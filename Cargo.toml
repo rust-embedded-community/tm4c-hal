@@ -37,8 +37,7 @@ version = "0.1.0"
 version = "0.1.0"
 
 [dependencies.tm4c123x]
-# version = "0.4.0"
-path = "../dslite2svd/crates/tm4c123x"
+version = "0.6"
 
 # [features]
 # rt = ["tm4c123x/rt"]
