@@ -9,7 +9,7 @@ main() {
             ;;
         *)
             xargo check --target $TARGET
-            xargo check --target $TARGET --features rt
+            # xargo check --target $TARGET --features rt
             ;;
     esac
 
