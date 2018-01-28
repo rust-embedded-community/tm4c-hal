@@ -14,9 +14,8 @@
 //! * Reset cause
 //! * Run-time clock configuration
 
-
 use tm4c123x;
-use time::{U32Ext, Hertz};
+use time::{Hertz, U32Ext};
 
 /// Constrained SYSCTL peripheral.
 pub struct Sysctl {
@@ -51,7 +50,7 @@ pub enum Oscillator {
     /// Use the 16 MHz precision internal oscillator, divided down to 4 MHz
     PrecisionInternalDiv4,
     /// Use the 30 kHz internal oscillator
-    LowFrequencyInternal
+    LowFrequencyInternal,
 }
 
 /// Selects the source for the system clock
@@ -60,7 +59,7 @@ pub enum SystemClock {
     UseOscillator(Divider),
     /// Clock the system from the PLL (which is driven by the system
     /// oscillator), divided down from 400MHz to the given frequency.
-    UsePll(PllOutputFrequency)
+    UsePll(PllOutputFrequency),
 }
 
 /// Selects which crystal is fitted to the XOSC pins.
@@ -174,7 +173,7 @@ pub enum Divider {
     /// Divide by 15
     _15 = 15,
     /// Divide by 16
-    _16 = 16
+    _16 = 16,
 }
 
 /// Extension trait that constrains the `SYSCTL` peripheral
@@ -191,7 +190,7 @@ impl SysctlExt for tm4c123x::SYSCTL {
                 oscillator: Oscillator::PrecisionInternal,
                 system_clock: SystemClock::UseOscillator(Divider::_1),
                 _0: (),
-            }
+            },
         }
     }
 }
@@ -256,7 +255,7 @@ pub mod chip_id {
         /// It's a Stellaris LM4F or a TM4C123 (they have the same value)
         StellarisBlizzard,
         /// I don't know what chip this is
-        Unknown
+        Unknown,
     }
 
     /// How many pins on this chip's package?
@@ -277,7 +276,7 @@ pub mod chip_id {
         /// It's a 168 pin package (TM4C123 only)
         _168,
         /// I don't know what chip this is
-        Unknown
+        Unknown,
     }
 
     /// What temperature range does this chip support?
@@ -290,7 +289,7 @@ pub mod chip_id {
         /// It's Extended temperature range (-40°C - +105°C)
         Extended,
         /// I don't know what temperature range this is
-        Unknown
+        Unknown,
     }
 
     /// What package is this chip in?
@@ -303,7 +302,7 @@ pub mod chip_id {
         /// It's a BGA package
         Bga,
         /// I don't know what package this is
-        Unknown
+        Unknown,
     }
 
     /// Is this an experimental chip or a production part?
@@ -316,7 +315,7 @@ pub mod chip_id {
         /// It's a Fully Qualified chip
         FullyQualified,
         /// I don't know what qualification this is
-        Unknown
+        Unknown,
     }
 
     /// These values describe the part number
@@ -327,7 +326,7 @@ pub mod chip_id {
         /// It's a LM4F120H5QR
         Lm4f120h5qr,
         /// It's an unknown chip - please file a bug report
-        Unknown(u8)
+        Unknown(u8),
     }
 
     /// These values describe the physical LM4F/TM4C chip
@@ -350,7 +349,7 @@ pub mod chip_id {
         /// The chip's qualification
         pub qualification: Qualification,
         /// The chip's part number
-        pub part_no: PartNo
+        pub part_no: PartNo,
     }
 
     /// Read DID0 and DID1 to discover what sort of
@@ -358,9 +357,7 @@ pub mod chip_id {
     pub fn get() -> Result<ChipId, Error> {
         use tm4c123x;
         // This is safe as it's read only
-        let p = unsafe {
-            &*tm4c123x::SYSCTL::ptr()
-        };
+        let p = unsafe { &*tm4c123x::SYSCTL::ptr() };
         let did0 = p.did0.read();
         if did0.ver().bits() != 0x01 {
             return Err(Error::UnknownDid0Ver(did0.ver().bits()));
@@ -419,7 +416,7 @@ pub mod chip_id {
             package,
             rohs_compliant,
             qualification,
-            part_no
+            part_no,
         })
     }
 }
