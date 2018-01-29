@@ -40,3 +40,5 @@ pub mod sysctl;
 // pub mod spi;
 pub mod time;
 // pub mod timer;
+
+pub use tm4c123x::Peripherals;

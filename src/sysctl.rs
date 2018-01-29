@@ -16,6 +16,7 @@
 
 use tm4c123x;
 use time::{Hertz, U32Ext};
+use cortex_m::asm::nop;
 
 /// Constrained SYSCTL peripheral.
 pub struct Sysctl {
@@ -35,25 +36,26 @@ pub struct PowerControl {
 pub struct ClockSetup {
     /// The system oscillator configuration
     pub oscillator: Oscillator,
-    /// The system clock configuration
-    pub system_clock: SystemClock,
     // Make this type uncreatable
     _0: (),
 }
 
 /// Selects the system oscillator source
+#[derive(Clone, Copy)]
 pub enum Oscillator {
-    /// Use the main oscillator (with the given crystal)
-    Main(CrystalFrequency),
-    /// Use the 16 MHz precision internal oscillator
-    PrecisionInternal,
+    /// Use the main oscillator (with the given crystal), into the PLL or a clock divider
+    Main(CrystalFrequency, SystemClock),
+    /// Use the 16 MHz precision internal oscillator, into the PLL or a clock divider
+    PrecisionInternal(SystemClock),
     /// Use the 16 MHz precision internal oscillator, divided down to 4 MHz
-    PrecisionInternalDiv4,
-    /// Use the 30 kHz internal oscillator
-    LowFrequencyInternal,
+    /// and then divided down again by the given value.
+    PrecisionInternalDiv4(Divider),
+    /// Use the 30 kHz internal oscillator, divided by the given value.
+    LowFrequencyInternal(Divider),
 }
 
 /// Selects the source for the system clock
+#[derive(Clone, Copy)]
 pub enum SystemClock {
     /// Clock the system direct from the system oscillator
     UseOscillator(Divider),
@@ -63,6 +65,7 @@ pub enum SystemClock {
 }
 
 /// Selects which crystal is fitted to the XOSC pins.
+#[derive(Clone, Copy)]
 pub enum CrystalFrequency {
     /// 4 MHz
     _4mhz,
@@ -109,38 +112,40 @@ pub enum CrystalFrequency {
 }
 
 /// Selects what to divide the PLL's 400MHz down to.
+#[derive(Clone, Copy)]
 pub enum PllOutputFrequency {
     /// 66.67 MHz
-    _66_67mhz,
+    _66_67mhz = 2,
     /// 50 MHz
-    _50_00mhz,
+    _50_00mhz = 3,
     /// 40 MHz
-    _40_00mhz,
+    _40_00mhz = 4,
     /// 33.33 MHz
-    _33_33mhz,
+    _33_33mhz = 5,
     /// 28.57 MHz
-    _28_57mhz,
+    _28_57mhz = 6,
     /// 25 MHz
-    _25mhz,
+    _25mhz = 7,
     /// 22.22 MHz
-    _22_22mhz,
+    _22_22mhz = 8,
     /// 20 MHz
-    _20mhz,
+    _20mhz = 9,
     /// 18.18 MHz
-    _18_18mhz,
+    _18_18mhz = 10,
     /// 16.67 MHz
-    _16_67mhz,
+    _16_67mhz = 11,
     /// 15.38 MHz
-    _15_38mhz,
+    _15_38mhz = 12,
     /// 14.29 MHz
-    _14_29mhz,
+    _14_29mhz = 13,
     /// 13.33 MHz
-    _13_33mhz,
+    _13_33mhz = 14,
     /// 12.5 MHz
-    _12_5mhz,
+    _12_5mhz = 15,
 }
 
 /// Selects how much to divide the system oscillator down.
+#[derive(Clone, Copy)]
 pub enum Divider {
     /// Divide by 1
     _1 = 1,
@@ -187,8 +192,7 @@ impl SysctlExt for tm4c123x::SYSCTL {
         Sysctl {
             power_control: PowerControl { _0: () },
             clock_setup: ClockSetup {
-                oscillator: Oscillator::PrecisionInternal,
-                system_clock: SystemClock::UseOscillator(Divider::_1),
+                oscillator: Oscillator::PrecisionInternal(SystemClock::UseOscillator(Divider::_1)),
                 _0: (),
             },
         }
@@ -199,18 +203,224 @@ impl ClockSetup {
     /// Fix the clock configuration and produce a record of the configuration
     /// so that other modules can calibrate themselves (e.g. the UARTs).
     pub fn freeze(self) -> Clocks {
-        // TODO: Pay attention to the clock setup and don't ignore it. The
-        // precision internal oscillator is 16 MHz and we run at 1:1 by
-        // default with no PLL.
-
         // We own the SYSCTL at this point - no one else can be running.
-        let _p = unsafe {
-            &*tm4c123x::SYSCTL::ptr();
-        };
+        let p = unsafe { &*tm4c123x::SYSCTL::ptr() };
+
+        let mut osc = 0u32;
+        let mut sysclk = 0u32;
+
+        match self.oscillator {
+            Oscillator::Main(crystal_frequency, system_clock) => {
+                p.rcc.write(|w| {
+                    // BYPASS on
+                    w.bypass().set_bit();
+                    // OSCSRC = Main Oscillator
+                    w.oscsrc().main();
+                    // Main Oscillator not disabled
+                    w.moscdis().clear_bit();
+                    // SysDiv = 0x00
+                    unsafe {
+                        w.sysdiv().bits(0x00);
+                    }
+                    // Set crystal frequency
+                    osc = match crystal_frequency {
+                        CrystalFrequency::_4mhz => {
+                            w.xtal()._4mhz();
+                            4_000_000
+                        }
+                        CrystalFrequency::_4_09mhz => {
+                            w.xtal()._4_09mhz();
+                            4_090_000
+                        }
+                        CrystalFrequency::_4_91mhz => {
+                            w.xtal()._4_91mhz();
+                            4_910_000
+                        }
+                        CrystalFrequency::_5mhz => {
+                            w.xtal()._5mhz();
+                            5_000_000
+                        }
+                        CrystalFrequency::_5_12mhz => {
+                            w.xtal()._5_12mhz();
+                            5_120_000
+                        }
+                        CrystalFrequency::_6mhz => {
+                            w.xtal()._6mhz();
+                            6_000_000
+                        }
+                        CrystalFrequency::_6_14mhz => {
+                            w.xtal()._6_14mhz();
+                            6_140_000
+                        }
+                        CrystalFrequency::_7_37mhz => {
+                            w.xtal()._7_37mhz();
+                            7_370_000
+                        }
+                        CrystalFrequency::_8mhz => {
+                            w.xtal()._8mhz();
+                            8_000_000
+                        }
+                        CrystalFrequency::_8_19mhz => {
+                            w.xtal()._8_19mhz();
+                            8_190_000
+                        }
+                        CrystalFrequency::_10mhz => {
+                            w.xtal()._10mhz();
+                            10_000_000
+                        }
+                        CrystalFrequency::_12mhz => {
+                            w.xtal()._12mhz();
+                            12_000_000
+                        }
+                        CrystalFrequency::_12_2mhz => {
+                            w.xtal()._12_2mhz();
+                            12_200_000
+                        }
+                        CrystalFrequency::_13_5mhz => {
+                            w.xtal()._13_5mhz();
+                            13_500_000
+                        }
+                        CrystalFrequency::_14_3mhz => {
+                            w.xtal()._14_3mhz();
+                            14_300_000
+                        }
+                        CrystalFrequency::_16mhz => {
+                            w.xtal()._16mhz();
+                            16_000_000
+                        }
+                        CrystalFrequency::_16_3mhz => {
+                            w.xtal()._16_3mhz();
+                            16_300_000
+                        }
+                        CrystalFrequency::_18mhz => {
+                            w.xtal()._18mhz();
+                            18_000_000
+                        }
+                        CrystalFrequency::_20mhz => {
+                            w.xtal()._20mhz();
+                            20_000_000
+                        }
+                        CrystalFrequency::_24mhz => {
+                            w.xtal()._24mhz();
+                            24_000_000
+                        }
+                        CrystalFrequency::_25mhz => {
+                            w.xtal()._25mhz();
+                            25_000_000
+                        }
+                    };
+                    if let SystemClock::UseOscillator(div) = system_clock {
+                        w.usesysdiv().set_bit();
+                        unsafe {
+                            w.sysdiv().bits(div as u8);
+                        }
+                        sysclk = osc / (div as u32);
+                    } else {
+                        // Run 1:1 now, do PLL later
+                        w.usesysdiv().clear_bit();
+                        unsafe {
+                            w.sysdiv().bits(0);
+                        }
+                        sysclk = osc;
+                    }
+                    w
+                });
+            }
+            // The default
+            Oscillator::PrecisionInternal(system_clock) => {
+                osc = 16_000_000;
+                p.rcc.write(|w| {
+                    // BYPASS on
+                    w.bypass().set_bit();
+                    // OSCSRC = Internal Oscillator
+                    w.oscsrc().int();
+                    // Main Oscillator disabled
+                    w.moscdis().set_bit();
+                    // SysDiv = ?
+                    if let SystemClock::UseOscillator(div) = system_clock {
+                        w.usesysdiv().set_bit();
+                        unsafe {
+                            w.sysdiv().bits(div as u8);
+                        }
+                        sysclk = osc / (div as u32);
+                    } else {
+                        // Run 1:1 now, do PLL later
+                        w.usesysdiv().clear_bit();
+                        unsafe {
+                            w.sysdiv().bits(0);
+                        }
+                        sysclk = osc;
+                    }
+                    w
+                });
+            }
+            Oscillator::PrecisionInternalDiv4(div) => {
+                osc = 4_000_000;
+                p.rcc.write(|w| {
+                    // BYPASS on
+                    w.bypass().set_bit();
+                    // OSCSRC = Internal Oscillator / 4
+                    w.oscsrc().int4();
+                    // Main Oscillator disabled
+                    w.moscdis().set_bit();
+                    w.usesysdiv().set_bit();
+                    unsafe {
+                        w.sysdiv().bits(div as u8);
+                    }
+                    sysclk = osc / (div as u32);
+                    w
+                });
+            }
+            Oscillator::LowFrequencyInternal(div) => {
+                osc = 30_000;
+                p.rcc.write(|w| {
+                    // BYPASS on
+                    w.bypass().set_bit();
+                    // OSCSRC = Low Frequency internal (30 kHz)
+                    w.oscsrc()._30();
+                    // Main Oscillator disabled
+                    w.moscdis().set_bit();
+                    w.usesysdiv().set_bit();
+                    unsafe {
+                        w.sysdiv().bits(div as u8);
+                    }
+                    sysclk = osc / (div as u32);
+                    w
+                });
+            }
+        }
+
+        match self.oscillator {
+            Oscillator::PrecisionInternal(SystemClock::UsePll(f))
+            | Oscillator::Main(_, SystemClock::UsePll(f)) => {
+                // Configure 400MHz PLL with divider f
+
+                // Set PLL bit in masked interrupt status to clear
+                // PLL lock status
+                p.misc.write(|w| w.plllmis().set_bit());
+
+                // Enable the PLL
+                p.rcc.modify(|_, w| w.pwrdn().clear_bit());
+
+                while p.pllstat.read().lock().bit_is_clear() {
+                    nop();
+                }
+
+                p.rcc.modify(|_, w| {
+                    unsafe { w.sysdiv().bits(f as u8) };
+                    w.usesysdiv().set_bit();
+                    w.bypass().clear_bit();
+                    w
+                });
+
+                sysclk = 400_000_000u32 / (2 * ((f as u32) + 1));
+            }
+            _ => {}
+        }
 
         Clocks {
-            osc: 16u32.mhz().into(),
-            sysclk: 16u32.mhz().into(),
+            osc: osc.hz(),
+            sysclk: sysclk.hz(),
         }
     }
 }
