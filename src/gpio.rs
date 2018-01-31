@@ -252,6 +252,7 @@ macro_rules! gpio {
                         let p = unsafe { &*$GPIOX::ptr() };
                         // input mode
                         unsafe { bb::change_bit(&p.dir, $i, false); }
+                        unsafe { bb::change_bit(&p.den, $i, true); }
                         // no pull
                         unsafe { bb::change_bit(&p.pur, $i, false); }
                         unsafe { bb::change_bit(&p.pdr, $i, false); }
@@ -266,6 +267,7 @@ macro_rules! gpio {
                         let p = unsafe { &*$GPIOX::ptr() };
                         // input mode
                         unsafe { bb::change_bit(&p.dir, $i, false); }
+                        unsafe { bb::change_bit(&p.den, $i, true); }
                         // pull down
                         unsafe { bb::change_bit(&p.pur, $i, false); }
                         unsafe { bb::change_bit(&p.pdr, $i, true); }
@@ -280,6 +282,7 @@ macro_rules! gpio {
                         let p = unsafe { &*$GPIOX::ptr() };
                         // input mode
                         unsafe { bb::change_bit(&p.dir, $i, false); }
+                        unsafe { bb::change_bit(&p.den, $i, true); }
                         // pull up
                         unsafe { bb::change_bit(&p.pur, $i, true); }
                         unsafe { bb::change_bit(&p.pdr, $i, false); }
@@ -293,6 +296,7 @@ macro_rules! gpio {
                         let p = unsafe { &*$GPIOX::ptr() };
                         // output mode
                         unsafe { bb::change_bit(&p.dir, $i, true); }
+                        unsafe { bb::change_bit(&p.den, $i, true); }
                         // open-drain
                         unsafe { bb::change_bit(&p.odr, $i, true); }
                         $PXi { _mode: PhantomData }
@@ -305,6 +309,7 @@ macro_rules! gpio {
                         let p = unsafe { &*$GPIOX::ptr() };
                         // output mode
                         unsafe { bb::change_bit(&p.dir, $i, true); }
+                        unsafe { bb::change_bit(&p.den, $i, true); }
                         // open-drain off
                         unsafe { bb::change_bit(&p.odr, $i, false); }
                         $PXi { _mode: PhantomData }
@@ -358,7 +363,7 @@ macro_rules! gpio {
     }
 }
 
-gpio!(GPIO_PORTA_AHB, gpio_porta, GpioA, PAx, [
+gpio!(GPIO_PORTA, gpio_porta, GpioA, PAx, [
     PA0: (pa0, 0, Input<Floating>),
     PA1: (pa1, 1, Input<Floating>),
     PA2: (pa2, 2, Input<Floating>),
@@ -369,7 +374,7 @@ gpio!(GPIO_PORTA_AHB, gpio_porta, GpioA, PAx, [
     PA7: (pa7, 7, Input<Floating>),
 ]);
 
-gpio!(GPIO_PORTB_AHB, gpio_portb, GpioB, PBx, [
+gpio!(GPIO_PORTB, gpio_portb, GpioB, PBx, [
     PB0: (pb0, 0, Input<Floating>),
     PB1: (pb1, 1, Input<Floating>),
     PB2: (pb2, 2, Input<Floating>),
@@ -380,7 +385,7 @@ gpio!(GPIO_PORTB_AHB, gpio_portb, GpioB, PBx, [
     PB7: (pb7, 7, Input<Floating>),
 ]);
 
-gpio!(GPIO_PORTF_AHB, gpio_portf, GpioF, PFx, [
+gpio!(GPIO_PORTF, gpio_portf, GpioF, PFx, [
     PF0: (pf0, 0, Input<Floating>),
     PF1: (pf1, 1, Input<Floating>),
     PF2: (pf2, 2, Input<Floating>),
