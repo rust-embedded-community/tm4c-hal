@@ -4,8 +4,9 @@
 // that let you select different microcontroller packages
 
 use core::marker::PhantomData;
-
+use hal::digital::{InputPin, OutputPin};
 use sysctl;
+use bb;
 
 /// Extension trait to split a GPIO peripheral in independent pins and registers
 pub trait GpioExt {
@@ -28,6 +29,9 @@ pub struct PullDown;
 /// Pulled up input (type state)
 pub struct PullUp;
 
+/// Tri-state
+pub struct Tristate;
+
 /// Output mode (type state)
 pub struct Output<MODE> {
     _mode: PhantomData<MODE>,
@@ -37,9 +41,6 @@ pub struct Output<MODE> {
 pub struct PushPull;
 /// Open drain output (type state)
 pub struct OpenDrain;
-
-/// Alternate function 0 (type state)
-pub struct AF0;
 
 /// Alternate function 1 (type state)
 pub struct AF1;
@@ -82,19 +83,19 @@ macro_rules! gpio {
     ]) => {
         /// GPIO
         pub mod $gpiox {
-            use core::marker::PhantomData;
-
-            use hal::digital::OutputPin;
+            use super::*;
             use tm4c123x::$GPIOX;
-            use sysctl;
-            use bb;
 
-            use super::{
-                Floating, GpioExt, Input, Output, PullUp, PullDown, OpenDrain, PushPull
-            };
+            /// Provides mutual-exclusion for certain GPIO operations (such as
+            /// selecting an alternate mode) that can't be done atomically.
+            pub struct GpioControl {
+                _0: (),
+            }
 
             /// GPIO parts
             pub struct Parts {
+                /// Pass an &mut reference to methods that require it.
+                pub control: GpioControl,
                 $(
                     /// Pin
                     pub $pxi: $PXi<$MODE>,
@@ -111,6 +112,7 @@ macro_rules! gpio {
                     sysctl::reset(pc, sysctl::PeripheralPowerDomain::$iopd);
 
                     Parts {
+                        control: GpioControl { _0: () },
                         $(
                             $pxi: $PXi { _mode: PhantomData },
                         )+
@@ -145,6 +147,17 @@ macro_rules! gpio {
                 }
             }
 
+            impl<MODE> InputPin for $PXx<Input<MODE>> {
+                fn is_high(&self) -> bool {
+                    let p = unsafe { &*$GPIOX::ptr() };
+                    bb::read_bit(&p.data, self.i)
+                }
+
+                fn is_low(&self) -> bool {
+                    !self.is_high()
+                }
+            }
+
             $(
                 /// Pin
                 pub struct $PXi<MODE> {
@@ -152,111 +165,236 @@ macro_rules! gpio {
                 }
 
                 impl<MODE> $PXi<MODE> {
-                //     /// Configures the pin to serve as alternate function 4 (AF4)
-                //     pub fn into_af4(
-                //         self,
-                //         dir: &mut DIR,
-                //         afsel: &mut AFSEL,
-                //     ) -> $PXi<AF4> {
-                //         let offset = 2 * $i;
+                    /// Configures the pin to serve as alternate function 1 (AF1)
+                    pub fn into_af1(
+                        self,
+                        _gpio_reg: &mut GpioControl,
+                    ) -> $PXi<AF1> {
+                        let p = unsafe { &*$GPIOX::ptr() };
+                        let mask = 0xF << ($i * 4);
+                        let bits = 0x1 << ($i * 4);
+                        unsafe {
+                            p.pctl.modify(|r, w| w.bits((r.bits() & !mask) | bits));
+                        }
+                        unsafe { bb::change_bit(&p.afsel, $i, true); }
+                        unsafe { bb::change_bit(&p.dir, $i, false); }
+                        unsafe { bb::change_bit(&p.odr, $i, false); }
+                        unsafe { bb::change_bit(&p.pur, $i, false); }
+                        unsafe { bb::change_bit(&p.pdr, $i, false); }
+                        unsafe { bb::change_bit(&p.den, $i, true); }
+                        $PXi { _mode: PhantomData }
+                    }
 
-                //         // alternate function mode
-                //         let mode = 0b10;
-                //         dir.dir().modify(|r, w| unsafe {
-                //             w.bits((r.bits() & !(0b11 << offset)) | (mode << offset))
-                //         });
+                    /// Configures the pin to serve as alternate function 2 (AF2)
+                    pub fn into_af2(
+                        self,
+                        _gpio_reg: &mut GpioControl,
+                    ) -> $PXi<AF2> {
+                        let p = unsafe { &*$GPIOX::ptr() };
+                        let mask = 0xF << ($i * 4);
+                        let bits = 0x2 << ($i * 4);
+                        unsafe {
+                            p.pctl.modify(|r, w| w.bits((r.bits() & !mask) | bits));
+                        }
+                        unsafe { bb::change_bit(&p.afsel, $i, true); }
+                        unsafe { bb::change_bit(&p.dir, $i, false); }
+                        unsafe { bb::change_bit(&p.odr, $i, false); }
+                        unsafe { bb::change_bit(&p.pur, $i, false); }
+                        unsafe { bb::change_bit(&p.pdr, $i, false); }
+                        unsafe { bb::change_bit(&p.den, $i, true); }
+                        $PXi { _mode: PhantomData }
+                    }
 
-                //         let af = 4;
-                //         let offset = 4 * ($i % 8);
-                //         afsel.afsel().modify(|r, w| unsafe {
-                //             w.bits((r.bits() & !(0b1111 << offset)) | (af << offset))
-                //         });
+                    /// Configures the pin to serve as alternate function 3 (AF3)
+                    pub fn into_af3(
+                        self,
+                        _gpio_reg: &mut GpioControl,
+                    ) -> $PXi<AF3> {
+                        let p = unsafe { &*$GPIOX::ptr() };
+                        let mask = 0xF << ($i * 4);
+                        let bits = 0x3 << ($i * 4);
+                        unsafe {
+                            p.pctl.modify(|r, w| w.bits((r.bits() & !mask) | bits));
+                        }
+                        unsafe { bb::change_bit(&p.afsel, $i, true); }
+                        unsafe { bb::change_bit(&p.dir, $i, false); }
+                        unsafe { bb::change_bit(&p.odr, $i, false); }
+                        unsafe { bb::change_bit(&p.pur, $i, false); }
+                        unsafe { bb::change_bit(&p.pdr, $i, false); }
+                        unsafe { bb::change_bit(&p.den, $i, true); }
+                        $PXi { _mode: PhantomData }
+                    }
 
-                //         $PXi { _mode: PhantomData }
-                //     }
+                    /// Configures the pin to serve as alternate function 4 (AF4)
+                    pub fn into_af4(
+                        self,
+                        _gpio_reg: &mut GpioControl,
+                    ) -> $PXi<AF4> {
+                        let p = unsafe { &*$GPIOX::ptr() };
+                        let mask = 0xF << ($i * 4);
+                        let bits = 0x4 << ($i * 4);
+                        unsafe {
+                            p.pctl.modify(|r, w| w.bits((r.bits() & !mask) | bits));
+                        }
+                        unsafe { bb::change_bit(&p.afsel, $i, true); }
+                        unsafe { bb::change_bit(&p.dir, $i, false); }
+                        unsafe { bb::change_bit(&p.odr, $i, false); }
+                        unsafe { bb::change_bit(&p.pur, $i, false); }
+                        unsafe { bb::change_bit(&p.pdr, $i, false); }
+                        unsafe { bb::change_bit(&p.den, $i, true); }
+                        $PXi { _mode: PhantomData }
+                    }
 
-                //     /// Configures the pin to serve as alternate function 5 (AF5)
-                //     pub fn into_af5(
-                //         self,
-                //         dir: &mut DIR,
-                //         afsel: &mut AFSEL,
-                //     ) -> $PXi<AF5> {
-                //         let offset = 2 * $i;
+                    /// Configures the pin to serve as alternate function 5 (AF5)
+                    pub fn into_af5(
+                        self,
+                        _gpio_reg: &mut GpioControl,
+                    ) -> $PXi<AF5> {
+                        let p = unsafe { &*$GPIOX::ptr() };
+                        let mask = 0xF << ($i * 4);
+                        let bits = 0x5 << ($i * 4);
+                        unsafe {
+                            p.pctl.modify(|r, w| w.bits((r.bits() & !mask) | bits));
+                        }
+                        unsafe { bb::change_bit(&p.afsel, $i, true); }
+                        unsafe { bb::change_bit(&p.dir, $i, false); }
+                        unsafe { bb::change_bit(&p.odr, $i, false); }
+                        unsafe { bb::change_bit(&p.pur, $i, false); }
+                        unsafe { bb::change_bit(&p.pdr, $i, false); }
+                        unsafe { bb::change_bit(&p.den, $i, true); }
+                        $PXi { _mode: PhantomData }
+                    }
 
-                //         // alternate function mode
-                //         let mode = 0b10;
-                //         dir.dir().modify(|r, w| unsafe {
-                //             w.bits((r.bits() & !(0b11 << offset)) | (mode << offset))
-                //         });
+                    /// Configures the pin to serve as alternate function 6 (AF6)
+                    pub fn into_af6(
+                        self,
+                        _gpio_reg: &mut GpioControl,
+                    ) -> $PXi<AF6> {
+                        let p = unsafe { &*$GPIOX::ptr() };
+                        let mask = 0xF << ($i * 4);
+                        let bits = 0x6 << ($i * 4);
+                        unsafe {
+                            p.pctl.modify(|r, w| w.bits((r.bits() & !mask) | bits));
+                        }
+                        unsafe { bb::change_bit(&p.afsel, $i, true); }
+                        unsafe { bb::change_bit(&p.dir, $i, false); }
+                        unsafe { bb::change_bit(&p.odr, $i, false); }
+                        unsafe { bb::change_bit(&p.pur, $i, false); }
+                        unsafe { bb::change_bit(&p.pdr, $i, false); }
+                        unsafe { bb::change_bit(&p.den, $i, true); }
+                        $PXi { _mode: PhantomData }
+                    }
 
-                //         let af = 5;
-                //         let offset = 4 * ($i % 8);
-                //         afsel.afsel().modify(|r, w| unsafe {
-                //             w.bits((r.bits() & !(0b1111 << offset)) | (af << offset))
-                //         });
+                    /// Configures the pin to serve as alternate function 7 (AF7)
+                    pub fn into_af7(
+                        self,
+                        _gpio_reg: &mut GpioControl,
+                    ) -> $PXi<AF7> {
+                        let p = unsafe { &*$GPIOX::ptr() };
+                        let mask = 0xF << ($i * 4);
+                        let bits = 0x7 << ($i * 4);
+                        unsafe {
+                            p.pctl.modify(|r, w| w.bits((r.bits() & !mask) | bits));
+                        }
+                        unsafe { bb::change_bit(&p.afsel, $i, true); }
+                        unsafe { bb::change_bit(&p.dir, $i, false); }
+                        unsafe { bb::change_bit(&p.odr, $i, false); }
+                        unsafe { bb::change_bit(&p.pur, $i, false); }
+                        unsafe { bb::change_bit(&p.pdr, $i, false); }
+                        unsafe { bb::change_bit(&p.den, $i, true); }
+                        $PXi { _mode: PhantomData }
+                    }
 
-                //         $PXi { _mode: PhantomData }
-                //     }
+                    /// Configures the pin to serve as alternate function 8 (AF8)
+                    pub fn into_af8(
+                        self,
+                        _gpio_reg: &mut GpioControl,
+                    ) -> $PXi<AF8> {
+                        let p = unsafe { &*$GPIOX::ptr() };
+                        let mask = 0xF << ($i * 4);
+                        let bits = 0x8 << ($i * 4);
+                        unsafe {
+                            p.pctl.modify(|r, w| w.bits((r.bits() & !mask) | bits));
+                        }
+                        unsafe { bb::change_bit(&p.afsel, $i, true); }
+                        unsafe { bb::change_bit(&p.dir, $i, false); }
+                        unsafe { bb::change_bit(&p.odr, $i, false); }
+                        unsafe { bb::change_bit(&p.pur, $i, false); }
+                        unsafe { bb::change_bit(&p.pdr, $i, false); }
+                        unsafe { bb::change_bit(&p.den, $i, true); }
+                        $PXi { _mode: PhantomData }
+                    }
 
-                //     /// Configures the pin to serve as alternate function 6 (AF6)
-                //     pub fn into_af6(
-                //         self,
-                //         dir: &mut DIR,
-                //         afsel: &mut AFSEL,
-                //     ) -> $PXi<AF6> {
-                //         let offset = 2 * $i;
+                    /// Configures the pin to serve as alternate function 9 (AF9)
+                    pub fn into_af9(
+                        self,
+                        _gpio_reg: &mut GpioControl,
+                    ) -> $PXi<AF9> {
+                        let p = unsafe { &*$GPIOX::ptr() };
+                        let mask = 0xF << ($i * 4);
+                        let bits = 0x9 << ($i * 4);
+                        unsafe {
+                            p.pctl.modify(|r, w| w.bits((r.bits() & !mask) | bits));
+                        }
+                        unsafe { bb::change_bit(&p.afsel, $i, true); }
+                        unsafe { bb::change_bit(&p.dir, $i, false); }
+                        unsafe { bb::change_bit(&p.odr, $i, false); }
+                        unsafe { bb::change_bit(&p.pur, $i, false); }
+                        unsafe { bb::change_bit(&p.pdr, $i, false); }
+                        unsafe { bb::change_bit(&p.den, $i, true); }
+                        $PXi { _mode: PhantomData }
+                    }
 
-                //         // alternate function mode
-                //         let mode = 0b10;
-                //         dir.dir().modify(|r, w| unsafe {
-                //             w.bits((r.bits() & !(0b11 << offset)) | (mode << offset))
-                //         });
+                    /// Configures the pin to serve as alternate function 14 (AF14)
+                    pub fn into_af14(
+                        self,
+                        _gpio_reg: &mut GpioControl,
+                    ) -> $PXi<AF14> {
+                        let p = unsafe { &*$GPIOX::ptr() };
+                        let mask = 0xF << ($i * 4);
+                        let bits = 0xE << ($i * 4);
+                        unsafe {
+                            p.pctl.modify(|r, w| w.bits((r.bits() & !mask) | bits));
+                        }
+                        unsafe { bb::change_bit(&p.afsel, $i, true); }
+                        unsafe { bb::change_bit(&p.dir, $i, false); }
+                        unsafe { bb::change_bit(&p.odr, $i, false); }
+                        unsafe { bb::change_bit(&p.pur, $i, false); }
+                        unsafe { bb::change_bit(&p.pdr, $i, false); }
+                        unsafe { bb::change_bit(&p.den, $i, true); }
+                        $PXi { _mode: PhantomData }
+                    }
 
-                //         let af = 6;
-                //         let offset = 4 * ($i % 8);
-                //         afsel.afsel().modify(|r, w| unsafe {
-                //             w.bits((r.bits() & !(0b1111 << offset)) | (af << offset))
-                //         });
-
-                //         $PXi { _mode: PhantomData }
-                //     }
-
-                //     /// Configures the pin to serve as alternate function 7 (AF7)
-                //     pub fn into_af7(
-                //         self,
-                //         dir: &mut DIR,
-                //         afsel: &mut AFSEL,
-                //     ) -> $PXi<AF7> {
-                //         let offset = 2 * $i;
-
-                //         // alternate function mode
-                //         let mode = 0b10;
-                //         dir.dir().modify(|r, w| unsafe {
-                //             w.bits((r.bits() & !(0b11 << offset)) | (mode << offset))
-                //         });
-
-                //         let af = 7;
-                //         let offset = 4 * ($i % 8);
-
-                //         afsel.afsel().modify(|r, w| unsafe {
-                //             w.bits((r.bits() & !(0b1111 << offset)) | (af << offset))
-                //         });
-
-                //         $PXi { _mode: PhantomData }
-                //     }
+                    /// Configures the pin to serve as alternate function 15 (AF15)
+                    pub fn into_af15(
+                        self,
+                        _gpio_reg: &mut GpioControl,
+                    ) -> $PXi<AF15> {
+                        let p = unsafe { &*$GPIOX::ptr() };
+                        let bits = 0xF << ($i * 4);
+                        unsafe {
+                            p.pctl.modify(|r, w| w.bits(r.bits() | bits));
+                        }
+                        unsafe { bb::change_bit(&p.afsel, $i, true); }
+                        unsafe { bb::change_bit(&p.dir, $i, false); }
+                        unsafe { bb::change_bit(&p.odr, $i, false); }
+                        unsafe { bb::change_bit(&p.pur, $i, false); }
+                        unsafe { bb::change_bit(&p.pdr, $i, false); }
+                        unsafe { bb::change_bit(&p.den, $i, true); }
+                        $PXi { _mode: PhantomData }
+                    }
 
                     /// Configures the pin to operate as a floating input pin
                     pub fn into_floating_input(
                         self
                     ) -> $PXi<Input<Floating>> {
                         let p = unsafe { &*$GPIOX::ptr() };
-                        // input mode
+                        unsafe { bb::change_bit(&p.afsel, $i, false); }
                         unsafe { bb::change_bit(&p.dir, $i, false); }
-                        unsafe { bb::change_bit(&p.den, $i, true); }
-                        // no pull
+                        unsafe { bb::change_bit(&p.odr, $i, false); }
                         unsafe { bb::change_bit(&p.pur, $i, false); }
                         unsafe { bb::change_bit(&p.pdr, $i, false); }
-
+                        unsafe { bb::change_bit(&p.den, $i, true); }
                         $PXi { _mode: PhantomData }
                     }
 
@@ -265,13 +403,12 @@ macro_rules! gpio {
                         self
                     ) -> $PXi<Input<PullDown>> {
                         let p = unsafe { &*$GPIOX::ptr() };
-                        // input mode
+                        unsafe { bb::change_bit(&p.afsel, $i, false); }
                         unsafe { bb::change_bit(&p.dir, $i, false); }
-                        unsafe { bb::change_bit(&p.den, $i, true); }
-                        // pull down
+                        unsafe { bb::change_bit(&p.odr, $i, false); }
                         unsafe { bb::change_bit(&p.pur, $i, false); }
                         unsafe { bb::change_bit(&p.pdr, $i, true); }
-
+                        unsafe { bb::change_bit(&p.den, $i, true); }
                         $PXi { _mode: PhantomData }
                     }
 
@@ -280,12 +417,12 @@ macro_rules! gpio {
                         self
                     ) -> $PXi<Input<PullUp>> {
                         let p = unsafe { &*$GPIOX::ptr() };
-                        // input mode
+                        unsafe { bb::change_bit(&p.afsel, $i, false); }
                         unsafe { bb::change_bit(&p.dir, $i, false); }
-                        unsafe { bb::change_bit(&p.den, $i, true); }
-                        // pull up
+                        unsafe { bb::change_bit(&p.odr, $i, false); }
                         unsafe { bb::change_bit(&p.pur, $i, true); }
                         unsafe { bb::change_bit(&p.pdr, $i, false); }
+                        unsafe { bb::change_bit(&p.den, $i, true); }
                         $PXi { _mode: PhantomData }
                     }
 
@@ -294,11 +431,12 @@ macro_rules! gpio {
                         self
                     ) -> $PXi<Output<OpenDrain>> {
                         let p = unsafe { &*$GPIOX::ptr() };
-                        // output mode
+                        unsafe { bb::change_bit(&p.afsel, $i, false); }
                         unsafe { bb::change_bit(&p.dir, $i, true); }
-                        unsafe { bb::change_bit(&p.den, $i, true); }
-                        // open-drain
                         unsafe { bb::change_bit(&p.odr, $i, true); }
+                        unsafe { bb::change_bit(&p.pur, $i, false); }
+                        unsafe { bb::change_bit(&p.pdr, $i, false); }
+                        unsafe { bb::change_bit(&p.den, $i, true); }
                         $PXi { _mode: PhantomData }
                     }
 
@@ -307,13 +445,29 @@ macro_rules! gpio {
                         self
                     ) -> $PXi<Output<PushPull>> {
                         let p = unsafe { &*$GPIOX::ptr() };
-                        // output mode
+                        unsafe { bb::change_bit(&p.afsel, $i, false); }
                         unsafe { bb::change_bit(&p.dir, $i, true); }
-                        unsafe { bb::change_bit(&p.den, $i, true); }
-                        // open-drain off
                         unsafe { bb::change_bit(&p.odr, $i, false); }
+                        unsafe { bb::change_bit(&p.pur, $i, false); }
+                        unsafe { bb::change_bit(&p.pdr, $i, false); }
+                        unsafe { bb::change_bit(&p.den, $i, true); }
                         $PXi { _mode: PhantomData }
                     }
+
+                    /// Configures the pin as tri-state
+                    pub fn into_tri_state(
+                        self
+                    ) -> $PXi<Tristate> {
+                        let p = unsafe { &*$GPIOX::ptr() };
+                        unsafe { bb::change_bit(&p.den, $i, false); }
+                        unsafe { bb::change_bit(&p.afsel, $i, false); }
+                        unsafe { bb::change_bit(&p.dir, $i, false); }
+                        unsafe { bb::change_bit(&p.odr, $i, false); }
+                        unsafe { bb::change_bit(&p.pur, $i, false); }
+                        unsafe { bb::change_bit(&p.pdr, $i, false); }
+                        $PXi { _mode: PhantomData }
+                    }
+
                 }
 
                 impl $PXi<Output<OpenDrain>> {
@@ -325,12 +479,12 @@ macro_rules! gpio {
                     }
                 }
 
-                impl<MODE> $PXi<Output<MODE>> {
+                impl<MODE> $PXi<MODE> {
                     /// Erases the pin number from the type
                     ///
                     /// This is useful when you want to collect the pins into an array where you
                     /// need all the elements to have the same type
-                    pub fn downgrade(self) -> $PXx<Output<MODE>> {
+                    pub fn downgrade(self) -> $PXx<MODE> {
                         $PXx {
                             i: $i,
                             _mode: self._mode,
@@ -358,40 +512,86 @@ macro_rules! gpio {
                         unsafe { bb::change_bit(&p.data, $i, false); }
                     }
                 }
+
+                impl<MODE> InputPin for $PXi<Input<MODE>> {
+                    fn is_high(&self) -> bool {
+                        let p = unsafe { &*$GPIOX::ptr() };
+                        bb::read_bit(&p.data, $i)
+                    }
+
+                    fn is_low(&self) -> bool {
+                        !self.is_high()
+                    }
+                }
             )+
         }
     }
 }
 
-gpio!(GPIO_PORTA, gpio_porta, GpioA, PAx, [
-    PA0: (pa0, 0, Input<Floating>),
-    PA1: (pa1, 1, Input<Floating>),
-    PA2: (pa2, 2, Input<Floating>),
-    PA3: (pa3, 3, Input<Floating>),
-    PA4: (pa4, 4, Input<Floating>),
-    PA5: (pa5, 5, Input<Floating>),
-    PA6: (pa6, 6, Input<Floating>),
-    PA7: (pa7, 7, Input<Floating>),
+gpio!(GPIO_PORTA, gpioa, GpioA, PAx, [
+    PA0: (pa0, 0, Tristate),
+    PA1: (pa1, 1, Tristate),
+    PA2: (pa2, 2, Tristate),
+    PA3: (pa3, 3, Tristate),
+    PA4: (pa4, 4, Tristate),
+    PA5: (pa5, 5, Tristate),
+    PA6: (pa6, 6, Tristate),
+    PA7: (pa7, 7, Tristate),
 ]);
 
-gpio!(GPIO_PORTB, gpio_portb, GpioB, PBx, [
-    PB0: (pb0, 0, Input<Floating>),
-    PB1: (pb1, 1, Input<Floating>),
-    PB2: (pb2, 2, Input<Floating>),
-    PB3: (pb3, 3, Input<Floating>),
-    PB4: (pb4, 4, Input<Floating>),
-    PB5: (pb5, 5, Input<Floating>),
-    PB6: (pb6, 6, Input<Floating>),
-    PB7: (pb7, 7, Input<Floating>),
+gpio!(GPIO_PORTB, gpiob, GpioB, PBx, [
+    PB0: (pb0, 0, Tristate),
+    PB1: (pb1, 1, Tristate),
+    PB2: (pb2, 2, Tristate),
+    PB3: (pb3, 3, Tristate),
+    PB4: (pb4, 4, Tristate),
+    PB5: (pb5, 5, Tristate),
+    PB6: (pb6, 6, Tristate),
+    PB7: (pb7, 7, Tristate),
 ]);
 
-gpio!(GPIO_PORTF, gpio_portf, GpioF, PFx, [
-    PF0: (pf0, 0, Input<Floating>),
-    PF1: (pf1, 1, Input<Floating>),
-    PF2: (pf2, 2, Input<Floating>),
-    PF3: (pf3, 3, Input<Floating>),
-    PF4: (pf4, 4, Input<Floating>),
-    PF5: (pf5, 5, Input<Floating>),
-    PF6: (pf6, 6, Input<Floating>),
-    PF7: (pf7, 7, Input<Floating>),
+gpio!(GPIO_PORTC, gpioc, GpioC, PCx, [
+    PC0: (pc0, 0, AF1), // JTAG/SWD pins by default
+    PC1: (pc1, 1, AF1), // JTAG/SWD pins by default
+    PC2: (pc2, 2, AF1), // JTAG/SWD pins by default
+    PC3: (pc3, 3, AF1), // JTAG/SWD pins by default
+    PC4: (pc4, 4, Tristate),
+    PC5: (pc5, 5, Tristate),
+    PC6: (pc6, 6, Tristate),
+    PC7: (pc7, 7, Tristate),
+]);
+
+gpio!(GPIO_PORTD, gpiod, GpioD, PDx, [
+    PD0: (pd0, 0, Tristate),
+    PD1: (pd1, 1, Tristate),
+    PD2: (pd2, 2, Tristate),
+    PD3: (pd3, 3, Tristate),
+    PD4: (pd4, 4, Tristate),
+    PD5: (pd5, 5, Tristate),
+    PD6: (pd6, 6, Tristate),
+    // NMI - can't change state without extra unlock magic
+    // PD7: (pd7, 7, Tristate),
+]);
+
+gpio!(GPIO_PORTE, gpioe, GpioE, PEx, [
+    PE0: (pe0, 0, Tristate),
+    PE1: (pe1, 1, Tristate),
+    PE2: (pe2, 2, Tristate),
+    PE3: (pe3, 3, Tristate),
+    PE4: (pe4, 4, Tristate),
+    PE5: (pe5, 5, Tristate),
+    PE6: (pe6, 6, Tristate),
+    PE7: (pe7, 7, Tristate),
+]);
+
+gpio!(GPIO_PORTF, gpiof, GpioF, PFx, [
+    // NMI - can't change state without extra unlock magic
+    // PF0: (pf0, 0, Tristate),
+    PF1: (pf1, 1, Tristate),
+    PF2: (pf2, 2, Tristate),
+    PF3: (pf3, 3, Tristate),
+    PF4: (pf4, 4, Tristate),
+    PF5: (pf5, 5, Tristate),
+    PF6: (pf6, 6, Tristate),
+    PF7: (pf7, 7, Tristate),
 ]);
