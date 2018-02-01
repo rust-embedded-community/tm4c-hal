@@ -5,15 +5,10 @@ use core::marker::PhantomData;
 
 use hal::serial;
 use nb;
-use tm4c123x::{USART1, USART2, USART3};
+use tm4c123x::{UART0, UART1, UART2, UART3, UART4, UART5, UART6, UART7};
 
-use gpio::gpioa::{PA10, PA2, PA3, PA9};
-use gpio::gpiob::{PB10, PB11, PB6, PB7};
-use gpio::gpioc::{PC10, PC11, PC4, PC5};
-use gpio::gpiod::{PD5, PD6, PD8, PD9};
-use gpio::gpioe::{PE0, PE1, PE15};
-use gpio::AF7;
-use rcc::{APB1, APB2, Clocks};
+use gpio::gpioa::{PA0, PA1};
+use sysctl::Clocks;
 use time::Bps;
 
 /// Interrupt event
@@ -45,34 +40,8 @@ pub unsafe trait TxPin<USART> {}
 /// RX pin - DO NOT IMPLEMENT THIS TRAIT
 pub unsafe trait RxPin<USART> {}
 
-unsafe impl TxPin<USART1> for PA9<AF7> {}
-unsafe impl TxPin<USART1> for PB6<AF7> {}
-unsafe impl TxPin<USART1> for PC4<AF7> {}
-unsafe impl TxPin<USART1> for PE0<AF7> {}
-
-unsafe impl RxPin<USART1> for PA10<AF7> {}
-unsafe impl RxPin<USART1> for PB7<AF7> {}
-unsafe impl RxPin<USART1> for PC5<AF7> {}
-unsafe impl RxPin<USART1> for PE1<AF7> {}
-
-unsafe impl TxPin<USART2> for PA2<AF7> {}
-// unsafe impl TxPin<USART2> for PA14<AF7> {}
-// unsafe impl TxPin<USART2> for PB3<AF7> {}
-unsafe impl TxPin<USART2> for PD5<AF7> {}
-
-unsafe impl RxPin<USART2> for PA3<AF7> {}
-// unsafe impl RxPin<USART2> for PA15<AF7> {}
-// unsafe impl RxPin<USART2> for PB4<AF7> {}
-unsafe impl RxPin<USART2> for PD6<AF7> {}
-
-unsafe impl TxPin<USART3> for PB10<AF7> {}
-unsafe impl TxPin<USART3> for PC10<AF7> {}
-unsafe impl TxPin<USART3> for PD8<AF7> {}
-
-unsafe impl RxPin<USART3> for PB11<AF7> {}
-unsafe impl RxPin<USART3> for PC11<AF7> {}
-unsafe impl RxPin<USART3> for PD9<AF7> {}
-unsafe impl RxPin<USART3> for PE15<AF7> {}
+unsafe impl RxPin<UART0> for PA0<AF1> {}
+unsafe impl TxPin<UART0> for PA1<AF1> {}
 
 /// Serial abstraction
 pub struct Serial<USART, PINS> {
@@ -102,31 +71,12 @@ macro_rules! hal {
                     pins: (TX, RX),
                     baud_rate: Bps,
                     clocks: Clocks,
-                    apb: &mut $APB,
                 ) -> Self
                 where
                     TX: TxPin<$USARTX>,
                     RX: RxPin<$USARTX>,
                 {
-                    // enable or reset $USARTX
-                    apb.enr().modify(|_, w| w.$usartXen().enabled());
-                    apb.rstr().modify(|_, w| w.$usartXrst().set_bit());
-                    apb.rstr().modify(|_, w| w.$usartXrst().clear_bit());
-
-                    // disable hardware flow control
-                    // TODO enable DMA
-                    // usart.cr3.write(|w| w.rtse().clear_bit().ctse().clear_bit());
-
-                    let brr = clocks.$pclkX().0 / baud_rate.0;
-                    assert!(brr >= 16, "impossible baud rate");
-                    usart.brr.write(|w| unsafe { w.bits(brr) });
-
-                    // UE: enable USART
-                    // RE: enable receiver
-                    // TE: enable transceiver
-                    usart
-                        .cr1
-                        .write(|w| w.ue().set_bit().re().set_bit().te().set_bit());
+                    unimplemented!();
 
                     Serial { usart, pins }
                 }
