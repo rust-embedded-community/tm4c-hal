@@ -32,7 +32,9 @@ version = "0.4.0"
 
 [dependencies.embedded-hal]
 # version = "0.1.0"
-path = "../embedded-hal"
+# path = "../embedded-hal"
+git = "https://github.com/thejpster/embedded-hal"
+branch = "input_pin"
 
 [dependencies.nb]
 version = "0.1.0"
