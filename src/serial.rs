@@ -1,193 +1,291 @@
 //! Serial
 
-use core::ptr;
 use core::marker::PhantomData;
+use core::fmt;
 
 use hal::serial;
+use hal::prelude::*;
 use nb;
 use tm4c123x::{UART0, UART1, UART2, UART3, UART4, UART5, UART6, UART7};
 
-use gpio::gpioa::{PA0, PA1};
+use gpio::{gpioa, gpiob, gpioc};
+use gpio::{AF1, AF2};
 use sysctl::Clocks;
 use time::Bps;
-
-/// Interrupt event
-pub enum Event {
-    /// New data has been received
-    Rxne,
-    /// New data can be sent
-    Txe,
-}
-
-/// Serial error
-#[derive(Debug)]
-pub enum Error {
-    /// Framing error
-    Framing,
-    /// Noise error
-    Noise,
-    /// RX buffer overrun
-    Overrun,
-    /// Parity check error
-    Parity,
-    #[doc(hidden)] _Extensible,
-}
+use sysctl;
 
 // FIXME these should be "closed" traits
 /// TX pin - DO NOT IMPLEMENT THIS TRAIT
-pub unsafe trait TxPin<USART> {}
+pub unsafe trait TxPin<UART> {}
 
 /// RX pin - DO NOT IMPLEMENT THIS TRAIT
-pub unsafe trait RxPin<USART> {}
+pub unsafe trait RxPin<UART> {}
 
-unsafe impl RxPin<UART0> for PA0<AF1> {}
-unsafe impl TxPin<UART0> for PA1<AF1> {}
+// TODO: Add traits here for RTS and CTS?
+
+unsafe impl RxPin<UART0> for gpioa::PA0<AF1> {}
+unsafe impl TxPin<UART0> for gpioa::PA1<AF1> {}
+
+unsafe impl RxPin<UART1> for gpiob::PB0<AF1> {}
+unsafe impl TxPin<UART1> for gpiob::PB1<AF1> {}
+
+unsafe impl RxPin<UART1> for gpioc::PC4<AF2> {}
+unsafe impl TxPin<UART1> for gpioc::PC5<AF2> {}
+
+unsafe impl RxPin<UART4> for gpioc::PC4<AF1> {}
+unsafe impl TxPin<UART4> for gpioc::PC5<AF1> {}
+
+unsafe impl RxPin<UART3> for gpioc::PC6<AF1> {}
+unsafe impl TxPin<UART3> for gpioc::PC7<AF1> {}
 
 /// Serial abstraction
-pub struct Serial<USART, PINS> {
-    usart: USART,
-    pins: PINS,
+pub struct Serial<UART, TX, RX> {
+    uart: UART,
+    tx_pin: TX,
+    rx_pin: RX,
+    nl_mode: NewlineMode,
+}
+
+/// writeln!() emits LF chars, so this is useful
+/// if you're writing text with your UART
+#[derive(PartialEq, Clone, Copy)]
+pub enum NewlineMode {
+    /// Emit octets as received
+    Binary,
+    /// Emit an extra CR before every LF
+    SwapLFtoCRLF,
 }
 
 /// Serial receiver
-pub struct Rx<USART> {
-    _usart: PhantomData<USART>,
+pub struct Rx<UART, RX> {
+    _uart: PhantomData<UART>,
+    pin: RX,
 }
 
 /// Serial transmitter
-pub struct Tx<USART> {
-    _usart: PhantomData<USART>,
+pub struct Tx<UART, TX> {
+    uart: UART,
+    pin: TX,
+    nl_mode: NewlineMode,
 }
 
 macro_rules! hal {
     ($(
-        $USARTX:ident: ($usartX:ident, $APB:ident, $usartXen:ident, $usartXrst:ident, $pclkX:ident),
+        $UARTX:ident: ($powerDomain:ident, $uartX:ident),
     )+) => {
         $(
-            impl<TX, RX> Serial<$USARTX, (TX, RX)> {
-                /// Configures a USART peripheral to provide serial communication
-                pub fn $usartX(
-                    usart: $USARTX,
-                    pins: (TX, RX),
+            impl<TX, RX> Serial<$UARTX, TX, RX> {
+                /// Configures a UART peripheral to provide serial communication
+                pub fn $uartX(
+                    uart: $UARTX,
+                    tx_pin: TX,
+                    rx_pin: RX,
                     baud_rate: Bps,
-                    clocks: Clocks,
+                    nl_mode: NewlineMode,
+                    clocks: &Clocks,
+                    pc: &sysctl::PowerControl
                 ) -> Self
                 where
-                    TX: TxPin<$USARTX>,
-                    RX: RxPin<$USARTX>,
+                    TX: TxPin<$UARTX>,
+                    RX: RxPin<$UARTX>,
                 {
-                    unimplemented!();
+                    // Enable UART peripheral clocks
+                    sysctl::control_power(
+                        pc, sysctl::PeripheralPowerDomain::$powerDomain,
+                        sysctl::RunMode::Run, sysctl::PowerState::On);
+                    sysctl::reset(pc, sysctl::PeripheralPowerDomain::$powerDomain);
 
-                    Serial { usart, pins }
+                    // Reset UART
+                    uart.ctl.reset();
+
+                    // Calculate baud rate dividers
+                    let baud_int: u32 = (((clocks.sysclk.0 * 8) / baud_rate.0) + 1) / 2;
+
+                    // Set baud rate
+                    uart.ibrd.write(|w|
+                        unsafe { w.divint().bits((baud_int / 64) as u16) });
+                    uart.fbrd.write(|w|
+                        unsafe { w.divfrac().bits((baud_int % 64) as u8) });
+
+                    // Set data bits / parity / stop bits / enable fifo
+                    uart.lcrh.write(|w| w.wlen()._8().fen().bit(true));
+
+                    // Enable uart
+                    uart.ctl.write(|w| w.rxe().bit(true).txe().bit(true).uarten().bit(true));
+
+                    Serial { uart, tx_pin, rx_pin, nl_mode }
                 }
 
-                /// Starts listening for an interrupt event
-                pub fn listen(&mut self, event: Event) {
-                    match event {
-                        Event::Rxne => {
-                            self.usart.cr1.modify(|_, w| w.rxneie().set_bit())
-                        },
-                        Event::Txe => {
-                            self.usart.cr1.modify(|_, w| w.txeie().set_bit())
-                        },
-                    }
-                }
-
-                /// Starts listening for an interrupt event
-                pub fn unlisten(&mut self, event: Event) {
-                    match event {
-                        Event::Rxne => {
-                            self.usart.cr1.modify(|_, w| w.rxneie().clear_bit())
-                        },
-                        Event::Txe => {
-                            self.usart.cr1.modify(|_, w| w.txeie().clear_bit())
-                        },
-                    }
-                }
-
-                /// Splits the `Serial` abstraction into a transmitter and a receiver half
-                pub fn split(self) -> (Tx<$USARTX>, Rx<$USARTX>) {
+                /// Splits the `Serial` abstraction into a transmitter and a
+                /// receiver half. If you do this you can transmit and receive
+                /// in different threads.
+                pub fn split(self) -> (Tx<$UARTX, TX>, Rx<$UARTX, RX>) {
                     (
                         Tx {
-                            _usart: PhantomData,
+                            uart: self.uart,
+                            pin: self.tx_pin,
+                            nl_mode: self.nl_mode
                         },
                         Rx {
-                            _usart: PhantomData,
+                            _uart: PhantomData,
+                            pin: self.rx_pin
                         },
                     )
                 }
 
-                /// Releases the USART peripheral and associated pins
-                pub fn free(self) -> ($USARTX, (TX, RX)) {
-                    (self.usart, self.pins)
+                /// Write a complete string to the UART.
+                /// If this returns `Ok(())`, all the data was sent.
+                /// Otherwise you get number of octets sent and the error.
+                pub fn write_all<I: ?Sized>(&mut self, data: &I)
+                where
+                    I: AsRef<[u8]>,
+                {
+                    for octet in data.as_ref().iter() {
+                        block!(self.write(*octet)).unwrap();
+                    }
+                }
+
+                /// Re-combine a split UART
+                pub fn combine(tx: Tx<$UARTX, TX>, rx: Rx<$UARTX, RX>) -> Serial<$UARTX, TX, RX> {
+                    Serial {
+                        uart: tx.uart,
+                        nl_mode: tx.nl_mode,
+                        rx_pin: rx.pin,
+                        tx_pin: tx.pin
+                    }
+                }
+
+                /// Releases the UART peripheral and associated pins
+                pub fn free(self) -> ($UARTX, TX, RX) {
+                    (self.uart, self.tx_pin, self.rx_pin)
                 }
             }
 
-            impl serial::Read<u8> for Rx<$USARTX> {
-                type Error = Error;
-
-                fn read(&mut self) -> nb::Result<u8, Error> {
-                    // NOTE(unsafe) atomic read with no side effects
-                    let isr = unsafe { (*$USARTX::ptr()).isr.read() };
-
-                    Err(if isr.pe().bit_is_set() {
-                        nb::Error::Other(Error::Parity)
-                    } else if isr.fe().bit_is_set() {
-                        nb::Error::Other(Error::Framing)
-                    } else if isr.nf().bit_is_set() {
-                        nb::Error::Other(Error::Noise)
-                    } else if isr.ore().bit_is_set() {
-                        nb::Error::Other(Error::Overrun)
-                    } else if isr.rxne().bit_is_set() {
-                        // NOTE(read_volatile) see `write_volatile` below
-                        return Ok(unsafe {
-                            ptr::read_volatile(&(*$USARTX::ptr()).rdr as *const _ as *const _)
-                        });
-                    } else {
-                        nb::Error::WouldBlock
-                    })
+            impl<TX> Tx<$UARTX, TX> {
+                /// Write a complete string to the UART.
+                /// If this returns `Ok(())`, all the data was sent.
+                /// Otherwise you get number of octets sent and the error.
+                pub fn write_all<I: ?Sized>(&mut self, data: &I)
+                where
+                    I: AsRef<[u8]>,
+                {
+                    for octet in data.as_ref().iter() {
+                        block!(self.write(*octet)).unwrap();
+                    }
                 }
             }
 
-            impl serial::Write<u8> for Tx<$USARTX> {
-                // NOTE(!) See section "29.7 USART interrupts"; the only possible errors during transmission
-                // are: clear to send (which is disabled in this case) errors and framing errors (which only
-                // occur in SmartCard mode); neither of these apply to our hardware configuration
+            impl<TX, RX> serial::Read<u8> for Serial<$UARTX, TX, RX> {
+                type Error = !;
+
+                fn read(&mut self) -> nb::Result<u8, Self::Error> {
+                    if self.uart.fr.read().rxfe().bit() {
+                        return Err(nb::Error::WouldBlock);
+                    }
+                    Ok(self.uart.dr.read().data().bits())
+                }
+            }
+
+            impl<RX> serial::Read<u8> for Rx<$UARTX, RX> {
+                type Error = !;
+
+                fn read(&mut self) -> nb::Result<u8, Self::Error> {
+                    // We're only doing RX operations here so this is safe.
+                    let p = unsafe { &*$UARTX::ptr() };
+                    if p.fr.read().rxfe().bit() {
+                        return Err(nb::Error::WouldBlock);
+                    }
+                    Ok(p.dr.read().data().bits())
+                }
+            }
+
+            impl<TX, RX> serial::Write<u8> for Serial<$UARTX, TX, RX> {
                 type Error = !;
 
                 fn flush(&mut self) -> nb::Result<(), !> {
-                    // NOTE(unsafe) atomic read with no side effects
-                    let isr = unsafe { (*$USARTX::ptr()).isr.read() };
-
-                    if isr.tc().bit_is_set() {
-                        Ok(())
-                    } else {
-                        Err(nb::Error::WouldBlock)
+                    if self.uart.fr.read().txff().bit() {
+                        return Err(nb::Error::WouldBlock);
                     }
+                    Ok(())
                 }
 
                 fn write(&mut self, byte: u8) -> nb::Result<(), !> {
-                    // NOTE(unsafe) atomic read with no side effects
-                    let isr = unsafe { (*$USARTX::ptr()).isr.read() };
-
-                    if isr.txe().bit_is_set() {
-                        // NOTE(unsafe) atomic write to stateless register
-                        // NOTE(write_volatile) 8-bit write that's not possible through the svd2rust API
-                        unsafe {
-                            ptr::write_volatile(&(*$USARTX::ptr()).tdr as *const _ as *mut _, byte)
-                        }
-                        Ok(())
-                    } else {
-                        Err(nb::Error::WouldBlock)
+                    if self.uart.fr.read().txff().bit() {
+                        return Err(nb::Error::WouldBlock);
                     }
+                    self.uart.dr.write(|w| unsafe { w.data().bits(byte) });
+                    Ok(())
                 }
             }
+
+            impl<TX> serial::Write<u8> for Tx<$UARTX, TX> {
+                type Error = !;
+
+                fn flush(&mut self) -> nb::Result<(), !> {
+                    if self.uart.fr.read().txff().bit() {
+                        return Err(nb::Error::WouldBlock);
+                    }
+                    Ok(())
+                }
+
+                fn write(&mut self, byte: u8) -> nb::Result<(), !> {
+                    if self.uart.fr.read().txff().bit() {
+                        return Err(nb::Error::WouldBlock);
+                    }
+                    self.uart.dr.write(|w| unsafe { w.data().bits(byte) });
+                    Ok(())
+                }
+            }
+
+            /// Allows the Uart to be passed to 'write!()' and friends.
+            impl<TX, RX> fmt::Write for Serial<$UARTX, TX, RX> {
+                fn write_str(&mut self, s: &str) -> fmt::Result {
+                    match self.nl_mode {
+                        NewlineMode::Binary => self.write_all(s),
+                        NewlineMode::SwapLFtoCRLF => {
+                            for byte in s.bytes() {
+                                if byte == 0x0A {
+                                    // Prefix every \n with a \r
+                                    block!(self.write(0x0D))?;
+                                }
+                                block!(self.write(byte))?;
+                            }
+                        }
+                    }
+                    Ok(())
+                }
+            }
+
+            /// Allows the Tx to be passed to 'write!()' and friends.
+            impl<TX> fmt::Write for Tx<$UARTX, TX> {
+                fn write_str(&mut self, s: &str) -> fmt::Result {
+                    match self.nl_mode {
+                        NewlineMode::Binary => self.write_all(s),
+                        NewlineMode::SwapLFtoCRLF => {
+                            for byte in s.bytes() {
+                                if byte == 0x0A {
+                                    // Prefix every \n with a \r
+                                    block!(self.write(0x0D))?;
+                                }
+                                block!(self.write(byte))?;
+                            }
+                        }
+                    }
+                    Ok(())
+                }
+            }
+
         )+
     }
 }
 
 hal! {
-    USART1: (usart1, APB2, usart1en, usart1rst, pclk2),
-    USART2: (usart2, APB1, usart2en, usart2rst, pclk1),
-    USART3: (usart3, APB1, usart3en, usart3rst, pclk1),
+    UART0: (Uart0, uart0),
+    UART1: (Uart1, uart1),
+    UART2: (Uart2, uart2),
+    UART3: (Uart3, uart3),
+    UART4: (Uart4, uart4),
+    UART5: (Uart5, uart5),
+    UART6: (Uart6, uart6),
+    UART7: (Uart7, uart7),
 }

@@ -27,6 +27,7 @@
 extern crate cast;
 extern crate cortex_m;
 extern crate embedded_hal as hal;
+#[macro_use]
 extern crate nb;
 pub extern crate tm4c123x;
 
@@ -36,7 +37,7 @@ pub mod gpio;
 // pub mod i2c;
 // pub mod prelude;
 pub mod sysctl;
-// pub mod serial;
+pub mod serial;
 // pub mod spi;
 pub mod time;
 // pub mod timer;
