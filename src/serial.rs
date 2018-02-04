@@ -8,8 +8,8 @@ use hal::prelude::*;
 use nb;
 use tm4c123x::{UART0, UART1, UART2, UART3, UART4, UART5, UART6, UART7};
 
-use gpio::{gpioa, gpiob, gpioc};
-use gpio::{AF1, AF2};
+use gpio::{gpioa, gpiob, gpioc, gpiod, gpioe, gpiof};
+use gpio::{AF1, AF2, AF8};
 use sysctl::Clocks;
 use time::Bps;
 use sysctl;
@@ -21,28 +21,79 @@ pub unsafe trait TxPin<UART> {}
 /// RX pin - DO NOT IMPLEMENT THIS TRAIT
 pub unsafe trait RxPin<UART> {}
 
-// TODO: Add traits here for RTS and CTS?
+/// RTS pin - DO NOT IMPLEMENT THIS TRAIT
+pub unsafe trait RtsPin<UART> {
+    /// Enables the RTS functionality if a valid pin is given (not `()`).
+    fn enable(&mut self, _uart: &mut UART) {}
+}
 
+/// CTS pin - DO NOT IMPLEMENT THIS TRAIT
+pub unsafe trait CtsPin<UART> {
+    /// Enables the CTS functionality if a valid pin is given (not `()`).
+    fn enable(&mut self, _uart: &mut UART) {}
+}
+
+unsafe impl CtsPin<UART0> for () {}
+unsafe impl RtsPin<UART0> for () {}
+unsafe impl CtsPin<UART1> for () {}
+unsafe impl RtsPin<UART1> for () {}
+unsafe impl CtsPin<UART2> for () {}
+unsafe impl RtsPin<UART2> for () {}
+unsafe impl CtsPin<UART3> for () {}
+unsafe impl RtsPin<UART3> for () {}
+unsafe impl CtsPin<UART4> for () {}
+unsafe impl RtsPin<UART4> for () {}
+unsafe impl CtsPin<UART5> for () {}
+unsafe impl RtsPin<UART5> for () {}
+unsafe impl CtsPin<UART6> for () {}
+unsafe impl RtsPin<UART6> for () {}
+unsafe impl CtsPin<UART7> for () {}
+unsafe impl RtsPin<UART7> for () {}
+unsafe impl CtsPin<UART1> for gpiof::PF1<AF1> {
+    fn enable(&mut self, uart: &mut UART1) {
+        uart.ctl.modify(|_, w| w.ctsen().set_bit());
+    }
+}
+unsafe impl CtsPin<UART1> for gpioc::PC5<AF8> {
+    fn enable(&mut self, uart: &mut UART1) {
+        uart.ctl.modify(|_, w| w.ctsen().set_bit());
+    }
+}
+unsafe impl RtsPin<UART1> for gpioc::PC4<AF8> {
+    fn enable(&mut self, uart: &mut UART1) {
+        uart.ctl.modify(|_, w| w.rtsen().set_bit());
+    }
+}
 unsafe impl RxPin<UART0> for gpioa::PA0<AF1> {}
-unsafe impl TxPin<UART0> for gpioa::PA1<AF1> {}
-
 unsafe impl RxPin<UART1> for gpiob::PB0<AF1> {}
-unsafe impl TxPin<UART1> for gpiob::PB1<AF1> {}
-
 unsafe impl RxPin<UART1> for gpioc::PC4<AF2> {}
-unsafe impl TxPin<UART1> for gpioc::PC5<AF2> {}
-
-unsafe impl RxPin<UART4> for gpioc::PC4<AF1> {}
-unsafe impl TxPin<UART4> for gpioc::PC5<AF1> {}
-
+unsafe impl RxPin<UART2> for gpiod::PD6<AF1> {}
 unsafe impl RxPin<UART3> for gpioc::PC6<AF1> {}
+unsafe impl RxPin<UART4> for gpioc::PC4<AF1> {}
+unsafe impl RxPin<UART5> for gpioe::PE4<AF1> {}
+unsafe impl RxPin<UART6> for gpiod::PD4<AF1> {}
+unsafe impl RxPin<UART7> for gpioe::PE0<AF1> {}
+unsafe impl TxPin<UART0> for gpioa::PA1<AF1> {}
+unsafe impl TxPin<UART1> for gpiob::PB1<AF1> {}
+unsafe impl TxPin<UART1> for gpioc::PC5<AF2> {}
 unsafe impl TxPin<UART3> for gpioc::PC7<AF1> {}
+unsafe impl TxPin<UART4> for gpioc::PC5<AF1> {}
+unsafe impl TxPin<UART5> for gpioe::PE5<AF1> {}
+unsafe impl TxPin<UART6> for gpiod::PD5<AF1> {}
+unsafe impl TxPin<UART7> for gpioe::PE1<AF1> {}
+
+// NMI pins. Requires extra magic to use this pin for
+// non-NMI purposes and that isn't implemented yet.
+// unsafe impl RtsPin<UART1> for gpiof::PF0<AF1> {}
+// unsafe impl TxPin<UART2> for gpiod::PD7<AF1> {}
 
 /// Serial abstraction
-pub struct Serial<UART, TX, RX> {
+pub struct Serial<UART, TX, RX, RTS, CTS> {
     uart: UART,
     tx_pin: TX,
     rx_pin: RX,
+    rts_pin: RTS,
+    cts_pin: CTS,
     nl_mode: NewlineMode,
 }
 
@@ -57,15 +108,17 @@ pub enum NewlineMode {
 }
 
 /// Serial receiver
-pub struct Rx<UART, RX> {
+pub struct Rx<UART, RX, CTS> {
     _uart: PhantomData<UART>,
     pin: RX,
+    flow_pin: CTS,
 }
 
 /// Serial transmitter
-pub struct Tx<UART, TX> {
+pub struct Tx<UART, TX, RTS> {
     uart: UART,
     pin: TX,
+    flow_pin: RTS,
     nl_mode: NewlineMode,
 }
 
@@ -74,12 +127,14 @@ macro_rules! hal {
         $UARTX:ident: ($powerDomain:ident, $uartX:ident),
     )+) => {
         $(
-            impl<TX, RX> Serial<$UARTX, TX, RX> {
+            impl<TX, RX, RTS, CTS> Serial<$UARTX, TX, RX, RTS, CTS> {
                 /// Configures a UART peripheral to provide serial communication
                 pub fn $uartX(
-                    uart: $UARTX,
+                    mut uart: $UARTX,
                     tx_pin: TX,
                     rx_pin: RX,
+                    mut rts_pin: RTS,
+                    mut cts_pin: CTS,
                     baud_rate: Bps,
                     nl_mode: NewlineMode,
                     clocks: &Clocks,
@@ -88,6 +143,8 @@ macro_rules! hal {
                 where
                     TX: TxPin<$UARTX>,
                     RX: RxPin<$UARTX>,
+                    CTS: CtsPin<$UARTX>,
+                    RTS: RtsPin<$UARTX>,
                 {
                     // Enable UART peripheral clocks
                     sysctl::control_power(
@@ -110,25 +167,31 @@ macro_rules! hal {
                     // Set data bits / parity / stop bits / enable fifo
                     uart.lcrh.write(|w| w.wlen()._8().fen().bit(true));
 
-                    // Enable uart
-                    uart.ctl.write(|w| w.rxe().bit(true).txe().bit(true).uarten().bit(true));
+                    // Activate flow control (if desired)
+                    rts_pin.enable(&mut uart);
+                    cts_pin.enable(&mut uart);
 
-                    Serial { uart, tx_pin, rx_pin, nl_mode }
+                    // Enable uart
+                    uart.ctl.modify(|_, w| w.rxe().bit(true).txe().bit(true).uarten().bit(true));
+
+                    Serial { uart, tx_pin, rx_pin, rts_pin, cts_pin, nl_mode }
                 }
 
                 /// Splits the `Serial` abstraction into a transmitter and a
                 /// receiver half. If you do this you can transmit and receive
                 /// in different threads.
-                pub fn split(self) -> (Tx<$UARTX, TX>, Rx<$UARTX, RX>) {
+                pub fn split(self) -> (Tx<$UARTX, TX, RTS>, Rx<$UARTX, RX, CTS>) {
                     (
                         Tx {
                             uart: self.uart,
                             pin: self.tx_pin,
-                            nl_mode: self.nl_mode
+                            nl_mode: self.nl_mode,
+                            flow_pin: self.rts_pin,
                         },
                         Rx {
                             _uart: PhantomData,
-                            pin: self.rx_pin
+                            pin: self.rx_pin,
+                            flow_pin: self.cts_pin,
                         },
                     )
                 }
@@ -146,22 +209,24 @@ macro_rules! hal {
                 }
 
                 /// Re-combine a split UART
-                pub fn combine(tx: Tx<$UARTX, TX>, rx: Rx<$UARTX, RX>) -> Serial<$UARTX, TX, RX> {
+                pub fn combine(tx: Tx<$UARTX, TX, RTS>, rx: Rx<$UARTX, RX, CTS>) -> Serial<$UARTX, TX, RX, RTS, CTS> {
                     Serial {
                         uart: tx.uart,
                         nl_mode: tx.nl_mode,
                         rx_pin: rx.pin,
-                        tx_pin: tx.pin
+                        tx_pin: tx.pin,
+                        rts_pin: tx.flow_pin,
+                        cts_pin: rx.flow_pin,
                     }
                 }
 
                 /// Releases the UART peripheral and associated pins
-                pub fn free(self) -> ($UARTX, TX, RX) {
-                    (self.uart, self.tx_pin, self.rx_pin)
+                pub fn free(self) -> ($UARTX, TX, RX, RTS, CTS) {
+                    (self.uart, self.tx_pin, self.rx_pin, self.rts_pin, self.cts_pin)
                 }
             }
 
-            impl<TX> Tx<$UARTX, TX> {
+            impl<TX, RTS> Tx<$UARTX, TX, RTS> {
                 /// Write a complete string to the UART.
                 /// If this returns `Ok(())`, all the data was sent.
                 /// Otherwise you get number of octets sent and the error.
@@ -175,7 +240,7 @@ macro_rules! hal {
                 }
             }
 
-            impl<TX, RX> serial::Read<u8> for Serial<$UARTX, TX, RX> {
+            impl<TX, RX, RTS, CTS> serial::Read<u8> for Serial<$UARTX, TX, RX, RTS, CTS> {
                 type Error = !;
 
                 fn read(&mut self) -> nb::Result<u8, Self::Error> {
@@ -186,7 +251,7 @@ macro_rules! hal {
                 }
             }
 
-            impl<RX> serial::Read<u8> for Rx<$UARTX, RX> {
+            impl<RX, CTS> serial::Read<u8> for Rx<$UARTX, RX, CTS> {
                 type Error = !;
 
                 fn read(&mut self) -> nb::Result<u8, Self::Error> {
@@ -199,7 +264,7 @@ macro_rules! hal {
                 }
             }
 
-            impl<TX, RX> serial::Write<u8> for Serial<$UARTX, TX, RX> {
+            impl<TX, RX, RTS, CTS> serial::Write<u8> for Serial<$UARTX, TX, RX, RTS, CTS> {
                 type Error = !;
 
                 fn flush(&mut self) -> nb::Result<(), !> {
@@ -218,7 +283,7 @@ macro_rules! hal {
                 }
             }
 
-            impl<TX> serial::Write<u8> for Tx<$UARTX, TX> {
+            impl<TX, RTS> serial::Write<u8> for Tx<$UARTX, TX, RTS> {
                 type Error = !;
 
                 fn flush(&mut self) -> nb::Result<(), !> {
@@ -238,7 +303,7 @@ macro_rules! hal {
             }
 
             /// Allows the Uart to be passed to 'write!()' and friends.
-            impl<TX, RX> fmt::Write for Serial<$UARTX, TX, RX> {
+            impl<TX, RX, RTS, CTS> fmt::Write for Serial<$UARTX, TX, RX, RTS, CTS> {
                 fn write_str(&mut self, s: &str) -> fmt::Result {
                     match self.nl_mode {
                         NewlineMode::Binary => self.write_all(s),
@@ -257,7 +322,7 @@ macro_rules! hal {
             }
 
             /// Allows the Tx to be passed to 'write!()' and friends.
-            impl<TX> fmt::Write for Tx<$UARTX, TX> {
+            impl<TX, RTS> fmt::Write for Tx<$UARTX, TX, RTS> {
                 fn write_str(&mut self, s: &str) -> fmt::Result {
                     match self.nl_mode {
                         NewlineMode::Binary => self.write_all(s),
