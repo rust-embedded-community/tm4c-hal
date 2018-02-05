@@ -5,20 +5,21 @@ use cortex_m::peripheral::SYST;
 use cortex_m::peripheral::syst::SystClkSource;
 
 use hal::blocking::delay::{DelayMs, DelayUs};
-use rcc::Clocks;
+use sysctl::Clocks;
+use time::Hertz;
 
 /// System timer (SysTick) as a delay provider
 pub struct Delay {
-    clocks: Clocks,
+    sysclk: Hertz,
     syst: SYST,
 }
 
 impl Delay {
     /// Configures the system timer (SysTick) as a delay provider
-    pub fn new(mut syst: SYST, clocks: Clocks) -> Self {
+    pub fn new(mut syst: SYST, clocks: &Clocks) -> Self {
         syst.set_clock_source(SystClkSource::Core);
 
-        Delay { syst, clocks }
+        Delay { syst, sysclk: clocks.sysclk }
     }
 
     /// Releases the system timer (SysTick) resource
@@ -47,16 +48,25 @@ impl DelayMs<u8> for Delay {
 
 impl DelayUs<u32> for Delay {
     fn delay_us(&mut self, us: u32) {
-        let rvr = us * (self.clocks.sysclk().0 / 1_000_000);
+        // Tricky to get this to not overflow
+        let mut rvr = us * (self.sysclk.0 / 1_000_000);
+        rvr += (us * ((self.sysclk.0 % 1_000_000) / 1_000)) / 1_000;
+        rvr += (us * (self.sysclk.0 % 1_000)) / 1_000_000;
+
+        while rvr >= 1 << 24 {
+            self.syst.set_reload((1 << 24) - 1);
+            self.syst.clear_current();
+            self.syst.enable_counter();
+            while !self.syst.has_wrapped() {}
+            self.syst.disable_counter();
+            rvr -= 1 << 24;
+        }
 
         assert!(rvr < (1 << 24));
-
         self.syst.set_reload(rvr);
         self.syst.clear_current();
         self.syst.enable_counter();
-
         while !self.syst.has_wrapped() {}
-
         self.syst.disable_counter();
     }
 }

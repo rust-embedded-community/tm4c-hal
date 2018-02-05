@@ -31,7 +31,7 @@ extern crate embedded_hal as hal;
 extern crate nb;
 pub extern crate tm4c123x;
 
-// pub mod delay;
+pub mod delay;
 // pub mod flash;
 pub mod gpio;
 // pub mod i2c;
@@ -45,3 +45,4 @@ pub mod time;
 mod bb;
 
 pub use tm4c123x::Peripherals;
+pub use tm4c123x::CorePeripherals;
