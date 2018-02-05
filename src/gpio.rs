@@ -17,65 +17,88 @@ pub trait GpioExt {
     fn split(self, power_control: &sysctl::PowerControl) -> Self::Parts;
 }
 
+/// All unlocked pin modes implement this
+pub trait IsUnlocked {}
+
 /// Input mode (type state)
 pub struct Input<MODE> {
     _mode: PhantomData<MODE>,
 }
+impl<MODE> IsUnlocked for Input<MODE> {}
 
-/// Floating input (type state)
+/// Sub-mode of Input: Floating input (type state)
 pub struct Floating;
-/// Pulled down input (type state)
+
+/// Sub-mode of Input: Pulled down input (type state)
 pub struct PullDown;
-/// Pulled up input (type state)
+
+/// Sub-mode of Input: Pulled up input (type state)
 pub struct PullUp;
 
 /// Tri-state
 pub struct Tristate;
+impl IsUnlocked for Tristate {}
 
 /// Output mode (type state)
 pub struct Output<MODE> {
     _mode: PhantomData<MODE>,
 }
+impl<MODE> IsUnlocked for Output<MODE> {}
 
-/// Push pull output (type state)
+/// Sub-mode of Output: Push pull output (type state)
 pub struct PushPull;
-/// Open drain output (type state)
+
+/// Sub-mode of Output: Open drain output (type state)
 pub struct OpenDrain;
 
 /// Alternate function 1 (type state)
 pub struct AF1;
+impl IsUnlocked for AF1 {}
 
 /// Alternate function 2 (type state)
 pub struct AF2;
+impl IsUnlocked for AF2 {}
 
 /// Alternate function 3 (type state)
 pub struct AF3;
+impl IsUnlocked for AF3 {}
 
 /// Alternate function 4 (type state)
 pub struct AF4;
+impl IsUnlocked for AF4 {}
 
 /// Alternate function 5 (type state)
 pub struct AF5;
+impl IsUnlocked for AF5 {}
 
 /// Alternate function 6 (type state)
 pub struct AF6;
+impl IsUnlocked for AF6 {}
 
 /// Alternate function 7 (type state)
 pub struct AF7;
+impl IsUnlocked for AF7 {}
 
 /// Alternate function 8 (type state)
 pub struct AF8;
+impl IsUnlocked for AF8 {}
 
 /// Alternate function 9 (type state)
 pub struct AF9;
+impl IsUnlocked for AF9 {}
 
 // 10 through 13 are not available on this chip.
 
 /// Alternate function 14 (type state)
 pub struct AF14;
+impl IsUnlocked for AF14 {}
 
 /// Alternate function 15 (type state)
 pub struct AF15;
+impl IsUnlocked for AF15 {}
+
+/// Pin is locked through the GPIOCR register
+pub struct Locked;
 
 macro_rules! gpio {
     ($GPIOX:ident, $gpiox:ident, $iopd:ident, $PXx:ident, [
@@ -164,11 +187,11 @@ macro_rules! gpio {
                     _mode: PhantomData<MODE>,
                 }
 
-                impl<MODE> $PXi<MODE> {
+                impl<MODE> $PXi<MODE> where MODE: IsUnlocked {
                     /// Configures the pin to serve as alternate function 1 (AF1)
                     pub fn into_af1(
                         self,
-                        _gpio_reg: &mut GpioControl,
+                        _gpio_control: &mut GpioControl,
                     ) -> $PXi<AF1> {
                         let p = unsafe { &*$GPIOX::ptr() };
                         let mask = 0xF << ($i * 4);
@@ -188,7 +211,7 @@ macro_rules! gpio {
                     /// Configures the pin to serve as alternate function 2 (AF2)
                     pub fn into_af2(
                         self,
-                        _gpio_reg: &mut GpioControl,
+                        _gpio_control: &mut GpioControl,
                     ) -> $PXi<AF2> {
                         let p = unsafe { &*$GPIOX::ptr() };
                         let mask = 0xF << ($i * 4);
@@ -208,7 +231,7 @@ macro_rules! gpio {
                     /// Configures the pin to serve as alternate function 3 (AF3)
                     pub fn into_af3(
                         self,
-                        _gpio_reg: &mut GpioControl,
+                        _gpio_control: &mut GpioControl,
                     ) -> $PXi<AF3> {
                         let p = unsafe { &*$GPIOX::ptr() };
                         let mask = 0xF << ($i * 4);
@@ -228,7 +251,7 @@ macro_rules! gpio {
                     /// Configures the pin to serve as alternate function 4 (AF4)
                     pub fn into_af4(
                         self,
-                        _gpio_reg: &mut GpioControl,
+                        _gpio_control: &mut GpioControl,
                     ) -> $PXi<AF4> {
                         let p = unsafe { &*$GPIOX::ptr() };
                         let mask = 0xF << ($i * 4);
@@ -248,7 +271,7 @@ macro_rules! gpio {
                     /// Configures the pin to serve as alternate function 5 (AF5)
                     pub fn into_af5(
                         self,
-                        _gpio_reg: &mut GpioControl,
+                        _gpio_control: &mut GpioControl,
                     ) -> $PXi<AF5> {
                         let p = unsafe { &*$GPIOX::ptr() };
                         let mask = 0xF << ($i * 4);
@@ -268,7 +291,7 @@ macro_rules! gpio {
                     /// Configures the pin to serve as alternate function 6 (AF6)
                     pub fn into_af6(
                         self,
-                        _gpio_reg: &mut GpioControl,
+                        _gpio_control: &mut GpioControl,
                     ) -> $PXi<AF6> {
                         let p = unsafe { &*$GPIOX::ptr() };
                         let mask = 0xF << ($i * 4);
@@ -288,7 +311,7 @@ macro_rules! gpio {
                     /// Configures the pin to serve as alternate function 7 (AF7)
                     pub fn into_af7(
                         self,
-                        _gpio_reg: &mut GpioControl,
+                        _gpio_control: &mut GpioControl,
                     ) -> $PXi<AF7> {
                         let p = unsafe { &*$GPIOX::ptr() };
                         let mask = 0xF << ($i * 4);
@@ -308,7 +331,7 @@ macro_rules! gpio {
                     /// Configures the pin to serve as alternate function 8 (AF8)
                     pub fn into_af8(
                         self,
-                        _gpio_reg: &mut GpioControl,
+                        _gpio_control: &mut GpioControl,
                     ) -> $PXi<AF8> {
                         let p = unsafe { &*$GPIOX::ptr() };
                         let mask = 0xF << ($i * 4);
@@ -328,7 +351,7 @@ macro_rules! gpio {
                     /// Configures the pin to serve as alternate function 9 (AF9)
                     pub fn into_af9(
                         self,
-                        _gpio_reg: &mut GpioControl,
+                        _gpio_control: &mut GpioControl,
                     ) -> $PXi<AF9> {
                         let p = unsafe { &*$GPIOX::ptr() };
                         let mask = 0xF << ($i * 4);
@@ -348,7 +371,7 @@ macro_rules! gpio {
                     /// Configures the pin to serve as alternate function 14 (AF14)
                     pub fn into_af14(
                         self,
-                        _gpio_reg: &mut GpioControl,
+                        _gpio_control: &mut GpioControl,
                     ) -> $PXi<AF14> {
                         let p = unsafe { &*$GPIOX::ptr() };
                         let mask = 0xF << ($i * 4);
@@ -368,7 +391,7 @@ macro_rules! gpio {
                     /// Configures the pin to serve as alternate function 15 (AF15)
                     pub fn into_af15(
                         self,
-                        _gpio_reg: &mut GpioControl,
+                        _gpio_control: &mut GpioControl,
                     ) -> $PXi<AF15> {
                         let p = unsafe { &*$GPIOX::ptr() };
                         let bits = 0xF << ($i * 4);
@@ -523,6 +546,25 @@ macro_rules! gpio {
                         !self.is_high()
                     }
                 }
+
+                impl $PXi<Locked> {
+                    /// Unlock a GPIO so that it can be used. This is required
+                    /// on 'special' GPIOs that the manufacturer doesn't want
+                    /// you to change by accident - like NMI and JTAG pins.
+                    pub fn unlock(self, _gpio_control: &mut GpioControl) -> $PXi<Tristate> {
+                        let p = unsafe { &*$GPIOX::ptr() };
+                        p.lock.write(|w| w.lock().key());
+                        p.cr.modify(|_, w| unsafe { w.bits(1 << $i) });
+                        p.lock.write(|w| w.lock().unlocked());
+                        unsafe { bb::change_bit(&p.den, $i, false); }
+                        unsafe { bb::change_bit(&p.afsel, $i, false); }
+                        unsafe { bb::change_bit(&p.dir, $i, false); }
+                        unsafe { bb::change_bit(&p.odr, $i, false); }
+                        unsafe { bb::change_bit(&p.pur, $i, false); }
+                        unsafe { bb::change_bit(&p.pdr, $i, false); }
+                        $PXi { _mode: PhantomData }
+                    }
+                }
             )+
         }
     }
@@ -551,10 +593,10 @@ gpio!(GPIO_PORTB, gpiob, GpioB, PBx, [
 ]);
 
 gpio!(GPIO_PORTC, gpioc, GpioC, PCx, [
-    PC0: (pc0, 0, AF1), // JTAG/SWD pins by default
-    PC1: (pc1, 1, AF1), // JTAG/SWD pins by default
-    PC2: (pc2, 2, AF1), // JTAG/SWD pins by default
-    PC3: (pc3, 3, AF1), // JTAG/SWD pins by default
+    PC0: (pc0, 0, Locked), // JTAG/SWD pin
+    PC1: (pc1, 1, Locked), // JTAG/SWD pin
+    PC2: (pc2, 2, Locked), // JTAG/SWD pin
+    PC3: (pc3, 3, Locked), // JTAG/SWD pin
     PC4: (pc4, 4, Tristate),
     PC5: (pc5, 5, Tristate),
     PC6: (pc6, 6, Tristate),
@@ -569,8 +611,7 @@ gpio!(GPIO_PORTD, gpiod, GpioD, PDx, [
     PD4: (pd4, 4, Tristate),
     PD5: (pd5, 5, Tristate),
     PD6: (pd6, 6, Tristate),
-    // NMI - can't change state without extra unlock magic
-    // PD7: (pd7, 7, Tristate),
+    PD7: (pd7, 7, Locked), // NMI pin
 ]);
 
 gpio!(GPIO_PORTE, gpioe, GpioE, PEx, [
@@ -585,8 +626,7 @@ gpio!(GPIO_PORTE, gpioe, GpioE, PEx, [
 ]);
 
 gpio!(GPIO_PORTF, gpiof, GpioF, PFx, [
-    // NMI - can't change state without extra unlock magic
-    // PF0: (pf0, 0, Tristate),
+    PF0: (pf0, 0, Locked), // NMI pin
     PF1: (pf1, 1, Tristate),
     PF2: (pf2, 2, Tristate),
     PF3: (pf3, 3, Tristate),
