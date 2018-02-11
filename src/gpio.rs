@@ -8,6 +8,9 @@ use hal::digital::{InputPin, OutputPin};
 use sysctl;
 use bb;
 
+// AJM - Todo: Understand this?
+// I'm guessing these are marker traits/ZSTs to move functionality to the type system?
+
 /// Extension trait to split a GPIO peripheral in independent pins and registers
 pub trait GpioExt {
     /// The to split the GPIO into
@@ -18,6 +21,8 @@ pub trait GpioExt {
 }
 
 /// All unlocked pin modes implement this
+// AJM - Maybe explain what locked/unlocked is in context? I'm not familiar with this chipset,
+// so I'm guessing there is some core functionality this represents?
 pub trait IsUnlocked {}
 
 /// Input mode (type state)

@@ -1,3 +1,5 @@
+# AJM - remove this file?
+
 [package]
 authors = ["Jorge Aparicio <jorge@japaric.io>"]
 categories = ["embedded", "hardware-support", "no-std"]

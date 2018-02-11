@@ -25,6 +25,9 @@ pub enum Error {
     #[doc(hidden)] _Extensible,
 }
 
+// AJM - are thise impls correct? they are exactly the same as the 30x crate, and I would guess
+// you have different pin mapping for this chip...
+
 // FIXME these should be "closed" traits
 /// SCK pin -- DO NOT IMPLEMENT THIS TRAIT
 pub unsafe trait SckPin<SPI> {}

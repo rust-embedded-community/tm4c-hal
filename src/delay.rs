@@ -10,12 +10,13 @@ use time::Hertz;
 
 /// System timer (SysTick) as a delay provider
 pub struct Delay {
-    sysclk: Hertz,
+    sysclk: Hertz
     syst: SYST,
 }
 
 impl Delay {
     /// Configures the system timer (SysTick) as a delay provider
+    // AJM - Consistency: stm32f hal takes ownship of clocks here, where you only take/clone the sysclk `Hertz` object
     pub fn new(mut syst: SYST, clocks: &Clocks) -> Self {
         syst.set_clock_source(SystClkSource::Core);
 
