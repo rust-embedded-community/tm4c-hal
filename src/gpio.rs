@@ -130,9 +130,9 @@ macro_rules! gpio {
 
                 fn split(self, pc: &sysctl::PowerControl) -> Parts {
                     sysctl::control_power(
-                        pc, sysctl::PeripheralPowerDomain::$iopd,
+                        pc, sysctl::Domain::$iopd,
                         sysctl::RunMode::Run, sysctl::PowerState::On);
-                    sysctl::reset(pc, sysctl::PeripheralPowerDomain::$iopd);
+                    sysctl::reset(pc, sysctl::Domain::$iopd);
 
                     Parts {
                         control: GpioControl { _0: () },

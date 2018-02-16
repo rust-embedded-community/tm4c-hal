@@ -148,9 +148,9 @@ macro_rules! hal {
                 {
                     // Enable UART peripheral clocks
                     sysctl::control_power(
-                        pc, sysctl::PeripheralPowerDomain::$powerDomain,
+                        pc, sysctl::Domain::$powerDomain,
                         sysctl::RunMode::Run, sysctl::PowerState::On);
-                    sysctl::reset(pc, sysctl::PeripheralPowerDomain::$powerDomain);
+                    sysctl::reset(pc, sysctl::Domain::$powerDomain);
 
                     // Reset UART
                     uart.ctl.reset();

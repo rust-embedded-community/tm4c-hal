@@ -204,7 +204,7 @@ pub struct Clocks {
 
 /// List of peripherals that can be enabled or disabled
 #[derive(Copy, Clone)]
-pub enum PeripheralPowerDomain {
+pub enum Domain {
     /// Watchdog 1
     Watchdog1,
     /// Watchdog 0
@@ -316,183 +316,183 @@ pub enum PowerState {
 }
 
 /// Reset a peripheral
-pub fn reset(_lock: &PowerControl, pd: PeripheralPowerDomain) {
+pub fn reset(_lock: &PowerControl, pd: Domain) {
     // We use bit-banding to make an atomic write, so this is safe
     let p = unsafe { &*tm4c123x::SYSCTL::ptr() };
     match pd {
-        PeripheralPowerDomain::Watchdog1 => unsafe {
+        Domain::Watchdog1 => unsafe {
             bb::toggle_bit(&p.srwd, 1);
             bb::spin_bit(&p.prwd, 1);
         },
-        PeripheralPowerDomain::Watchdog0 => unsafe {
+        Domain::Watchdog0 => unsafe {
             bb::toggle_bit(&p.srwd, 0);
             bb::spin_bit(&p.prwd, 0);
         },
-        PeripheralPowerDomain::Timer5 => unsafe {
+        Domain::Timer5 => unsafe {
             bb::toggle_bit(&p.srtimer, 5);
             bb::spin_bit(&p.prtimer, 5);
         },
-        PeripheralPowerDomain::Timer4 => unsafe {
+        Domain::Timer4 => unsafe {
             bb::toggle_bit(&p.srtimer, 4);
             bb::spin_bit(&p.prtimer, 4);
         },
-        PeripheralPowerDomain::Timer3 => unsafe {
+        Domain::Timer3 => unsafe {
             bb::toggle_bit(&p.srtimer, 3);
             bb::spin_bit(&p.prtimer, 3);
         },
-        PeripheralPowerDomain::Timer2 => unsafe {
+        Domain::Timer2 => unsafe {
             bb::toggle_bit(&p.srtimer, 2);
             bb::spin_bit(&p.prtimer, 2);
         },
-        PeripheralPowerDomain::Timer1 => unsafe {
+        Domain::Timer1 => unsafe {
             bb::toggle_bit(&p.srtimer, 1);
             bb::spin_bit(&p.prtimer, 1);
         },
-        PeripheralPowerDomain::Timer0 => unsafe {
+        Domain::Timer0 => unsafe {
             bb::toggle_bit(&p.srtimer, 0);
             bb::spin_bit(&p.prtimer, 0);
         },
-        PeripheralPowerDomain::GpioF => unsafe {
+        Domain::GpioF => unsafe {
             bb::toggle_bit(&p.srgpio, 5);
             bb::spin_bit(&p.prgpio, 5);
         },
-        PeripheralPowerDomain::GpioE => unsafe {
+        Domain::GpioE => unsafe {
             bb::toggle_bit(&p.srgpio, 4);
             bb::spin_bit(&p.prgpio, 4);
         },
-        PeripheralPowerDomain::GpioD => unsafe {
+        Domain::GpioD => unsafe {
             bb::toggle_bit(&p.srgpio, 3);
             bb::spin_bit(&p.prgpio, 3);
         },
-        PeripheralPowerDomain::GpioC => unsafe {
+        Domain::GpioC => unsafe {
             bb::toggle_bit(&p.srgpio, 2);
             bb::spin_bit(&p.prgpio, 2);
         },
-        PeripheralPowerDomain::GpioB => unsafe {
+        Domain::GpioB => unsafe {
             bb::toggle_bit(&p.srgpio, 1);
             bb::spin_bit(&p.prgpio, 1);
         },
-        PeripheralPowerDomain::GpioA => unsafe {
+        Domain::GpioA => unsafe {
             bb::toggle_bit(&p.srgpio, 0);
             bb::spin_bit(&p.prgpio, 0);
         },
-        PeripheralPowerDomain::MicroDma => unsafe {
+        Domain::MicroDma => unsafe {
             bb::toggle_bit(&p.srdma, 0);
             bb::spin_bit(&p.prdma, 0);
         },
-        PeripheralPowerDomain::Hibernation => unsafe {
+        Domain::Hibernation => unsafe {
             bb::toggle_bit(&p.srhib, 0);
             bb::spin_bit(&p.prhib, 0);
         },
-        PeripheralPowerDomain::Uart7 => unsafe {
+        Domain::Uart7 => unsafe {
             bb::toggle_bit(&p.sruart, 7);
             bb::spin_bit(&p.pruart, 7);
         },
-        PeripheralPowerDomain::Uart6 => unsafe {
+        Domain::Uart6 => unsafe {
             bb::toggle_bit(&p.sruart, 6);
             bb::spin_bit(&p.pruart, 6);
         },
-        PeripheralPowerDomain::Uart5 => unsafe {
+        Domain::Uart5 => unsafe {
             bb::toggle_bit(&p.sruart, 5);
             bb::spin_bit(&p.pruart, 5);
         },
-        PeripheralPowerDomain::Uart4 => unsafe {
+        Domain::Uart4 => unsafe {
             bb::toggle_bit(&p.sruart, 4);
             bb::spin_bit(&p.pruart, 4);
         },
-        PeripheralPowerDomain::Uart3 => unsafe {
+        Domain::Uart3 => unsafe {
             bb::toggle_bit(&p.sruart, 3);
             bb::spin_bit(&p.pruart, 3);
         },
-        PeripheralPowerDomain::Uart2 => unsafe {
+        Domain::Uart2 => unsafe {
             bb::toggle_bit(&p.sruart, 2);
             bb::spin_bit(&p.pruart, 2);
         },
-        PeripheralPowerDomain::Uart1 => unsafe {
+        Domain::Uart1 => unsafe {
             bb::toggle_bit(&p.sruart, 1);
             bb::spin_bit(&p.pruart, 1);
         },
-        PeripheralPowerDomain::Uart0 => unsafe {
+        Domain::Uart0 => unsafe {
             bb::toggle_bit(&p.sruart, 0);
             bb::spin_bit(&p.pruart, 0);
         },
-        PeripheralPowerDomain::Ssi3 => unsafe {
+        Domain::Ssi3 => unsafe {
             bb::toggle_bit(&p.srssi, 3);
             bb::spin_bit(&p.prssi, 3);
         },
-        PeripheralPowerDomain::Ssi2 => unsafe {
+        Domain::Ssi2 => unsafe {
             bb::toggle_bit(&p.srssi, 2);
             bb::spin_bit(&p.prssi, 2);
         },
-        PeripheralPowerDomain::Ssi1 => unsafe {
+        Domain::Ssi1 => unsafe {
             bb::toggle_bit(&p.srssi, 1);
             bb::spin_bit(&p.prssi, 1);
         },
-        PeripheralPowerDomain::Ssi0 => unsafe {
+        Domain::Ssi0 => unsafe {
             bb::toggle_bit(&p.srssi, 0);
             bb::spin_bit(&p.prssi, 0);
         },
-        PeripheralPowerDomain::I2c3 => unsafe {
+        Domain::I2c3 => unsafe {
             bb::toggle_bit(&p.sri2c, 3);
             bb::spin_bit(&p.pri2c, 3);
         },
-        PeripheralPowerDomain::I2c2 => unsafe {
+        Domain::I2c2 => unsafe {
             bb::toggle_bit(&p.sri2c, 2);
             bb::spin_bit(&p.pri2c, 2);
         },
-        PeripheralPowerDomain::I2c1 => unsafe {
+        Domain::I2c1 => unsafe {
             bb::toggle_bit(&p.sri2c, 1);
             bb::spin_bit(&p.pri2c, 1);
         },
-        PeripheralPowerDomain::I2c0 => unsafe {
+        Domain::I2c0 => unsafe {
             bb::toggle_bit(&p.sri2c, 0);
             bb::spin_bit(&p.pri2c, 0);
         },
-        PeripheralPowerDomain::Usb => unsafe {
+        Domain::Usb => unsafe {
             bb::toggle_bit(&p.srusb, 0);
             bb::spin_bit(&p.prusb, 0);
         },
-        PeripheralPowerDomain::Can => unsafe {
+        Domain::Can => unsafe {
             bb::toggle_bit(&p.srcan, 0);
             bb::spin_bit(&p.prcan, 0);
         },
-        PeripheralPowerDomain::Adc1 => unsafe {
+        Domain::Adc1 => unsafe {
             bb::toggle_bit(&p.sradc, 1);
             bb::spin_bit(&p.pradc, 1);
         },
-        PeripheralPowerDomain::Adc0 => unsafe {
+        Domain::Adc0 => unsafe {
             bb::toggle_bit(&p.sradc, 0);
             bb::spin_bit(&p.pradc, 0);
         },
-        PeripheralPowerDomain::AnalogComparator => unsafe {
+        Domain::AnalogComparator => unsafe {
             bb::toggle_bit(&p.sracmp, 0);
             bb::spin_bit(&p.pracmp, 0);
         },
-        PeripheralPowerDomain::Eeprom => unsafe {
+        Domain::Eeprom => unsafe {
             bb::toggle_bit(&p.sreeprom, 0);
             bb::spin_bit(&p.preeprom, 0);
         },
-        PeripheralPowerDomain::WideTimer5 => unsafe {
+        Domain::WideTimer5 => unsafe {
             bb::toggle_bit(&p.srwtimer, 5);
             bb::spin_bit(&p.prwtimer, 5);
         },
-        PeripheralPowerDomain::WideTimer4 => unsafe {
+        Domain::WideTimer4 => unsafe {
             bb::toggle_bit(&p.srwtimer, 4);
             bb::spin_bit(&p.prwtimer, 4);
         },
-        PeripheralPowerDomain::WideTimer3 => unsafe {
+        Domain::WideTimer3 => unsafe {
             bb::toggle_bit(&p.srwtimer, 3);
             bb::spin_bit(&p.prwtimer, 3);
         },
-        PeripheralPowerDomain::WideTimer2 => unsafe {
+        Domain::WideTimer2 => unsafe {
             bb::toggle_bit(&p.srwtimer, 2);
             bb::spin_bit(&p.prwtimer, 2);
         },
-        PeripheralPowerDomain::WideTimer1 => unsafe {
+        Domain::WideTimer1 => unsafe {
             bb::toggle_bit(&p.srwtimer, 1);
             bb::spin_bit(&p.prwtimer, 1);
         },
-        PeripheralPowerDomain::WideTimer0 => unsafe {
+        Domain::WideTimer0 => unsafe {
             bb::toggle_bit(&p.srwtimer, 0);
             bb::spin_bit(&p.prwtimer, 0);
         },
@@ -507,7 +507,7 @@ pub fn reset(_lock: &PowerControl, pd: PeripheralPowerDomain) {
 /// interrupt safe.
 pub fn control_power(
     _lock: &PowerControl,
-    pd: PeripheralPowerDomain,
+    pd: Domain,
     run_mode: RunMode,
     state: PowerState,
 ) {
@@ -528,156 +528,156 @@ pub fn control_power(
     nop();
 }
 
-fn control_run_power(pd: PeripheralPowerDomain, on: bool) {
+fn control_run_power(pd: Domain, on: bool) {
     // We use bit-banding to make an atomic write, so this is safe
     let p = unsafe { &*tm4c123x::SYSCTL::ptr() };
     match pd {
-        PeripheralPowerDomain::Watchdog1 => unsafe { bb::change_bit(&p.rcgcwd, 1, on) },
-        PeripheralPowerDomain::Watchdog0 => unsafe { bb::change_bit(&p.rcgcwd, 0, on) },
-        PeripheralPowerDomain::Timer5 => unsafe { bb::change_bit(&p.rcgctimer, 5, on) },
-        PeripheralPowerDomain::Timer4 => unsafe { bb::change_bit(&p.rcgctimer, 4, on) },
-        PeripheralPowerDomain::Timer3 => unsafe { bb::change_bit(&p.rcgctimer, 3, on) },
-        PeripheralPowerDomain::Timer2 => unsafe { bb::change_bit(&p.rcgctimer, 2, on) },
-        PeripheralPowerDomain::Timer1 => unsafe { bb::change_bit(&p.rcgctimer, 1, on) },
-        PeripheralPowerDomain::Timer0 => unsafe { bb::change_bit(&p.rcgctimer, 0, on) },
-        PeripheralPowerDomain::GpioF => unsafe { bb::change_bit(&p.rcgcgpio, 5, on) },
-        PeripheralPowerDomain::GpioE => unsafe { bb::change_bit(&p.rcgcgpio, 4, on) },
-        PeripheralPowerDomain::GpioD => unsafe { bb::change_bit(&p.rcgcgpio, 3, on) },
-        PeripheralPowerDomain::GpioC => unsafe { bb::change_bit(&p.rcgcgpio, 2, on) },
-        PeripheralPowerDomain::GpioB => unsafe { bb::change_bit(&p.rcgcgpio, 1, on) },
-        PeripheralPowerDomain::GpioA => unsafe { bb::change_bit(&p.rcgcgpio, 0, on) },
-        PeripheralPowerDomain::MicroDma => unsafe { bb::change_bit(&p.rcgcdma, 0, on) },
-        PeripheralPowerDomain::Hibernation => unsafe { bb::change_bit(&p.rcgchib, 0, on) },
-        PeripheralPowerDomain::Uart7 => unsafe { bb::change_bit(&p.rcgcuart, 7, on) },
-        PeripheralPowerDomain::Uart6 => unsafe { bb::change_bit(&p.rcgcuart, 6, on) },
-        PeripheralPowerDomain::Uart5 => unsafe { bb::change_bit(&p.rcgcuart, 5, on) },
-        PeripheralPowerDomain::Uart4 => unsafe { bb::change_bit(&p.rcgcuart, 4, on) },
-        PeripheralPowerDomain::Uart3 => unsafe { bb::change_bit(&p.rcgcuart, 3, on) },
-        PeripheralPowerDomain::Uart2 => unsafe { bb::change_bit(&p.rcgcuart, 2, on) },
-        PeripheralPowerDomain::Uart1 => unsafe { bb::change_bit(&p.rcgcuart, 1, on) },
-        PeripheralPowerDomain::Uart0 => unsafe { bb::change_bit(&p.rcgcuart, 0, on) },
-        PeripheralPowerDomain::Ssi3 => unsafe { bb::change_bit(&p.rcgcssi, 3, on) },
-        PeripheralPowerDomain::Ssi2 => unsafe { bb::change_bit(&p.rcgcssi, 2, on) },
-        PeripheralPowerDomain::Ssi1 => unsafe { bb::change_bit(&p.rcgcssi, 1, on) },
-        PeripheralPowerDomain::Ssi0 => unsafe { bb::change_bit(&p.rcgcssi, 0, on) },
-        PeripheralPowerDomain::I2c3 => unsafe { bb::change_bit(&p.rcgci2c, 3, on) },
-        PeripheralPowerDomain::I2c2 => unsafe { bb::change_bit(&p.rcgci2c, 2, on) },
-        PeripheralPowerDomain::I2c1 => unsafe { bb::change_bit(&p.rcgci2c, 1, on) },
-        PeripheralPowerDomain::I2c0 => unsafe { bb::change_bit(&p.rcgci2c, 0, on) },
-        PeripheralPowerDomain::Usb => unsafe { bb::change_bit(&p.rcgcusb, 0, on) },
-        PeripheralPowerDomain::Can => unsafe { bb::change_bit(&p.rcgccan, 0, on) },
-        PeripheralPowerDomain::Adc1 => unsafe { bb::change_bit(&p.rcgcadc, 1, on) },
-        PeripheralPowerDomain::Adc0 => unsafe { bb::change_bit(&p.rcgcadc, 0, on) },
-        PeripheralPowerDomain::AnalogComparator => unsafe { bb::change_bit(&p.rcgcacmp, 0, on) },
-        PeripheralPowerDomain::Eeprom => unsafe { bb::change_bit(&p.rcgceeprom, 0, on) },
-        PeripheralPowerDomain::WideTimer5 => unsafe { bb::change_bit(&p.rcgcwtimer, 5, on) },
-        PeripheralPowerDomain::WideTimer4 => unsafe { bb::change_bit(&p.rcgcwtimer, 4, on) },
-        PeripheralPowerDomain::WideTimer3 => unsafe { bb::change_bit(&p.rcgcwtimer, 3, on) },
-        PeripheralPowerDomain::WideTimer2 => unsafe { bb::change_bit(&p.rcgcwtimer, 2, on) },
-        PeripheralPowerDomain::WideTimer1 => unsafe { bb::change_bit(&p.rcgcwtimer, 1, on) },
-        PeripheralPowerDomain::WideTimer0 => unsafe { bb::change_bit(&p.rcgcwtimer, 0, on) },
+        Domain::Watchdog1 => unsafe { bb::change_bit(&p.rcgcwd, 1, on) },
+        Domain::Watchdog0 => unsafe { bb::change_bit(&p.rcgcwd, 0, on) },
+        Domain::Timer5 => unsafe { bb::change_bit(&p.rcgctimer, 5, on) },
+        Domain::Timer4 => unsafe { bb::change_bit(&p.rcgctimer, 4, on) },
+        Domain::Timer3 => unsafe { bb::change_bit(&p.rcgctimer, 3, on) },
+        Domain::Timer2 => unsafe { bb::change_bit(&p.rcgctimer, 2, on) },
+        Domain::Timer1 => unsafe { bb::change_bit(&p.rcgctimer, 1, on) },
+        Domain::Timer0 => unsafe { bb::change_bit(&p.rcgctimer, 0, on) },
+        Domain::GpioF => unsafe { bb::change_bit(&p.rcgcgpio, 5, on) },
+        Domain::GpioE => unsafe { bb::change_bit(&p.rcgcgpio, 4, on) },
+        Domain::GpioD => unsafe { bb::change_bit(&p.rcgcgpio, 3, on) },
+        Domain::GpioC => unsafe { bb::change_bit(&p.rcgcgpio, 2, on) },
+        Domain::GpioB => unsafe { bb::change_bit(&p.rcgcgpio, 1, on) },
+        Domain::GpioA => unsafe { bb::change_bit(&p.rcgcgpio, 0, on) },
+        Domain::MicroDma => unsafe { bb::change_bit(&p.rcgcdma, 0, on) },
+        Domain::Hibernation => unsafe { bb::change_bit(&p.rcgchib, 0, on) },
+        Domain::Uart7 => unsafe { bb::change_bit(&p.rcgcuart, 7, on) },
+        Domain::Uart6 => unsafe { bb::change_bit(&p.rcgcuart, 6, on) },
+        Domain::Uart5 => unsafe { bb::change_bit(&p.rcgcuart, 5, on) },
+        Domain::Uart4 => unsafe { bb::change_bit(&p.rcgcuart, 4, on) },
+        Domain::Uart3 => unsafe { bb::change_bit(&p.rcgcuart, 3, on) },
+        Domain::Uart2 => unsafe { bb::change_bit(&p.rcgcuart, 2, on) },
+        Domain::Uart1 => unsafe { bb::change_bit(&p.rcgcuart, 1, on) },
+        Domain::Uart0 => unsafe { bb::change_bit(&p.rcgcuart, 0, on) },
+        Domain::Ssi3 => unsafe { bb::change_bit(&p.rcgcssi, 3, on) },
+        Domain::Ssi2 => unsafe { bb::change_bit(&p.rcgcssi, 2, on) },
+        Domain::Ssi1 => unsafe { bb::change_bit(&p.rcgcssi, 1, on) },
+        Domain::Ssi0 => unsafe { bb::change_bit(&p.rcgcssi, 0, on) },
+        Domain::I2c3 => unsafe { bb::change_bit(&p.rcgci2c, 3, on) },
+        Domain::I2c2 => unsafe { bb::change_bit(&p.rcgci2c, 2, on) },
+        Domain::I2c1 => unsafe { bb::change_bit(&p.rcgci2c, 1, on) },
+        Domain::I2c0 => unsafe { bb::change_bit(&p.rcgci2c, 0, on) },
+        Domain::Usb => unsafe { bb::change_bit(&p.rcgcusb, 0, on) },
+        Domain::Can => unsafe { bb::change_bit(&p.rcgccan, 0, on) },
+        Domain::Adc1 => unsafe { bb::change_bit(&p.rcgcadc, 1, on) },
+        Domain::Adc0 => unsafe { bb::change_bit(&p.rcgcadc, 0, on) },
+        Domain::AnalogComparator => unsafe { bb::change_bit(&p.rcgcacmp, 0, on) },
+        Domain::Eeprom => unsafe { bb::change_bit(&p.rcgceeprom, 0, on) },
+        Domain::WideTimer5 => unsafe { bb::change_bit(&p.rcgcwtimer, 5, on) },
+        Domain::WideTimer4 => unsafe { bb::change_bit(&p.rcgcwtimer, 4, on) },
+        Domain::WideTimer3 => unsafe { bb::change_bit(&p.rcgcwtimer, 3, on) },
+        Domain::WideTimer2 => unsafe { bb::change_bit(&p.rcgcwtimer, 2, on) },
+        Domain::WideTimer1 => unsafe { bb::change_bit(&p.rcgcwtimer, 1, on) },
+        Domain::WideTimer0 => unsafe { bb::change_bit(&p.rcgcwtimer, 0, on) },
     }
 }
 
-fn control_sleep_power(pd: PeripheralPowerDomain, on: bool) {
+fn control_sleep_power(pd: Domain, on: bool) {
     // We use bit-banding to make an atomic write, so this is safe
     let p = unsafe { &*tm4c123x::SYSCTL::ptr() };
     match pd {
-        PeripheralPowerDomain::Watchdog1 => unsafe { bb::change_bit(&p.scgcwd, 1, on) },
-        PeripheralPowerDomain::Watchdog0 => unsafe { bb::change_bit(&p.scgcwd, 0, on) },
-        PeripheralPowerDomain::Timer5 => unsafe { bb::change_bit(&p.scgctimer, 5, on) },
-        PeripheralPowerDomain::Timer4 => unsafe { bb::change_bit(&p.scgctimer, 4, on) },
-        PeripheralPowerDomain::Timer3 => unsafe { bb::change_bit(&p.scgctimer, 3, on) },
-        PeripheralPowerDomain::Timer2 => unsafe { bb::change_bit(&p.scgctimer, 2, on) },
-        PeripheralPowerDomain::Timer1 => unsafe { bb::change_bit(&p.scgctimer, 1, on) },
-        PeripheralPowerDomain::Timer0 => unsafe { bb::change_bit(&p.scgctimer, 0, on) },
-        PeripheralPowerDomain::GpioF => unsafe { bb::change_bit(&p.scgcgpio, 5, on) },
-        PeripheralPowerDomain::GpioE => unsafe { bb::change_bit(&p.scgcgpio, 4, on) },
-        PeripheralPowerDomain::GpioD => unsafe { bb::change_bit(&p.scgcgpio, 3, on) },
-        PeripheralPowerDomain::GpioC => unsafe { bb::change_bit(&p.scgcgpio, 2, on) },
-        PeripheralPowerDomain::GpioB => unsafe { bb::change_bit(&p.scgcgpio, 1, on) },
-        PeripheralPowerDomain::GpioA => unsafe { bb::change_bit(&p.scgcgpio, 0, on) },
-        PeripheralPowerDomain::MicroDma => unsafe { bb::change_bit(&p.scgcdma, 0, on) },
-        PeripheralPowerDomain::Hibernation => unsafe { bb::change_bit(&p.scgchib, 0, on) },
-        PeripheralPowerDomain::Uart7 => unsafe { bb::change_bit(&p.scgcuart, 7, on) },
-        PeripheralPowerDomain::Uart6 => unsafe { bb::change_bit(&p.scgcuart, 6, on) },
-        PeripheralPowerDomain::Uart5 => unsafe { bb::change_bit(&p.scgcuart, 5, on) },
-        PeripheralPowerDomain::Uart4 => unsafe { bb::change_bit(&p.scgcuart, 4, on) },
-        PeripheralPowerDomain::Uart3 => unsafe { bb::change_bit(&p.scgcuart, 3, on) },
-        PeripheralPowerDomain::Uart2 => unsafe { bb::change_bit(&p.scgcuart, 2, on) },
-        PeripheralPowerDomain::Uart1 => unsafe { bb::change_bit(&p.scgcuart, 1, on) },
-        PeripheralPowerDomain::Uart0 => unsafe { bb::change_bit(&p.scgcuart, 0, on) },
-        PeripheralPowerDomain::Ssi3 => unsafe { bb::change_bit(&p.scgcssi, 3, on) },
-        PeripheralPowerDomain::Ssi2 => unsafe { bb::change_bit(&p.scgcssi, 2, on) },
-        PeripheralPowerDomain::Ssi1 => unsafe { bb::change_bit(&p.scgcssi, 1, on) },
-        PeripheralPowerDomain::Ssi0 => unsafe { bb::change_bit(&p.scgcssi, 0, on) },
-        PeripheralPowerDomain::I2c3 => unsafe { bb::change_bit(&p.scgci2c, 3, on) },
-        PeripheralPowerDomain::I2c2 => unsafe { bb::change_bit(&p.scgci2c, 2, on) },
-        PeripheralPowerDomain::I2c1 => unsafe { bb::change_bit(&p.scgci2c, 1, on) },
-        PeripheralPowerDomain::I2c0 => unsafe { bb::change_bit(&p.scgci2c, 0, on) },
-        PeripheralPowerDomain::Usb => unsafe { bb::change_bit(&p.scgcusb, 0, on) },
-        PeripheralPowerDomain::Can => unsafe { bb::change_bit(&p.scgccan, 0, on) },
-        PeripheralPowerDomain::Adc1 => unsafe { bb::change_bit(&p.scgcadc, 1, on) },
-        PeripheralPowerDomain::Adc0 => unsafe { bb::change_bit(&p.scgcadc, 0, on) },
-        PeripheralPowerDomain::AnalogComparator => unsafe { bb::change_bit(&p.scgcacmp, 0, on) },
-        PeripheralPowerDomain::Eeprom => unsafe { bb::change_bit(&p.scgceeprom, 0, on) },
-        PeripheralPowerDomain::WideTimer5 => unsafe { bb::change_bit(&p.scgcwtimer, 5, on) },
-        PeripheralPowerDomain::WideTimer4 => unsafe { bb::change_bit(&p.scgcwtimer, 4, on) },
-        PeripheralPowerDomain::WideTimer3 => unsafe { bb::change_bit(&p.scgcwtimer, 3, on) },
-        PeripheralPowerDomain::WideTimer2 => unsafe { bb::change_bit(&p.scgcwtimer, 2, on) },
-        PeripheralPowerDomain::WideTimer1 => unsafe { bb::change_bit(&p.scgcwtimer, 1, on) },
-        PeripheralPowerDomain::WideTimer0 => unsafe { bb::change_bit(&p.scgcwtimer, 0, on) },
+        Domain::Watchdog1 => unsafe { bb::change_bit(&p.scgcwd, 1, on) },
+        Domain::Watchdog0 => unsafe { bb::change_bit(&p.scgcwd, 0, on) },
+        Domain::Timer5 => unsafe { bb::change_bit(&p.scgctimer, 5, on) },
+        Domain::Timer4 => unsafe { bb::change_bit(&p.scgctimer, 4, on) },
+        Domain::Timer3 => unsafe { bb::change_bit(&p.scgctimer, 3, on) },
+        Domain::Timer2 => unsafe { bb::change_bit(&p.scgctimer, 2, on) },
+        Domain::Timer1 => unsafe { bb::change_bit(&p.scgctimer, 1, on) },
+        Domain::Timer0 => unsafe { bb::change_bit(&p.scgctimer, 0, on) },
+        Domain::GpioF => unsafe { bb::change_bit(&p.scgcgpio, 5, on) },
+        Domain::GpioE => unsafe { bb::change_bit(&p.scgcgpio, 4, on) },
+        Domain::GpioD => unsafe { bb::change_bit(&p.scgcgpio, 3, on) },
+        Domain::GpioC => unsafe { bb::change_bit(&p.scgcgpio, 2, on) },
+        Domain::GpioB => unsafe { bb::change_bit(&p.scgcgpio, 1, on) },
+        Domain::GpioA => unsafe { bb::change_bit(&p.scgcgpio, 0, on) },
+        Domain::MicroDma => unsafe { bb::change_bit(&p.scgcdma, 0, on) },
+        Domain::Hibernation => unsafe { bb::change_bit(&p.scgchib, 0, on) },
+        Domain::Uart7 => unsafe { bb::change_bit(&p.scgcuart, 7, on) },
+        Domain::Uart6 => unsafe { bb::change_bit(&p.scgcuart, 6, on) },
+        Domain::Uart5 => unsafe { bb::change_bit(&p.scgcuart, 5, on) },
+        Domain::Uart4 => unsafe { bb::change_bit(&p.scgcuart, 4, on) },
+        Domain::Uart3 => unsafe { bb::change_bit(&p.scgcuart, 3, on) },
+        Domain::Uart2 => unsafe { bb::change_bit(&p.scgcuart, 2, on) },
+        Domain::Uart1 => unsafe { bb::change_bit(&p.scgcuart, 1, on) },
+        Domain::Uart0 => unsafe { bb::change_bit(&p.scgcuart, 0, on) },
+        Domain::Ssi3 => unsafe { bb::change_bit(&p.scgcssi, 3, on) },
+        Domain::Ssi2 => unsafe { bb::change_bit(&p.scgcssi, 2, on) },
+        Domain::Ssi1 => unsafe { bb::change_bit(&p.scgcssi, 1, on) },
+        Domain::Ssi0 => unsafe { bb::change_bit(&p.scgcssi, 0, on) },
+        Domain::I2c3 => unsafe { bb::change_bit(&p.scgci2c, 3, on) },
+        Domain::I2c2 => unsafe { bb::change_bit(&p.scgci2c, 2, on) },
+        Domain::I2c1 => unsafe { bb::change_bit(&p.scgci2c, 1, on) },
+        Domain::I2c0 => unsafe { bb::change_bit(&p.scgci2c, 0, on) },
+        Domain::Usb => unsafe { bb::change_bit(&p.scgcusb, 0, on) },
+        Domain::Can => unsafe { bb::change_bit(&p.scgccan, 0, on) },
+        Domain::Adc1 => unsafe { bb::change_bit(&p.scgcadc, 1, on) },
+        Domain::Adc0 => unsafe { bb::change_bit(&p.scgcadc, 0, on) },
+        Domain::AnalogComparator => unsafe { bb::change_bit(&p.scgcacmp, 0, on) },
+        Domain::Eeprom => unsafe { bb::change_bit(&p.scgceeprom, 0, on) },
+        Domain::WideTimer5 => unsafe { bb::change_bit(&p.scgcwtimer, 5, on) },
+        Domain::WideTimer4 => unsafe { bb::change_bit(&p.scgcwtimer, 4, on) },
+        Domain::WideTimer3 => unsafe { bb::change_bit(&p.scgcwtimer, 3, on) },
+        Domain::WideTimer2 => unsafe { bb::change_bit(&p.scgcwtimer, 2, on) },
+        Domain::WideTimer1 => unsafe { bb::change_bit(&p.scgcwtimer, 1, on) },
+        Domain::WideTimer0 => unsafe { bb::change_bit(&p.scgcwtimer, 0, on) },
     }
 }
 
-fn control_deep_sleep_power(pd: PeripheralPowerDomain, on: bool) {
+fn control_deep_sleep_power(pd: Domain, on: bool) {
     // We use bit-banding to make an atomic write, so this is safe
     let p = unsafe { &*tm4c123x::SYSCTL::ptr() };
     match pd {
-        PeripheralPowerDomain::Watchdog1 => unsafe { bb::change_bit(&p.dcgcwd, 1, on) },
-        PeripheralPowerDomain::Watchdog0 => unsafe { bb::change_bit(&p.dcgcwd, 0, on) },
-        PeripheralPowerDomain::Timer5 => unsafe { bb::change_bit(&p.dcgctimer, 5, on) },
-        PeripheralPowerDomain::Timer4 => unsafe { bb::change_bit(&p.dcgctimer, 4, on) },
-        PeripheralPowerDomain::Timer3 => unsafe { bb::change_bit(&p.dcgctimer, 3, on) },
-        PeripheralPowerDomain::Timer2 => unsafe { bb::change_bit(&p.dcgctimer, 2, on) },
-        PeripheralPowerDomain::Timer1 => unsafe { bb::change_bit(&p.dcgctimer, 1, on) },
-        PeripheralPowerDomain::Timer0 => unsafe { bb::change_bit(&p.dcgctimer, 0, on) },
-        PeripheralPowerDomain::GpioF => unsafe { bb::change_bit(&p.dcgcgpio, 5, on) },
-        PeripheralPowerDomain::GpioE => unsafe { bb::change_bit(&p.dcgcgpio, 4, on) },
-        PeripheralPowerDomain::GpioD => unsafe { bb::change_bit(&p.dcgcgpio, 3, on) },
-        PeripheralPowerDomain::GpioC => unsafe { bb::change_bit(&p.dcgcgpio, 2, on) },
-        PeripheralPowerDomain::GpioB => unsafe { bb::change_bit(&p.dcgcgpio, 1, on) },
-        PeripheralPowerDomain::GpioA => unsafe { bb::change_bit(&p.dcgcgpio, 0, on) },
-        PeripheralPowerDomain::MicroDma => unsafe { bb::change_bit(&p.dcgcdma, 0, on) },
-        PeripheralPowerDomain::Hibernation => unsafe { bb::change_bit(&p.dcgchib, 0, on) },
-        PeripheralPowerDomain::Uart7 => unsafe { bb::change_bit(&p.dcgcuart, 7, on) },
-        PeripheralPowerDomain::Uart6 => unsafe { bb::change_bit(&p.dcgcuart, 6, on) },
-        PeripheralPowerDomain::Uart5 => unsafe { bb::change_bit(&p.dcgcuart, 5, on) },
-        PeripheralPowerDomain::Uart4 => unsafe { bb::change_bit(&p.dcgcuart, 4, on) },
-        PeripheralPowerDomain::Uart3 => unsafe { bb::change_bit(&p.dcgcuart, 3, on) },
-        PeripheralPowerDomain::Uart2 => unsafe { bb::change_bit(&p.dcgcuart, 2, on) },
-        PeripheralPowerDomain::Uart1 => unsafe { bb::change_bit(&p.dcgcuart, 1, on) },
-        PeripheralPowerDomain::Uart0 => unsafe { bb::change_bit(&p.dcgcuart, 0, on) },
-        PeripheralPowerDomain::Ssi3 => unsafe { bb::change_bit(&p.dcgcssi, 3, on) },
-        PeripheralPowerDomain::Ssi2 => unsafe { bb::change_bit(&p.dcgcssi, 2, on) },
-        PeripheralPowerDomain::Ssi1 => unsafe { bb::change_bit(&p.dcgcssi, 1, on) },
-        PeripheralPowerDomain::Ssi0 => unsafe { bb::change_bit(&p.dcgcssi, 0, on) },
-        PeripheralPowerDomain::I2c3 => unsafe { bb::change_bit(&p.dcgci2c, 3, on) },
-        PeripheralPowerDomain::I2c2 => unsafe { bb::change_bit(&p.dcgci2c, 2, on) },
-        PeripheralPowerDomain::I2c1 => unsafe { bb::change_bit(&p.dcgci2c, 1, on) },
-        PeripheralPowerDomain::I2c0 => unsafe { bb::change_bit(&p.dcgci2c, 0, on) },
-        PeripheralPowerDomain::Usb => unsafe { bb::change_bit(&p.dcgcusb, 0, on) },
-        PeripheralPowerDomain::Can => unsafe { bb::change_bit(&p.dcgccan, 0, on) },
-        PeripheralPowerDomain::Adc1 => unsafe { bb::change_bit(&p.dcgcadc, 1, on) },
-        PeripheralPowerDomain::Adc0 => unsafe { bb::change_bit(&p.dcgcadc, 0, on) },
-        PeripheralPowerDomain::AnalogComparator => unsafe { bb::change_bit(&p.dcgcacmp, 0, on) },
-        PeripheralPowerDomain::Eeprom => unsafe { bb::change_bit(&p.dcgceeprom, 0, on) },
-        PeripheralPowerDomain::WideTimer5 => unsafe { bb::change_bit(&p.dcgcwtimer, 5, on) },
-        PeripheralPowerDomain::WideTimer4 => unsafe { bb::change_bit(&p.dcgcwtimer, 4, on) },
-        PeripheralPowerDomain::WideTimer3 => unsafe { bb::change_bit(&p.dcgcwtimer, 3, on) },
-        PeripheralPowerDomain::WideTimer2 => unsafe { bb::change_bit(&p.dcgcwtimer, 2, on) },
-        PeripheralPowerDomain::WideTimer1 => unsafe { bb::change_bit(&p.dcgcwtimer, 1, on) },
-        PeripheralPowerDomain::WideTimer0 => unsafe { bb::change_bit(&p.dcgcwtimer, 0, on) },
+        Domain::Watchdog1 => unsafe { bb::change_bit(&p.dcgcwd, 1, on) },
+        Domain::Watchdog0 => unsafe { bb::change_bit(&p.dcgcwd, 0, on) },
+        Domain::Timer5 => unsafe { bb::change_bit(&p.dcgctimer, 5, on) },
+        Domain::Timer4 => unsafe { bb::change_bit(&p.dcgctimer, 4, on) },
+        Domain::Timer3 => unsafe { bb::change_bit(&p.dcgctimer, 3, on) },
+        Domain::Timer2 => unsafe { bb::change_bit(&p.dcgctimer, 2, on) },
+        Domain::Timer1 => unsafe { bb::change_bit(&p.dcgctimer, 1, on) },
+        Domain::Timer0 => unsafe { bb::change_bit(&p.dcgctimer, 0, on) },
+        Domain::GpioF => unsafe { bb::change_bit(&p.dcgcgpio, 5, on) },
+        Domain::GpioE => unsafe { bb::change_bit(&p.dcgcgpio, 4, on) },
+        Domain::GpioD => unsafe { bb::change_bit(&p.dcgcgpio, 3, on) },
+        Domain::GpioC => unsafe { bb::change_bit(&p.dcgcgpio, 2, on) },
+        Domain::GpioB => unsafe { bb::change_bit(&p.dcgcgpio, 1, on) },
+        Domain::GpioA => unsafe { bb::change_bit(&p.dcgcgpio, 0, on) },
+        Domain::MicroDma => unsafe { bb::change_bit(&p.dcgcdma, 0, on) },
+        Domain::Hibernation => unsafe { bb::change_bit(&p.dcgchib, 0, on) },
+        Domain::Uart7 => unsafe { bb::change_bit(&p.dcgcuart, 7, on) },
+        Domain::Uart6 => unsafe { bb::change_bit(&p.dcgcuart, 6, on) },
+        Domain::Uart5 => unsafe { bb::change_bit(&p.dcgcuart, 5, on) },
+        Domain::Uart4 => unsafe { bb::change_bit(&p.dcgcuart, 4, on) },
+        Domain::Uart3 => unsafe { bb::change_bit(&p.dcgcuart, 3, on) },
+        Domain::Uart2 => unsafe { bb::change_bit(&p.dcgcuart, 2, on) },
+        Domain::Uart1 => unsafe { bb::change_bit(&p.dcgcuart, 1, on) },
+        Domain::Uart0 => unsafe { bb::change_bit(&p.dcgcuart, 0, on) },
+        Domain::Ssi3 => unsafe { bb::change_bit(&p.dcgcssi, 3, on) },
+        Domain::Ssi2 => unsafe { bb::change_bit(&p.dcgcssi, 2, on) },
+        Domain::Ssi1 => unsafe { bb::change_bit(&p.dcgcssi, 1, on) },
+        Domain::Ssi0 => unsafe { bb::change_bit(&p.dcgcssi, 0, on) },
+        Domain::I2c3 => unsafe { bb::change_bit(&p.dcgci2c, 3, on) },
+        Domain::I2c2 => unsafe { bb::change_bit(&p.dcgci2c, 2, on) },
+        Domain::I2c1 => unsafe { bb::change_bit(&p.dcgci2c, 1, on) },
+        Domain::I2c0 => unsafe { bb::change_bit(&p.dcgci2c, 0, on) },
+        Domain::Usb => unsafe { bb::change_bit(&p.dcgcusb, 0, on) },
+        Domain::Can => unsafe { bb::change_bit(&p.dcgccan, 0, on) },
+        Domain::Adc1 => unsafe { bb::change_bit(&p.dcgcadc, 1, on) },
+        Domain::Adc0 => unsafe { bb::change_bit(&p.dcgcadc, 0, on) },
+        Domain::AnalogComparator => unsafe { bb::change_bit(&p.dcgcacmp, 0, on) },
+        Domain::Eeprom => unsafe { bb::change_bit(&p.dcgceeprom, 0, on) },
+        Domain::WideTimer5 => unsafe { bb::change_bit(&p.dcgcwtimer, 5, on) },
+        Domain::WideTimer4 => unsafe { bb::change_bit(&p.dcgcwtimer, 4, on) },
+        Domain::WideTimer3 => unsafe { bb::change_bit(&p.dcgcwtimer, 3, on) },
+        Domain::WideTimer2 => unsafe { bb::change_bit(&p.dcgcwtimer, 2, on) },
+        Domain::WideTimer1 => unsafe { bb::change_bit(&p.dcgcwtimer, 1, on) },
+        Domain::WideTimer0 => unsafe { bb::change_bit(&p.dcgcwtimer, 0, on) },
     }
 }
 
