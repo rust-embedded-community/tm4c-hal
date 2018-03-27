@@ -236,14 +236,6 @@ impl AlternateFunctionChoice for AF14 {
     }
 }
 
-/// Alternate function 15 (type state)
-pub struct AF15;
-impl AlternateFunctionChoice for AF15 {
-    fn number() -> u32 {
-        return 15;
-    }
-}
-
 /// Pin is locked through the GPIOCR register
 pub struct Locked;
 
