@@ -100,6 +100,22 @@ impl IsUnlocked for AF15 {}
 /// Pin is locked through the GPIOCR register
 pub struct Locked;
 
+/// Sets when a GPIO pin triggers an interrupt.
+pub enum InterruptMode {
+    /// Interrupt when level is low
+    LevelLow,
+    /// Interrupt when level is high
+    LevelHigh,
+    /// Interrupt on rising edge
+    EdgeRising,
+    /// Interrupt on falling edge
+    EdgeFalling,
+    /// Interrupt on both rising and falling edges
+    EdgeBoth,
+    /// Disable interrupts on this pin
+    Disabled
+}
+
 macro_rules! gpio {
     ($GPIOX:ident, $gpiox:ident, $iopd:ident, $PXx:ident, [
         $($PXi:ident: ($pxi:ident, $i:expr, $MODE:ty),)+
@@ -178,6 +194,87 @@ macro_rules! gpio {
 
                 fn is_low(&self) -> bool {
                     !self.is_high()
+                }
+            }
+
+            impl<MODE> $PXx<Input<MODE>> {
+                /// Enables or disables interrupts on this GPIO pin.
+                pub fn set_interrupt_mode(&mut self, mode: InterruptMode) {
+                    let p = unsafe { &*$GPIOX::ptr() };
+                    unsafe { bb::change_bit(&p.im, self.i, false); }
+                    match mode {
+                        InterruptMode::LevelHigh => {
+                            // IM &= ~self.i;
+                            unsafe { bb::change_bit(&p.im, self.i, false); }
+                            // IS |= self.i;
+                            unsafe { bb::change_bit(&p.is, self.i, true); }
+                            // IBE &= ~self.i;
+                            unsafe { bb::change_bit(&p.ibe, self.i, false); }
+                            // IEV |= self.i;
+                            unsafe { bb::change_bit(&p.iev, self.i, true); }
+                            // IM |= self.i;
+                            unsafe { bb::change_bit(&p.im, self.i, true); }
+                        },
+                        InterruptMode::LevelLow => {
+                            // IM &= ~self.i;
+                            unsafe { bb::change_bit(&p.im, self.i, false); }
+                            // IS |= self.i;
+                            unsafe { bb::change_bit(&p.is, self.i, true); }
+                            // IBE &= ~self.i;
+                            unsafe { bb::change_bit(&p.ibe, self.i, false); }
+                            // IEV &= ~self.i;
+                            unsafe { bb::change_bit(&p.iev, self.i, false); }
+                            // IM |= self.i;
+                            unsafe { bb::change_bit(&p.im, self.i, true); }
+                        },
+                        InterruptMode::EdgeRising => {
+                            // IM &= ~self.i;
+                            unsafe { bb::change_bit(&p.im, self.i, false); }
+                            // IS &= ~self.i;
+                            unsafe { bb::change_bit(&p.is, self.i, false); }
+                            // IBE &= ~self.i;
+                            unsafe { bb::change_bit(&p.ibe, self.i, false); }
+                            // IEV |= self.i;
+                            unsafe { bb::change_bit(&p.iev, self.i, true); }
+                            // IM |= self.i;
+                            unsafe { bb::change_bit(&p.im, self.i, true); }
+                        },
+                        InterruptMode::EdgeFalling => {
+                            // IM &= ~self.i;
+                            unsafe { bb::change_bit(&p.im, self.i, false); }
+                            // IS &= ~self.i;
+                            unsafe { bb::change_bit(&p.is, self.i, false); }
+                            // IBE &= ~self.i;
+                            unsafe { bb::change_bit(&p.ibe, self.i, false); }
+                            // IEV &= ~self.i;
+                            unsafe { bb::change_bit(&p.iev, self.i, false); }
+                            // IM |= self.i;
+                            unsafe { bb::change_bit(&p.im, self.i, true); }
+                        },
+                        InterruptMode::EdgeBoth => {
+                            // IM &= ~self.i;
+                            unsafe { bb::change_bit(&p.im, self.i, false); }
+                            // IS &= ~self.i;
+                            unsafe { bb::change_bit(&p.is, self.i, false); }
+                            // IBE |= self.i;
+                            unsafe { bb::change_bit(&p.ibe, self.i, true); }
+                            // IEV |= self.i;
+                            unsafe { bb::change_bit(&p.iev, self.i, true); }
+                            // IM |= self.i;
+                            unsafe { bb::change_bit(&p.im, self.i, true); }
+                        },
+                        InterruptMode::Disabled => {
+                            // IM &= ~self.i;
+                            unsafe { bb::change_bit(&p.im, self.i, false); }
+                        },
+                    }
+                }
+
+                /// Marks the interrupt for this pin as handled. You should
+                /// call this (or perform its functionality) from the ISR.
+                pub fn clear_interrupt(&self) {
+                    let p = unsafe { &*$GPIOX::ptr() };
+                    unsafe { bb::change_bit(&p.icr, self.i, true); }
                 }
             }
 
@@ -544,6 +641,87 @@ macro_rules! gpio {
 
                     fn is_low(&self) -> bool {
                         !self.is_high()
+                    }
+                }
+
+                impl<MODE> $PXi<Input<MODE>> {
+                    /// Enables or disables interrupts on this GPIO pin.
+                    pub fn set_interrupt_mode(&mut self, mode: InterruptMode) {
+                        let p = unsafe { &*$GPIOX::ptr() };
+                        unsafe { bb::change_bit(&p.im, $i, false); }
+                        match mode {
+                            InterruptMode::LevelHigh => {
+                                // IM &= ~$i;
+                                unsafe { bb::change_bit(&p.im, $i, false); }
+                                // IS |= $i;
+                                unsafe { bb::change_bit(&p.is, $i, true); }
+                                // IBE &= ~$i;
+                                unsafe { bb::change_bit(&p.ibe, $i, false); }
+                                // IEV |= $i;
+                                unsafe { bb::change_bit(&p.iev, $i, true); }
+                                // IM |= $i;
+                                unsafe { bb::change_bit(&p.im, $i, true); }
+                            },
+                            InterruptMode::LevelLow => {
+                                // IM &= ~$i;
+                                unsafe { bb::change_bit(&p.im, $i, false); }
+                                // IS |= $i;
+                                unsafe { bb::change_bit(&p.is, $i, true); }
+                                // IBE &= ~$i;
+                                unsafe { bb::change_bit(&p.ibe, $i, false); }
+                                // IEV &= ~$i;
+                                unsafe { bb::change_bit(&p.iev, $i, false); }
+                                // IM |= $i;
+                                unsafe { bb::change_bit(&p.im, $i, true); }
+                            },
+                            InterruptMode::EdgeRising => {
+                                // IM &= ~$i;
+                                unsafe { bb::change_bit(&p.im, $i, false); }
+                                // IS &= ~$i;
+                                unsafe { bb::change_bit(&p.is, $i, false); }
+                                // IBE &= ~$i;
+                                unsafe { bb::change_bit(&p.ibe, $i, false); }
+                                // IEV |= $i;
+                                unsafe { bb::change_bit(&p.iev, $i, true); }
+                                // IM |= $i;
+                                unsafe { bb::change_bit(&p.im, $i, true); }
+                            },
+                            InterruptMode::EdgeFalling => {
+                                // IM &= ~$i;
+                                unsafe { bb::change_bit(&p.im, $i, false); }
+                                // IS &= ~$i;
+                                unsafe { bb::change_bit(&p.is, $i, false); }
+                                // IBE &= ~$i;
+                                unsafe { bb::change_bit(&p.ibe, $i, false); }
+                                // IEV &= ~$i;
+                                unsafe { bb::change_bit(&p.iev, $i, false); }
+                                // IM |= $i;
+                                unsafe { bb::change_bit(&p.im, $i, true); }
+                            },
+                            InterruptMode::EdgeBoth => {
+                                // IM &= ~$i;
+                                unsafe { bb::change_bit(&p.im, $i, false); }
+                                // IS &= ~$i;
+                                unsafe { bb::change_bit(&p.is, $i, false); }
+                                // IBE |= $i;
+                                unsafe { bb::change_bit(&p.ibe, $i, true); }
+                                // IEV |= $i;
+                                unsafe { bb::change_bit(&p.iev, $i, true); }
+                                // IM |= $i;
+                                unsafe { bb::change_bit(&p.im, $i, true); }
+                            },
+                            InterruptMode::Disabled => {
+                                // IM &= ~$i;
+                                unsafe { bb::change_bit(&p.im, $i, false); }
+                            },
+                        }
+                    }
+
+                    /// Marks the interrupt for this pin as handled. You should
+                    /// call this (or perform its functionality) from the ISR.
+                    pub fn clear_interrupt(&self) {
+                        let p = unsafe { &*$GPIOX::ptr() };
+                        unsafe { bb::change_bit(&p.icr, $i, true); }
                     }
                 }
 
