@@ -25,6 +25,8 @@ pub enum Error {
     #[doc(hidden)] _Extensible,
 }
 
+// AJM - Should these pin mappings be identical to the 30x crate?
+
 // FIXME these should be "closed" traits
 /// SCL pin -- DO NOT IMPLEMENT THIS TRAIT
 pub unsafe trait SclPin<I2C> {}

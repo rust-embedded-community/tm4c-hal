@@ -9,6 +9,7 @@ main() {
             ;;
         *)
             xargo check --target $TARGET
+            # AJM - Whats up here?
             # xargo check --target $TARGET --features rt
             ;;
     esac
