@@ -21,10 +21,10 @@
 //!
 //! See the LM4F120 datasheet, page 228 for a full list.
 
-use tm4c123x;
-use time::{Hertz, U32Ext};
-use cortex_m::asm::nop;
 use super::bb;
+use cortex_m::asm::nop;
+use time::{Hertz, U32Ext};
+use tm4c123x;
 
 /// Constrained SYSCTL peripheral.
 pub struct Sysctl {
@@ -505,12 +505,7 @@ pub fn reset(_lock: &PowerControl, pd: Domain) {
 /// We take a reference to PowerControl as a permission check. We don't need
 /// an &mut reference as we use atomic writes in the bit-banding area so it's
 /// interrupt safe.
-pub fn control_power(
-    _lock: &PowerControl,
-    pd: Domain,
-    run_mode: RunMode,
-    state: PowerState,
-) {
+pub fn control_power(_lock: &PowerControl, pd: Domain, run_mode: RunMode, state: PowerState) {
     let on = match state {
         PowerState::On => true,
         PowerState::Off => false,

@@ -32,10 +32,10 @@
 //! # }
 //! ```
 
+use bb;
 use core::marker::PhantomData;
 use hal::digital::{InputPin, OutputPin};
 use sysctl;
-use bb;
 
 /// Extension trait to split a GPIO peripheral in independent pins and registers
 pub trait GpioExt {
@@ -68,17 +68,26 @@ pub trait AlternateFunctionChoice {
 }
 
 /// Input mode (type state)
-pub struct Input<MODE> where MODE: InputMode {
+pub struct Input<MODE>
+where
+    MODE: InputMode,
+{
     _mode: PhantomData<MODE>,
 }
-impl<MODE> IsUnlocked for Input<MODE> where MODE: InputMode {}
+impl<MODE> IsUnlocked for Input<MODE>
+where
+    MODE: InputMode,
+{
+}
 
 /// Sub-mode of Input: Floating input (type state)
 pub struct Floating;
 impl InputMode for Floating {}
 impl OpenDrainMode for Floating {
     /// Pull-up is not enabled
-    fn pup() -> bool { false }
+    fn pup() -> bool {
+        false
+    }
 }
 
 /// Sub-mode of Input: Pulled down input (type state)
@@ -90,7 +99,9 @@ pub struct PullUp;
 impl InputMode for PullUp {}
 impl OpenDrainMode for PullUp {
     /// Pull-up is enabled
-    fn pup() -> bool { true }
+    fn pup() -> bool {
+        true
+    }
 }
 
 /// Tri-state
@@ -98,27 +109,50 @@ pub struct Tristate;
 impl IsUnlocked for Tristate {}
 
 /// Output mode (type state)
-pub struct Output<MODE> where MODE: OutputMode {
+pub struct Output<MODE>
+where
+    MODE: OutputMode,
+{
     _mode: PhantomData<MODE>,
 }
-impl<MODE> IsUnlocked for Output<MODE> where MODE: OutputMode {}
+impl<MODE> IsUnlocked for Output<MODE>
+where
+    MODE: OutputMode,
+{
+}
 
 /// AlternateFunction mode (type state for a GPIO pin)
-pub struct AlternateFunction<AF, MODE> where AF: AlternateFunctionChoice, MODE: OutputMode  {
+pub struct AlternateFunction<AF, MODE>
+where
+    AF: AlternateFunctionChoice,
+    MODE: OutputMode,
+{
     _func: PhantomData<AF>,
     _mode: PhantomData<MODE>,
 }
-impl<AF, MODE> IsUnlocked for AlternateFunction<AF, MODE> where AF: AlternateFunctionChoice, MODE: OutputMode {}
+impl<AF, MODE> IsUnlocked for AlternateFunction<AF, MODE>
+where
+    AF: AlternateFunctionChoice,
+    MODE: OutputMode,
+{
+}
 
 /// Sub-mode of Output/AlternateFunction: Push pull output (type state for Output)
 pub struct PushPull;
 impl OutputMode for PushPull {}
 
 /// Sub-mode of Output/AlternateFunction: Open drain output (type state for Output)
-pub struct OpenDrain<ODM> where ODM: OpenDrainMode {
-    _pull: PhantomData<ODM>
+pub struct OpenDrain<ODM>
+where
+    ODM: OpenDrainMode,
+{
+    _pull: PhantomData<ODM>,
 }
-impl<ODM> OutputMode for OpenDrain<ODM> where ODM: OpenDrainMode {}
+impl<ODM> OutputMode for OpenDrain<ODM>
+where
+    ODM: OpenDrainMode,
+{
+}
 
 /// Alternate function 1 (type state)
 pub struct AF1;
@@ -226,7 +260,7 @@ pub enum InterruptMode {
     /// Interrupt on both rising and falling edges
     EdgeBoth,
     /// Disable interrupts on this pin
-    Disabled
+    Disabled,
 }
 
 macro_rules! gpio {
