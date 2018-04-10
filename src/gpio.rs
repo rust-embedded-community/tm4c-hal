@@ -1,7 +1,36 @@
 //! General Purpose Input / Output
-
-// TODO the pins here currently correspond to the LQFP-100 package. There should be Cargo features
-// that let you select different microcontroller packages
+//!
+//! This module makes heavy use of types to try and ensure you can't have a
+//! pin in a mode you didn't expect.
+//!
+//! Most pins start in the `Tristate` state. You can call methods to convert
+//! them to inputs, outputs or put them into Alternate Function mode (e.g. to
+//! use with a UART).
+//!
+//! Some of the modes require extra information, and for that we use the so-
+//! called 'Turbo Fish` syntax, which looks like `method::<TYPE>`.
+//!
+//! If the operation is non-atomic, then you need to pass a mut-reference to
+//! the port's control structure. This ensures you can't change two pins in
+//! two threads at the same time. If the operation is fully atomic (using the
+//! chip's bit-banding feature) then this argument is not required.
+//!
+//! Here's an example:
+//!
+//! ```
+//! # use tm4c123x_hal::*;
+//! # use tm4c123x_hal::sysctl::SysctlExt;
+//! # use tm4c123x_hal::gpio::GpioExt;
+//! # fn foo() {
+//! let p = Peripherals::take().unwrap();
+//! let mut sc = p.SYSCTL.constrain();
+//! let mut portb = p.GPIO_PORTB.split(&sc.power_control);
+//! let timer_output_pin = portb.pb0.into_af_push_pull::<gpio::AF7>(&mut portb.control);
+//! let uart_tx_pin = portb.pb1.into_af_open_drain::<gpio::AF1, gpio::PullUp>(&mut portb.control);
+//! let blue_led = portb.pb2.into_push_pull_output();
+//! let button = portb.pb3.into_pull_up_input();
+//! # }
+//! ```
 
 use core::marker::PhantomData;
 use hal::digital::{InputPin, OutputPin};
@@ -20,6 +49,18 @@ pub trait GpioExt {
 /// All unlocked pin modes implement this
 pub trait IsUnlocked {}
 
+/// All input modes implement this
+pub trait InputMode {}
+
+/// All output modes implement this
+pub trait OutputMode {}
+
+/// OpenDrain modes implement this
+pub trait OpenDrainMode {
+    /// Is pull-up enabled
+    fn pup() -> bool;
+}
+
 /// All the different Alternate Functions you can choose implement this
 pub trait AlternateFunctionChoice {
     /// Which Alternate Function (numbered 1 through 15) is this?
@@ -27,42 +68,57 @@ pub trait AlternateFunctionChoice {
 }
 
 /// Input mode (type state)
-pub struct Input<MODE> {
+pub struct Input<MODE> where MODE: InputMode {
     _mode: PhantomData<MODE>,
 }
-impl<MODE> IsUnlocked for Input<MODE> {}
+impl<MODE> IsUnlocked for Input<MODE> where MODE: InputMode {}
 
 /// Sub-mode of Input: Floating input (type state)
 pub struct Floating;
+impl InputMode for Floating {}
+impl OpenDrainMode for Floating {
+    /// Pull-up is not enabled
+    fn pup() -> bool { false }
+}
 
 /// Sub-mode of Input: Pulled down input (type state)
 pub struct PullDown;
+impl InputMode for PullDown {}
 
 /// Sub-mode of Input: Pulled up input (type state)
 pub struct PullUp;
+impl InputMode for PullUp {}
+impl OpenDrainMode for PullUp {
+    /// Pull-up is enabled
+    fn pup() -> bool { true }
+}
 
 /// Tri-state
 pub struct Tristate;
 impl IsUnlocked for Tristate {}
 
 /// Output mode (type state)
-pub struct Output<MODE> {
+pub struct Output<MODE> where MODE: OutputMode {
     _mode: PhantomData<MODE>,
 }
-impl<MODE> IsUnlocked for Output<MODE> {}
+impl<MODE> IsUnlocked for Output<MODE> where MODE: OutputMode {}
 
-/// AlternateFunction mode (type state)
-pub struct AlternateFunction<AF, MODE> where AF: AlternateFunctionChoice {
+/// AlternateFunction mode (type state for a GPIO pin)
+pub struct AlternateFunction<AF, MODE> where AF: AlternateFunctionChoice, MODE: OutputMode  {
     _func: PhantomData<AF>,
     _mode: PhantomData<MODE>,
 }
-impl<AF, MODE> IsUnlocked for AlternateFunction<AF, MODE> where AF: AlternateFunctionChoice {}
+impl<AF, MODE> IsUnlocked for AlternateFunction<AF, MODE> where AF: AlternateFunctionChoice, MODE: OutputMode {}
 
-/// Sub-mode of Output/AlternateFunction: Push pull output (type state)
+/// Sub-mode of Output/AlternateFunction: Push pull output (type state for Output)
 pub struct PushPull;
+impl OutputMode for PushPull {}
 
-/// Sub-mode of Output/AlternateFunction: Open drain output (type state)
-pub struct OpenDrain;
+/// Sub-mode of Output/AlternateFunction: Open drain output (type state for Output)
+pub struct OpenDrain<ODM> where ODM: OpenDrainMode {
+    _pull: PhantomData<ODM>
+}
+impl<ODM> OutputMode for OpenDrain<ODM> where ODM: OpenDrainMode {}
 
 /// Alternate function 1 (type state)
 pub struct AF1;
@@ -222,7 +278,7 @@ macro_rules! gpio {
                 _mode: PhantomData<MODE>,
             }
 
-            impl<MODE> OutputPin for $PXx<Output<MODE>> {
+            impl<MODE> OutputPin for $PXx<Output<MODE>> where MODE: OutputMode {
                 fn is_high(&self) -> bool {
                     let p = unsafe { &*$GPIOX::ptr() };
                     bb::read_bit(&p.data, self.i)
@@ -243,7 +299,7 @@ macro_rules! gpio {
                 }
             }
 
-            impl<MODE> InputPin for $PXx<Input<MODE>> {
+            impl<MODE> InputPin for $PXx<Input<MODE>> where MODE: InputMode {
                 fn is_high(&self) -> bool {
                     let p = unsafe { &*$GPIOX::ptr() };
                     bb::read_bit(&p.data, self.i)
@@ -254,7 +310,7 @@ macro_rules! gpio {
                 }
             }
 
-            impl<MODE> $PXx<Input<MODE>> {
+            impl<MODE> $PXx<Input<MODE>> where MODE: InputMode {
                 /// Enables or disables interrupts on this GPIO pin.
                 pub fn set_interrupt_mode(&mut self, mode: InterruptMode) {
                     let p = unsafe { &*$GPIOX::ptr() };
@@ -365,10 +421,10 @@ macro_rules! gpio {
 
                     /// Configures the pin to serve as alternate function 1 through 15.
                     /// Enables open-drain (useful for I2C SDA, for example).
-                    pub fn into_af_open_drain<AF>(
+                    pub fn into_af_open_drain<AF, ODM>(
                         self,
                         _gpio_control: &mut GpioControl,
-                    ) -> $PXi<AlternateFunction<AF, OpenDrain>> where AF: AlternateFunctionChoice {
+                    ) -> $PXi<AlternateFunction<AF, OpenDrain<ODM>>> where AF: AlternateFunctionChoice, ODM: OpenDrainMode {
                         let p = unsafe { &*$GPIOX::ptr() };
                         let mask = 0xF << ($i * 4);
                         let bits = AF::number() << ($i * 4);
@@ -378,7 +434,7 @@ macro_rules! gpio {
                         unsafe { bb::change_bit(&p.afsel, $i, true); }
                         unsafe { bb::change_bit(&p.dir, $i, false); }
                         unsafe { bb::change_bit(&p.odr, $i, true); }
-                        unsafe { bb::change_bit(&p.pur, $i, false); }
+                        unsafe { bb::change_bit(&p.pur, $i, ODM::pup()); }
                         unsafe { bb::change_bit(&p.pdr, $i, false); }
                         unsafe { bb::change_bit(&p.den, $i, true); }
                         $PXi { _mode: PhantomData }
@@ -427,14 +483,14 @@ macro_rules! gpio {
                     }
 
                     /// Configures the pin to operate as an open drain output pin
-                    pub fn into_open_drain_output(
+                    pub fn into_open_drain_output<ODM>(
                         self
-                    ) -> $PXi<Output<OpenDrain>> {
+                    ) -> $PXi<Output<OpenDrain<ODM>>> where ODM: OpenDrainMode {
                         let p = unsafe { &*$GPIOX::ptr() };
                         unsafe { bb::change_bit(&p.afsel, $i, false); }
                         unsafe { bb::change_bit(&p.dir, $i, true); }
                         unsafe { bb::change_bit(&p.odr, $i, true); }
-                        unsafe { bb::change_bit(&p.pur, $i, false); }
+                        unsafe { bb::change_bit(&p.pur, $i, ODM::pup()); }
                         unsafe { bb::change_bit(&p.pdr, $i, false); }
                         unsafe { bb::change_bit(&p.den, $i, true); }
                         $PXi { _mode: PhantomData }
@@ -470,15 +526,6 @@ macro_rules! gpio {
 
                 }
 
-                impl $PXi<Output<OpenDrain>> {
-                    /// Enables / disables the internal pull up
-                    pub fn internal_pull_up(&mut self, on: bool) {
-                        let p = unsafe { &*$GPIOX::ptr() };
-                        // pull up
-                        unsafe { bb::change_bit(&p.pur, $i, on); }
-                    }
-                }
-
                 impl<MODE> $PXi<MODE> {
                     /// Erases the pin number from the type
                     ///
@@ -492,7 +539,7 @@ macro_rules! gpio {
                     }
                 }
 
-                impl<MODE> OutputPin for $PXi<Output<MODE>> {
+                impl<MODE> OutputPin for $PXi<Output<MODE>> where MODE: OutputMode {
                     fn is_high(&self) -> bool {
                         let p = unsafe { &*$GPIOX::ptr() };
                         bb::read_bit(&p.data, $i)
@@ -513,7 +560,7 @@ macro_rules! gpio {
                     }
                 }
 
-                impl<MODE> InputPin for $PXi<Input<MODE>> {
+                impl<MODE> InputPin for $PXi<Input<MODE>> where MODE: InputMode {
                     fn is_high(&self) -> bool {
                         let p = unsafe { &*$GPIOX::ptr() };
                         bb::read_bit(&p.data, $i)
@@ -524,7 +571,7 @@ macro_rules! gpio {
                     }
                 }
 
-                impl<MODE> $PXi<Input<MODE>> {
+                impl<MODE> $PXi<Input<MODE>> where MODE: InputMode {
                     /// Enables or disables interrupts on this GPIO pin.
                     pub fn set_interrupt_mode(&mut self, mode: InterruptMode) {
                         let p = unsafe { &*$GPIOX::ptr() };
