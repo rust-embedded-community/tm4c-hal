@@ -6,7 +6,7 @@ use core::marker::PhantomData;
 use hal::prelude::*;
 use hal::serial;
 use nb;
-use tm4c123x::{UART0, UART1, UART2, UART3, UART4, UART5, UART6, UART7};
+pub use tm4c123x::{UART0, UART1, UART2, UART3, UART4, UART5, UART6, UART7};
 
 use gpio::{AF1, AF2, AF8, AlternateFunction, OutputMode};
 use gpio::{gpioa, gpiob, gpioc, gpiod, gpioe, gpiof};
