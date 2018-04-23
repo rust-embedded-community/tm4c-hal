@@ -36,14 +36,14 @@ pub mod delay;
 pub mod gpio;
 // pub mod i2c;
 // pub mod prelude;
-pub mod sysctl;
 pub mod serial;
+pub mod sysctl;
 // pub mod spi;
 pub mod time;
 // pub mod timer;
 
 pub mod bb;
 
-pub use tm4c123x::Peripherals;
 pub use tm4c123x::CorePeripherals;
 pub use tm4c123x::Interrupt;
+pub use tm4c123x::Peripherals;

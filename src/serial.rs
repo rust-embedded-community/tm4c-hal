@@ -1,18 +1,18 @@
 //! Serial
 
-use core::marker::PhantomData;
 use core::fmt;
+use core::marker::PhantomData;
 
-use hal::serial;
 use hal::prelude::*;
+use hal::serial;
 use nb;
-use tm4c123x::{UART0, UART1, UART2, UART3, UART4, UART5, UART6, UART7};
+pub use tm4c123x::{UART0, UART1, UART2, UART3, UART4, UART5, UART6, UART7};
 
+use gpio::{AF1, AF2, AF8, AlternateFunction, OutputMode};
 use gpio::{gpioa, gpiob, gpioc, gpiod, gpioe, gpiof};
-use gpio::{AF1, AF2, AF8};
+use sysctl;
 use sysctl::Clocks;
 use time::Bps;
-use sysctl;
 
 // FIXME these should be "closed" traits
 /// TX pin - DO NOT IMPLEMENT THIS TRAIT
@@ -49,43 +49,130 @@ unsafe impl CtsPin<UART6> for () {}
 unsafe impl RtsPin<UART6> for () {}
 unsafe impl CtsPin<UART7> for () {}
 unsafe impl RtsPin<UART7> for () {}
-unsafe impl CtsPin<UART1> for gpiof::PF1<AF1> {
+
+unsafe impl<T> CtsPin<UART1> for gpiof::PF1<AlternateFunction<AF1, T>>
+where
+    T: OutputMode,
+{
     fn enable(&mut self, uart: &mut UART1) {
         uart.ctl.modify(|_, w| w.ctsen().set_bit());
     }
 }
-unsafe impl CtsPin<UART1> for gpioc::PC5<AF8> {
+unsafe impl<T> CtsPin<UART1> for gpioc::PC5<AlternateFunction<AF8, T>>
+where
+    T: OutputMode,
+{
     fn enable(&mut self, uart: &mut UART1) {
         uart.ctl.modify(|_, w| w.ctsen().set_bit());
     }
 }
-unsafe impl RtsPin<UART1> for gpioc::PC4<AF8> {
+unsafe impl<T> RtsPin<UART1> for gpioc::PC4<AlternateFunction<AF8, T>>
+where
+    T: OutputMode,
+{
     fn enable(&mut self, uart: &mut UART1) {
         uart.ctl.modify(|_, w| w.rtsen().set_bit());
     }
 }
-unsafe impl RxPin<UART0> for gpioa::PA0<AF1> {}
-unsafe impl RxPin<UART1> for gpiob::PB0<AF1> {}
-unsafe impl RxPin<UART1> for gpioc::PC4<AF2> {}
-unsafe impl RxPin<UART2> for gpiod::PD6<AF1> {}
-unsafe impl RxPin<UART3> for gpioc::PC6<AF1> {}
-unsafe impl RxPin<UART4> for gpioc::PC4<AF1> {}
-unsafe impl RxPin<UART5> for gpioe::PE4<AF1> {}
-unsafe impl RxPin<UART6> for gpiod::PD4<AF1> {}
-unsafe impl RxPin<UART7> for gpioe::PE0<AF1> {}
-unsafe impl TxPin<UART0> for gpioa::PA1<AF1> {}
-unsafe impl TxPin<UART1> for gpiob::PB1<AF1> {}
-unsafe impl TxPin<UART1> for gpioc::PC5<AF2> {}
-unsafe impl TxPin<UART3> for gpioc::PC7<AF1> {}
-unsafe impl TxPin<UART4> for gpioc::PC5<AF1> {}
-unsafe impl TxPin<UART5> for gpioe::PE5<AF1> {}
-unsafe impl TxPin<UART6> for gpiod::PD5<AF1> {}
-unsafe impl TxPin<UART7> for gpioe::PE1<AF1> {}
+unsafe impl<T> RtsPin<UART1> for gpiof::PF0<AlternateFunction<AF1, T>>
+where
+    T: OutputMode,
+{
+    fn enable(&mut self, uart: &mut UART1) {
+        uart.ctl.modify(|_, w| w.rtsen().set_bit());
+    }
+}
 
-// NMI pins. Requires extra magic to use this pin for
-// non-NMI purposes and that isn't implemented yet.
-// unsafe impl RtsPin<UART1> for gpiof::PF0<AF1> {}
-// unsafe impl TxPin<UART2> for gpiod::PD7<AF1> {}
+unsafe impl<T> RxPin<UART0> for gpioa::PA0<AlternateFunction<AF1, T>>
+where
+    T: OutputMode,
+{
+}
+unsafe impl<T> RxPin<UART1> for gpiob::PB0<AlternateFunction<AF1, T>>
+where
+    T: OutputMode,
+{
+}
+unsafe impl<T> RxPin<UART1> for gpioc::PC4<AlternateFunction<AF2, T>>
+where
+    T: OutputMode,
+{
+}
+unsafe impl<T> RxPin<UART2> for gpiod::PD6<AlternateFunction<AF1, T>>
+where
+    T: OutputMode,
+{
+}
+unsafe impl<T> RxPin<UART3> for gpioc::PC6<AlternateFunction<AF1, T>>
+where
+    T: OutputMode,
+{
+}
+unsafe impl<T> RxPin<UART4> for gpioc::PC4<AlternateFunction<AF1, T>>
+where
+    T: OutputMode,
+{
+}
+unsafe impl<T> RxPin<UART5> for gpioe::PE4<AlternateFunction<AF1, T>>
+where
+    T: OutputMode,
+{
+}
+unsafe impl<T> RxPin<UART6> for gpiod::PD4<AlternateFunction<AF1, T>>
+where
+    T: OutputMode,
+{
+}
+unsafe impl<T> RxPin<UART7> for gpioe::PE0<AlternateFunction<AF1, T>>
+where
+    T: OutputMode,
+{
+}
+unsafe impl<T> TxPin<UART0> for gpioa::PA1<AlternateFunction<AF1, T>>
+where
+    T: OutputMode,
+{
+}
+unsafe impl<T> TxPin<UART1> for gpiob::PB1<AlternateFunction<AF1, T>>
+where
+    T: OutputMode,
+{
+}
+unsafe impl<T> TxPin<UART1> for gpioc::PC5<AlternateFunction<AF2, T>>
+where
+    T: OutputMode,
+{
+}
+unsafe impl<T> TxPin<UART2> for gpiod::PD7<AlternateFunction<AF1, T>>
+where
+    T: OutputMode,
+{
+}
+unsafe impl<T> TxPin<UART3> for gpioc::PC7<AlternateFunction<AF1, T>>
+where
+    T: OutputMode,
+{
+}
+unsafe impl<T> TxPin<UART4> for gpioc::PC5<AlternateFunction<AF1, T>>
+where
+    T: OutputMode,
+{
+}
+unsafe impl<T> TxPin<UART5> for gpioe::PE5<AlternateFunction<AF1, T>>
+where
+    T: OutputMode,
+{
+}
+unsafe impl<T> TxPin<UART6> for gpiod::PD5<AlternateFunction<AF1, T>>
+where
+    T: OutputMode,
+{
+}
+unsafe impl<T> TxPin<UART7> for gpioe::PE1<AlternateFunction<AF1, T>>
+where
+    T: OutputMode,
+{
+}
 
 /// Serial abstraction
 pub struct Serial<UART, TX, RX, RTS, CTS> {
