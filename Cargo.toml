@@ -12,7 +12,7 @@
 
 [package]
 name = "tm4c123x-hal"
-version = "0.1.0"
+version = "0.2.0"
 authors = [
 	"Jorge Aparicio <jorge@japaric.io>",
 	"Jonathan 'theJPster' Pallant <github@thejpster.org.uk>",
