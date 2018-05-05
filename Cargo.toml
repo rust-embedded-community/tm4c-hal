@@ -40,5 +40,5 @@ version = "0.1.0"
 [dependencies.tm4c123x]
 version = "0.6"
 
-# [features]
-# rt = ["tm4c123x/rt"]
+[features]
+rt = ["tm4c123x/rt"]
