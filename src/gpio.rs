@@ -291,6 +291,7 @@ macro_rules! gpio {
             impl GpioExt for $GPIOX {
                 type Parts = Parts;
 
+                /// Break this GPIO port into separate pins
                 fn split(self, pc: &sysctl::PowerControl) -> Parts {
                     sysctl::control_power(
                         pc, sysctl::Domain::$iopd,

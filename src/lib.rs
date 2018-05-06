@@ -21,6 +21,11 @@
 
 #![deny(missing_docs)]
 #![deny(warnings)]
+#![feature(linkage)]
+#![feature(naked_functions)]
+#![feature(used)]
+#![feature(core_intrinsics)]
+#![feature(asm)]
 #![feature(never_type)]
 #![no_std]
 
@@ -32,18 +37,11 @@ extern crate nb;
 pub extern crate tm4c123x;
 
 pub mod delay;
-// pub mod flash;
 pub mod gpio;
-// pub mod i2c;
-// pub mod prelude;
+pub mod prelude;
 pub mod serial;
 pub mod sysctl;
-// pub mod spi;
 pub mod time;
-// pub mod timer;
-
 pub mod bb;
 
-pub use tm4c123x::CorePeripherals;
-pub use tm4c123x::Interrupt;
-pub use tm4c123x::Peripherals;
+pub use tm4c123x::*;
