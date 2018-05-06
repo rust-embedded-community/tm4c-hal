@@ -21,10 +21,6 @@
 
 #![deny(missing_docs)]
 #![deny(warnings)]
-#![feature(linkage)]
-#![feature(naked_functions)]
-#![feature(used)]
-#![feature(core_intrinsics)]
 #![feature(asm)]
 #![feature(never_type)]
 #![no_std]
