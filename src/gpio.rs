@@ -34,7 +34,7 @@
 
 use bb;
 use core::marker::PhantomData;
-use hal::digital::{InputPin, OutputPin};
+use hal::digital::{InputPin, OutputPin, StatefulOutputPin};
 use sysctl;
 
 /// Extension trait to split a GPIO peripheral in independent pins and registers
@@ -305,16 +305,18 @@ macro_rules! gpio {
                 _mode: PhantomData<MODE>,
             }
 
-            impl<MODE> OutputPin for $PXx<Output<MODE>> where MODE: OutputMode {
-                fn is_high(&self) -> bool {
+            impl<MODE> StatefulOutputPin for $PXx<Output<MODE>> where MODE: OutputMode {
+                fn is_set_high(&self) -> bool {
                     let p = unsafe { &*$GPIOX::ptr() };
                     bb::read_bit(&p.data, self.i)
                 }
 
-                fn is_low(&self) -> bool {
-                    !self.is_high()
+                fn is_set_low(&self) -> bool {
+                    !self.is_set_high()
                 }
+            }
 
+            impl<MODE> OutputPin for $PXx<Output<MODE>> where MODE: OutputMode {
                 fn set_high(&mut self) {
                     let p = unsafe { &*$GPIOX::ptr() };
                     unsafe { bb::change_bit(&p.data, self.i, true); }
@@ -566,16 +568,18 @@ macro_rules! gpio {
                     }
                 }
 
-                impl<MODE> OutputPin for $PXi<Output<MODE>> where MODE: OutputMode {
-                    fn is_high(&self) -> bool {
+                impl<MODE> StatefulOutputPin for $PXi<Output<MODE>> where MODE: OutputMode {
+                    fn is_set_high(&self) -> bool {
                         let p = unsafe { &*$GPIOX::ptr() };
                         bb::read_bit(&p.data, $i)
                     }
 
-                    fn is_low(&self) -> bool {
-                        !self.is_high()
+                    fn is_set_low(&self) -> bool {
+                        !self.is_set_high()
                     }
+                }
 
+                impl<MODE> OutputPin for $PXi<Output<MODE>> where MODE: OutputMode {
                     fn set_high(&mut self) {
                         let p = unsafe { &*$GPIOX::ptr() };
                         unsafe { bb::change_bit(&p.data, $i, true); }
