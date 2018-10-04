@@ -1014,12 +1014,14 @@ pub mod chip_id {
     /// What temperature range does this chip support?
     #[derive(Debug)]
     pub enum TempRange {
-        /// It's Commercial temperature range (0°C - +70°C)
+        /// It's a Commercial temperature range part (0°C - +70°C)
         Commercial,
-        /// It's Industrial temperature range (-40°C - +85°C)
+        /// It's a Industrial temperature range part (-40°C - +85°C)
         Industrial,
-        /// It's Extended temperature range (-40°C - +105°C)
+        /// It's a Extended temperature range part (-40°C - +105°C)
         Extended,
+        /// It's either Extended or Industrial depending on the exact part number
+        IndustrialOrExtended,
         /// I don't know what temperature range this is
         Unknown,
     }
@@ -1085,7 +1087,7 @@ pub mod chip_id {
     }
 
     /// Read DID0 and DID1 to discover what sort of
-    /// TM4C123/LM4F123 this is.
+    /// TM4C123/LM4F120 this is.
     pub fn get() -> Result<ChipId, Error> {
         use tm4c123x;
         // This is safe as it's read only
@@ -1108,7 +1110,7 @@ pub mod chip_id {
         let part_no = match did1.prtno().bits() {
             0x04 => PartNo::Lm4f120h5qr,
             0xA1 => PartNo::Tm4c123gh6pm,
-            _ => PartNo::Unknown(did1.prtno().bits()),
+            e => PartNo::Unknown(e),
         };
         let pin_count = match did1.pincnt().bits() {
             0 => PinCount::_28,
@@ -1124,6 +1126,7 @@ pub mod chip_id {
             0 => TempRange::Commercial,
             1 => TempRange::Industrial,
             2 => TempRange::Extended,
+            3 => TempRange::IndustrialOrExtended,
             _ => TempRange::Unknown,
         };
         let package = match did1.pkg().bits() {
