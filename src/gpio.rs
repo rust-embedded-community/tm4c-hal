@@ -32,10 +32,10 @@
 //! # }
 //! ```
 
-use bb;
 use core::marker::PhantomData;
-use hal::digital::{InputPin, OutputPin, StatefulOutputPin};
-use sysctl;
+use crate::bb;
+use crate::hal::digital::{InputPin, OutputPin, StatefulOutputPin};
+use crate::sysctl;
 
 /// Extension trait to split a GPIO peripheral in independent pins and registers
 pub trait GpioExt {
@@ -74,11 +74,7 @@ where
 {
     _mode: PhantomData<MODE>,
 }
-impl<MODE> IsUnlocked for Input<MODE>
-where
-    MODE: InputMode,
-{
-}
+impl<MODE> IsUnlocked for Input<MODE> where MODE: InputMode {}
 
 /// Sub-mode of Input: Floating input (type state)
 pub struct Floating;
@@ -115,11 +111,7 @@ where
 {
     _mode: PhantomData<MODE>,
 }
-impl<MODE> IsUnlocked for Output<MODE>
-where
-    MODE: OutputMode,
-{
-}
+impl<MODE> IsUnlocked for Output<MODE> where MODE: OutputMode {}
 
 /// AlternateFunction mode (type state for a GPIO pin)
 pub struct AlternateFunction<AF, MODE>
@@ -134,8 +126,7 @@ impl<AF, MODE> IsUnlocked for AlternateFunction<AF, MODE>
 where
     AF: AlternateFunctionChoice,
     MODE: OutputMode,
-{
-}
+{}
 
 /// Sub-mode of Output/AlternateFunction: Push pull output (type state for Output)
 pub struct PushPull;
@@ -148,11 +139,7 @@ where
 {
     _pull: PhantomData<ODM>,
 }
-impl<ODM> OutputMode for OpenDrain<ODM>
-where
-    ODM: OpenDrainMode,
-{
-}
+impl<ODM> OutputMode for OpenDrain<ODM> where ODM: OpenDrainMode {}
 
 /// Alternate function 1 (type state)
 pub struct AF1;

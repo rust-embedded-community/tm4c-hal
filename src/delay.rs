@@ -4,9 +4,9 @@ use cast::u32;
 use cortex_m::peripheral::syst::SystClkSource;
 use cortex_m::peripheral::SYST;
 
-use hal::blocking::delay::{DelayMs, DelayUs};
-use sysctl::Clocks;
-use time::Hertz;
+use crate::hal::blocking::delay::{DelayMs, DelayUs};
+use crate::sysctl::Clocks;
+use crate::time::Hertz;
 
 /// System timer (SysTick) as a delay provider
 pub struct Delay {

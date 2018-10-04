@@ -23,22 +23,16 @@
 #![deny(warnings)]
 #![no_std]
 
-extern crate cast;
-extern crate cortex_m;
-extern crate embedded_hal as hal;
-#[macro_use]
-extern crate nb;
-extern crate void;
-pub extern crate tm4c123x;
-
+pub mod bb;
 pub mod delay;
 pub mod gpio;
-pub mod prelude;
 pub mod i2c;
-pub mod spi;
+pub mod prelude;
 pub mod serial;
+pub mod spi;
 pub mod sysctl;
 pub mod time;
-pub mod bb;
 
+use embedded_hal as hal;
+pub use tm4c123x;
 pub use tm4c123x::*;

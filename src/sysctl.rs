@@ -21,9 +21,9 @@
 //!
 //! See the LM4F120 datasheet, page 228 for a full list.
 
-use super::bb;
 use cortex_m::asm::nop;
-use time::{Hertz, U32Ext};
+use crate::bb;
+use crate::time::{Hertz, U32Ext};
 use tm4c123x;
 
 /// Constrained SYSCTL peripheral.

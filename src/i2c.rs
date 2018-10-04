@@ -2,18 +2,17 @@
 
 use tm4c123x::{I2C0, I2C1, I2C2, I2C3};
 
-use gpio::gpioa::{PA6, PA7};
-use gpio::gpiob::{PB2, PB3};
-use gpio::gpioe::{PE4, PE5};
-use gpio::gpiod::{PD0, PD1};
+use crate::gpio::gpioa::{PA6, PA7};
+use crate::gpio::gpiob::{PB2, PB3};
+use crate::gpio::gpiod::{PD0, PD1};
+use crate::gpio::gpioe::{PE4, PE5};
 
-use gpio::{AF3, AlternateFunction, Floating, OpenDrain, OutputMode};
+use crate::gpio::{AlternateFunction, Floating, OpenDrain, OutputMode, AF3};
 
-use sysctl::Clocks;
-use sysctl;
+use crate::sysctl::{self, Clocks};
 
-use hal::blocking::i2c::{Write, WriteRead, Read};
-use time::Hertz;
+use crate::hal::blocking::i2c::{Read, Write, WriteRead};
+use crate::time::Hertz;
 
 /// I2C error
 #[derive(Debug)]
@@ -29,7 +28,8 @@ pub enum Error {
     /// Missing Addrees ACK
     AdrAck,
 
-    #[doc(hidden)] _Extensible,
+    #[doc(hidden)]
+    _Extensible,
 }
 
 // FIXME these should be "closed" traits
@@ -39,16 +39,16 @@ pub unsafe trait SclPin<I2C> {}
 /// SDA pin -- DO NOT IMPLEMENT THIS TRAIT
 pub unsafe trait SdaPin<I2C> {}
 
-unsafe impl<T> SclPin<I2C0> for PB2<AlternateFunction<AF3, T>> where T:OutputMode, {}
+unsafe impl<T> SclPin<I2C0> for PB2<AlternateFunction<AF3, T>> where T: OutputMode {}
 unsafe impl SdaPin<I2C0> for PB3<AlternateFunction<AF3, OpenDrain<Floating>>> {}
 
-unsafe impl<T> SclPin<I2C1> for PA6<AlternateFunction<AF3, T>> where T:OutputMode, {}
+unsafe impl<T> SclPin<I2C1> for PA6<AlternateFunction<AF3, T>> where T: OutputMode {}
 unsafe impl SdaPin<I2C1> for PA7<AlternateFunction<AF3, OpenDrain<Floating>>> {}
 
-unsafe impl<T> SclPin<I2C2> for PE4<AlternateFunction<AF3, T>> where T:OutputMode, {}
+unsafe impl<T> SclPin<I2C2> for PE4<AlternateFunction<AF3, T>> where T: OutputMode {}
 unsafe impl SdaPin<I2C2> for PE5<AlternateFunction<AF3, OpenDrain<Floating>>> {}
 
-unsafe impl<T> SclPin<I2C3> for PD0<AlternateFunction<AF3, T>> where T:OutputMode, {}
+unsafe impl<T> SclPin<I2C3> for PD0<AlternateFunction<AF3, T>> where T: OutputMode {}
 unsafe impl SdaPin<I2C3> for PD1<AlternateFunction<AF3, OpenDrain<Floating>>> {}
 
 /// I2C peripheral operating in master mode
@@ -77,7 +77,7 @@ macro_rules! busy_wait {
                 // try again
             }
         }
-    }
+    };
 }
 
 macro_rules! hal {

@@ -1,23 +1,24 @@
 //! Serial Peripheral Interface (SPI) bus
 
-use hal::spi::{FullDuplex, Mode , Phase, Polarity};
+use crate::hal::spi::{FullDuplex, Mode, Phase, Polarity};
 use nb;
-use tm4c123x::{SSI0,SSI1, SSI2, SSI3};
+use tm4c123x::{SSI0, SSI1, SSI2, SSI3};
 
-use gpio::gpioa::{PA2, PA4, PA5};
-use gpio::gpiob::{PB4, PB6, PB7};
-use gpio::gpiod::{PD0, PD2, PD3};
+use crate::gpio::gpioa::{PA2, PA4, PA5};
+use crate::gpio::gpiob::{PB4, PB6, PB7};
+use crate::gpio::gpiod::{PD0, PD2, PD3};
 
-use sysctl::Clocks;
-use sysctl;
+use crate::sysctl;
+use crate::sysctl::Clocks;
 
-use gpio::{AF1, AF2, AlternateFunction, OutputMode};
-use time::Hertz;
+use crate::gpio::{AlternateFunction, OutputMode, AF1, AF2};
+use crate::time::Hertz;
 
 /// SPI error
 #[derive(Debug)]
 pub enum Error {
-    #[doc(hidden)] _Extensible,
+    #[doc(hidden)]
+    _Extensible,
 }
 
 // FIXME these should be "closed" traits
@@ -31,24 +32,24 @@ pub unsafe trait MisoPin<SPI> {}
 pub unsafe trait MosiPin<SPI> {}
 
 // SSI0
-unsafe impl<T> SckPin<SSI0> for PA2<AlternateFunction<AF2, T>> where T:OutputMode, {}
-unsafe impl<T> MisoPin<SSI0> for PA4<AlternateFunction<AF2, T>> where T:OutputMode, {}
-unsafe impl<T> MosiPin<SSI0> for PA5<AlternateFunction<AF2, T>> where T:OutputMode, {}
+unsafe impl<T> SckPin<SSI0> for PA2<AlternateFunction<AF2, T>> where T: OutputMode {}
+unsafe impl<T> MisoPin<SSI0> for PA4<AlternateFunction<AF2, T>> where T: OutputMode {}
+unsafe impl<T> MosiPin<SSI0> for PA5<AlternateFunction<AF2, T>> where T: OutputMode {}
 
 // SSI1
-unsafe impl<T> SckPin<SSI1> for PD0<AlternateFunction<AF2, T>> where T:OutputMode, {}
-unsafe impl<T> MisoPin<SSI1> for PD2<AlternateFunction<AF2, T>> where T:OutputMode, {}
-unsafe impl<T> MosiPin<SSI1> for PD3<AlternateFunction<AF2, T>> where T:OutputMode, {}
+unsafe impl<T> SckPin<SSI1> for PD0<AlternateFunction<AF2, T>> where T: OutputMode {}
+unsafe impl<T> MisoPin<SSI1> for PD2<AlternateFunction<AF2, T>> where T: OutputMode {}
+unsafe impl<T> MosiPin<SSI1> for PD3<AlternateFunction<AF2, T>> where T: OutputMode {}
 
 // SSI2
-unsafe impl<T> SckPin<SSI2> for PB4<AlternateFunction<AF2, T>> where T:OutputMode, {}
-unsafe impl<T> MisoPin<SSI2> for PB6<AlternateFunction<AF2, T>> where T:OutputMode, {}
-unsafe impl<T> MosiPin<SSI2> for PB7<AlternateFunction<AF2, T>> where T:OutputMode, {}
+unsafe impl<T> SckPin<SSI2> for PB4<AlternateFunction<AF2, T>> where T: OutputMode {}
+unsafe impl<T> MisoPin<SSI2> for PB6<AlternateFunction<AF2, T>> where T: OutputMode {}
+unsafe impl<T> MosiPin<SSI2> for PB7<AlternateFunction<AF2, T>> where T: OutputMode {}
 
 // SSI3
-unsafe impl<T> SckPin<SSI3> for PD0<AlternateFunction<AF1, T>> where T:OutputMode, {}
-unsafe impl<T> MisoPin<SSI3> for PD2<AlternateFunction<AF1, T>> where T:OutputMode, {}
-unsafe impl<T> MosiPin<SSI3> for PD3<AlternateFunction<AF1, T>> where T:OutputMode, {}
+unsafe impl<T> SckPin<SSI3> for PD0<AlternateFunction<AF1, T>> where T: OutputMode {}
+unsafe impl<T> MisoPin<SSI3> for PD2<AlternateFunction<AF1, T>> where T: OutputMode {}
+unsafe impl<T> MosiPin<SSI3> for PD3<AlternateFunction<AF1, T>> where T: OutputMode {}
 
 /// SPI peripheral operating in full duplex master mode
 pub struct Spi<SPI, PINS> {
@@ -64,7 +65,7 @@ macro_rules! busy_wait {
                 break;
             }
         }
-    }
+    };
 }
 
 macro_rules! hal {
@@ -174,9 +175,9 @@ macro_rules! hal {
                 }
             }
 
-            impl<PINS> ::hal::blocking::spi::transfer::Default<u8> for Spi<$SPIX, PINS> {}
+            impl<PINS> crate::hal::blocking::spi::transfer::Default<u8> for Spi<$SPIX, PINS> {}
 
-            impl<PINS> ::hal::blocking::spi::write::Default<u8> for Spi<$SPIX, PINS> {}
+            impl<PINS> crate::hal::blocking::spi::write::Default<u8> for Spi<$SPIX, PINS> {}
         )+
     }
 }

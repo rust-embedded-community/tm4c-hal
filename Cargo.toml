@@ -11,7 +11,7 @@ keywords = ["arm", "cortex-m", "tm4c", "lm4f120", "hal"]
 categories = ["embedded", "hardware-support", "no-std"]
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/thejpster/tm4c123x-hal"
-# edition = "2018"
+edition = "2018"
 
 [dependencies.cast]
 version = "0.2.2"
