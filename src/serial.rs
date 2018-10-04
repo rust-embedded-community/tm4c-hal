@@ -7,6 +7,7 @@ use hal::prelude::*;
 use hal::serial;
 use nb;
 pub use tm4c123x::{UART0, UART1, UART2, UART3, UART4, UART5, UART6, UART7};
+use void::Void;
 
 use gpio::{gpioa, gpiob, gpioc, gpiod, gpioe, gpiof};
 use gpio::{AF1, AF2, AF8, AlternateFunction, OutputMode};
@@ -291,7 +292,7 @@ macro_rules! hal {
                     I: AsRef<[u8]>,
                 {
                     for octet in data.as_ref().iter() {
-                        block!(self.write(*octet)).unwrap();
+                        block!(self.write(*octet)).unwrap(); // E = Void
                     }
                 }
 
@@ -322,13 +323,13 @@ macro_rules! hal {
                     I: AsRef<[u8]>,
                 {
                     for octet in data.as_ref().iter() {
-                        block!(self.write(*octet)).unwrap();
+                        block!(self.write(*octet)).unwrap(); // E = Void
                     }
                 }
             }
 
             impl<TX, RX, RTS, CTS> serial::Read<u8> for Serial<$UARTX, TX, RX, RTS, CTS> {
-                type Error = !;
+                type Error = Void;
 
                 fn read(&mut self) -> nb::Result<u8, Self::Error> {
                     if self.uart.fr.read().rxfe().bit() {
@@ -339,7 +340,7 @@ macro_rules! hal {
             }
 
             impl<RX, CTS> serial::Read<u8> for Rx<$UARTX, RX, CTS> {
-                type Error = !;
+                type Error = Void;
 
                 fn read(&mut self) -> nb::Result<u8, Self::Error> {
                     // We're only doing RX operations here so this is safe.
@@ -352,16 +353,16 @@ macro_rules! hal {
             }
 
             impl<TX, RX, RTS, CTS> serial::Write<u8> for Serial<$UARTX, TX, RX, RTS, CTS> {
-                type Error = !;
+                type Error = Void;
 
-                fn flush(&mut self) -> nb::Result<(), !> {
+                fn flush(&mut self) -> nb::Result<(), Void> {
                     if self.uart.fr.read().txff().bit() {
                         return Err(nb::Error::WouldBlock);
                     }
                     Ok(())
                 }
 
-                fn write(&mut self, byte: u8) -> nb::Result<(), !> {
+                fn write(&mut self, byte: u8) -> nb::Result<(), Void> {
                     if self.uart.fr.read().txff().bit() {
                         return Err(nb::Error::WouldBlock);
                     }
@@ -371,16 +372,16 @@ macro_rules! hal {
             }
 
             impl<TX, RTS> serial::Write<u8> for Tx<$UARTX, TX, RTS> {
-                type Error = !;
+                type Error = Void;
 
-                fn flush(&mut self) -> nb::Result<(), !> {
+                fn flush(&mut self) -> nb::Result<(), Void> {
                     if self.uart.fr.read().txff().bit() {
                         return Err(nb::Error::WouldBlock);
                     }
                     Ok(())
                 }
 
-                fn write(&mut self, byte: u8) -> nb::Result<(), !> {
+                fn write(&mut self, byte: u8) -> nb::Result<(), Void> {
                     if self.uart.fr.read().txff().bit() {
                         return Err(nb::Error::WouldBlock);
                     }
@@ -398,9 +399,9 @@ macro_rules! hal {
                             for byte in s.bytes() {
                                 if byte == 0x0A {
                                     // Prefix every \n with a \r
-                                    block!(self.write(0x0D))?;
+                                    block!(self.write(0x0D)).unwrap(); // E = Void
                                 }
-                                block!(self.write(byte))?;
+                                block!(self.write(byte)).unwrap(); // E = Void
                             }
                         }
                     }
@@ -417,9 +418,9 @@ macro_rules! hal {
                             for byte in s.bytes() {
                                 if byte == 0x0A {
                                     // Prefix every \n with a \r
-                                    block!(self.write(0x0D))?;
+                                    block!(self.write(0x0D)).unwrap(); // E = Void
                                 }
-                                block!(self.write(byte))?;
+                                block!(self.write(byte)).unwrap(); // E = Void
                             }
                         }
                     }

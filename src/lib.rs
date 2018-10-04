@@ -21,8 +21,6 @@
 
 #![deny(missing_docs)]
 #![deny(warnings)]
-#![feature(asm)]
-#![feature(never_type)]
 #![no_std]
 
 extern crate cast;
@@ -30,6 +28,7 @@ extern crate cortex_m;
 extern crate embedded_hal as hal;
 #[macro_use]
 extern crate nb;
+extern crate void;
 pub extern crate tm4c123x;
 
 pub mod delay;
