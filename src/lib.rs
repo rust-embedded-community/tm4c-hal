@@ -35,4 +35,4 @@ pub mod time;
 
 use embedded_hal as hal;
 pub use tm4c123x;
-pub use tm4c123x::*;
+pub use tm4c123x::{Peripherals, CorePeripherals};
