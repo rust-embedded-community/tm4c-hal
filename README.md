@@ -1,10 +1,10 @@
-# `tm4c123x-hal`
+# `tm4c129x-hal`
 
-> HAL for the TM4C123x (and compatible LM4F120x) family of microcontrollers
+> HAL for the TM4C129x family of microcontrollers
 
 [`embedded-hal`]: https://crates.io/crates/embedded-hal
 
-## [Documentation](https://docs.rs/tm4c123x-hal)
+## [Documentation](https://docs.rs/tm4c129x-hal)
 
 ## License
 

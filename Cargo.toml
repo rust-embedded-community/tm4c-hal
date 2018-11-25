@@ -1,16 +1,17 @@
 [package]
-name = "tm4c123x-hal"
+name = "tm4c129x-hal"
 version = "0.6.1"
 authors = [
 	"Jorge Aparicio <jorge@japaric.io>",
 	"Jonathan 'theJPster' Pallant <github@thejpster.org.uk>",
 	"Marc Poulhiès <dkm@kataplop.net>",
+    "David Wood <code@dtwood.co.uk>",
 ]
-description = "HAL for the TM4C123x family of microcontrollers"
-keywords = ["arm", "cortex-m", "tm4c", "lm4f120", "hal"]
+description = "HAL for the TM4C129x family of microcontrollers"
+keywords = ["arm", "cortex-m", "tm4c", "hal"]
 categories = ["embedded", "hardware-support", "no-std"]
 license = "MIT OR Apache-2.0"
-repository = "https://github.com/thejpster/tm4c123x-hal"
+repository = "https://github.com/dtwood/tm4c129x-hal"
 edition = "2018"
 
 [dependencies.cast]
@@ -27,13 +28,12 @@ features = ["unproven"]
 [dependencies.nb]
 version = "0.1"
 
-[dependencies.tm4c123x]
+[dependencies.tm4c129x]
 version = "0.7"
-# path = "../dslite2svd/crates/tm4c123x"
 
 [dependencies.void]
 version = "1.0"
 default-features = false
 
 [features]
-rt = ["tm4c123x/rt"]
+rt = ["tm4c129x/rt"]

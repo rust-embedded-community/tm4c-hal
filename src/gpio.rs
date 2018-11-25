@@ -18,24 +18,26 @@
 //! Here's an example:
 //!
 //! ```
-//! # use tm4c123x_hal::*;
-//! # use tm4c123x_hal::sysctl::SysctlExt;
-//! # use tm4c123x_hal::gpio::GpioExt;
+//! # use tm4c129x_hal::*;
+//! # use tm4c129x_hal::sysctl::SysctlExt;
+//! # use tm4c129x_hal::gpio::GpioExt;
 //! # fn foo() {
 //! let p = Peripherals::take().unwrap();
 //! let mut sc = p.SYSCTL.constrain();
 //! let mut portb = p.GPIO_PORTB.split(&sc.power_control);
 //! let timer_output_pin = portb.pb0.into_af_push_pull::<gpio::AF7>(&mut portb.control);
-//! let uart_tx_pin = portb.pb1.into_af_open_drain::<gpio::AF1, gpio::PullUp>(&mut portb.control);
+//! let uart_tx_pin = portb
+//!     .pb1
+//!     .into_af_open_drain::<gpio::AF1, gpio::PullUp>(&mut portb.control);
 //! let blue_led = portb.pb2.into_push_pull_output();
 //! let button = portb.pb3.into_pull_up_input();
 //! # }
 //! ```
 
-use core::marker::PhantomData;
 use crate::bb;
 use crate::hal::digital::{InputPin, OutputPin, StatefulOutputPin};
 use crate::sysctl;
+use core::marker::PhantomData;
 
 /// Extension trait to split a GPIO peripheral in independent pins and registers
 pub trait GpioExt {
@@ -126,13 +128,16 @@ impl<AF, MODE> IsUnlocked for AlternateFunction<AF, MODE>
 where
     AF: AlternateFunctionChoice,
     MODE: OutputMode,
-{}
+{
+}
 
-/// Sub-mode of Output/AlternateFunction: Push pull output (type state for Output)
+/// Sub-mode of Output/AlternateFunction: Push pull output (type state for
+/// Output)
 pub struct PushPull;
 impl OutputMode for PushPull {}
 
-/// Sub-mode of Output/AlternateFunction: Open drain output (type state for Output)
+/// Sub-mode of Output/AlternateFunction: Open drain output (type state for
+/// Output)
 pub struct OpenDrain<ODM>
 where
     ODM: OpenDrainMode,
@@ -249,7 +254,7 @@ macro_rules! gpio {
         /// GPIO
         pub mod $gpiox {
             use super::*;
-            use tm4c123x::$GPIOX;
+            use tm4c129x::$GPIOX;
 
             /// Provides mutual-exclusion for certain GPIO operations (such as
             /// selecting an alternate mode) that can't be done atomically.
@@ -693,7 +698,7 @@ macro_rules! gpio {
     }
 }
 
-gpio!(GPIO_PORTA, gpioa, GpioA, PAx, [
+gpio!(GPIO_PORTA_AHB, gpioa, GpioA, PAx, [
     PA0: (pa0, 0, Tristate),
     PA1: (pa1, 1, Tristate),
     PA2: (pa2, 2, Tristate),
@@ -704,18 +709,18 @@ gpio!(GPIO_PORTA, gpioa, GpioA, PAx, [
     PA7: (pa7, 7, Tristate),
 ]);
 
-gpio!(GPIO_PORTB, gpiob, GpioB, PBx, [
+gpio!(GPIO_PORTB_AHB, gpiob, GpioB, PBx, [
     PB0: (pb0, 0, Tristate),
     PB1: (pb1, 1, Tristate),
     PB2: (pb2, 2, Tristate),
     PB3: (pb3, 3, Tristate),
     PB4: (pb4, 4, Tristate),
     PB5: (pb5, 5, Tristate),
-    PB6: (pb6, 6, Tristate),
-    PB7: (pb7, 7, Tristate),
+    // PB6: (pb6, 6, Tristate),
+    // PB7: (pb7, 7, Tristate),
 ]);
 
-gpio!(GPIO_PORTC, gpioc, GpioC, PCx, [
+gpio!(GPIO_PORTC_AHB, gpioc, GpioC, PCx, [
     PC0: (pc0, 0, Locked), // JTAG/SWD pin
     PC1: (pc1, 1, Locked), // JTAG/SWD pin
     PC2: (pc2, 2, Locked), // JTAG/SWD pin
@@ -726,7 +731,7 @@ gpio!(GPIO_PORTC, gpioc, GpioC, PCx, [
     PC7: (pc7, 7, Tristate),
 ]);
 
-gpio!(GPIO_PORTD, gpiod, GpioD, PDx, [
+gpio!(GPIO_PORTD_AHB, gpiod, GpioD, PDx, [
     PD0: (pd0, 0, Tristate),
     PD1: (pd1, 1, Tristate),
     PD2: (pd2, 2, Tristate),
@@ -734,27 +739,126 @@ gpio!(GPIO_PORTD, gpiod, GpioD, PDx, [
     PD4: (pd4, 4, Tristate),
     PD5: (pd5, 5, Tristate),
     PD6: (pd6, 6, Tristate),
-    PD7: (pd7, 7, Locked), // NMI pin
+    PD7: (pd7, 7, Locked), // GPIO pin
 ]);
 
-gpio!(GPIO_PORTE, gpioe, GpioE, PEx, [
+gpio!(GPIO_PORTE_AHB, gpioe, GpioE, PEx, [
     PE0: (pe0, 0, Tristate),
     PE1: (pe1, 1, Tristate),
     PE2: (pe2, 2, Tristate),
     PE3: (pe3, 3, Tristate),
     PE4: (pe4, 4, Tristate),
     PE5: (pe5, 5, Tristate),
-    PE6: (pe6, 6, Tristate),
-    PE7: (pe7, 7, Tristate),
+    // PE6: (pe6, 6, Tristate),
+    // PE7: (pe7, 7, Locked), // GPIO pin
 ]);
 
-gpio!(GPIO_PORTF, gpiof, GpioF, PFx, [
-    PF0: (pf0, 0, Locked), // NMI pin
+gpio!(GPIO_PORTF_AHB, gpiof, GpioF, PFx, [
+    PF0: (pf0, 0, Tristate),
     PF1: (pf1, 1, Tristate),
     PF2: (pf2, 2, Tristate),
     PF3: (pf3, 3, Tristate),
     PF4: (pf4, 4, Tristate),
-    PF5: (pf5, 5, Tristate),
-    PF6: (pf6, 6, Tristate),
-    PF7: (pf7, 7, Tristate),
+    // PF5: (pf5, 5, Tristate),
+    // PF6: (pf6, 6, Tristate),
+    // PF7: (pf7, 7, Tristate),
+]);
+
+gpio!(GPIO_PORTG_AHB, gpiog, GpioG, PGx, [
+    PG0: (pg0, 0, Tristate),
+    PG1: (pg1, 1, Tristate),
+    // PG2: (pg2, 2, Tristate),
+    // PG3: (pg3, 3, Tristate),
+    // PG4: (pg4, 4, Tristate),
+    // PG5: (pg5, 5, Tristate),
+    // PG6: (pg6, 6, Tristate),
+    // PG7: (pg7, 7, Tristate),
+]);
+
+gpio!(GPIO_PORTH_AHB, gpioh, GpioH, PHx, [
+    PH0: (ph0, 0, Tristate),
+    PH1: (ph1, 1, Tristate),
+    PH2: (ph2, 2, Tristate),
+    PH3: (ph3, 3, Tristate),
+    // PH4: (ph4, 4, Tristate),
+    // PH5: (ph5, 5, Tristate),
+    // PH6: (ph6, 6, Tristate),
+    // PH7: (ph7, 7, Tristate),
+]);
+
+gpio!(GPIO_PORTJ_AHB, gpioj, GpioJ, PJx, [
+    PJ0: (pj0, 0, Tristate),
+    PJ1: (pj1, 1, Tristate),
+    // PJ2: (pj2, 2, Tristate),
+    // PJ3: (pj3, 3, Tristate),
+    // PJ4: (pj4, 4, Tristate),
+    // PJ5: (pj5, 5, Tristate),
+    // PJ6: (pj6, 6, Tristate),
+    // PJ7: (pj7, 7, Tristate),
+]);
+
+gpio!(GPIO_PORTK, gpiok, GpioK, PKx, [
+    PK0: (pk0, 0, Tristate),
+    PK1: (pk1, 1, Tristate),
+    PK2: (pk2, 2, Tristate),
+    PK3: (pk3, 3, Tristate),
+    PK4: (pk4, 4, Tristate),
+    PK5: (pk5, 5, Tristate),
+    PK6: (pk6, 6, Tristate),
+    PK7: (pk7, 7, Tristate),
+]);
+
+gpio!(GPIO_PORTL, gpiol, GpioL, PNL, [
+    PL0: (pl0, 0, Tristate),
+    PL1: (pl1, 1, Tristate),
+    PL2: (pl2, 2, Tristate),
+    PL3: (pl3, 3, Tristate),
+    PL4: (pl4, 4, Tristate),
+    PL5: (pl5, 5, Tristate),
+    PL6: (pl6, 6, Tristate),
+    PL7: (pl7, 7, Tristate),
+]);
+
+gpio!(GPIO_PORTM, gpiom, GpioM, PMx, [
+    PM0: (pm0, 0, Tristate),
+    PM1: (pm1, 1, Tristate),
+    PM2: (pm2, 2, Tristate),
+    PM3: (pm3, 3, Tristate),
+    PM4: (pm4, 4, Tristate),
+    PM5: (pm5, 5, Tristate),
+    PM6: (pm6, 6, Tristate),
+    PM7: (pm7, 7, Tristate),
+]);
+
+gpio!(GPIO_PORTN, gpion, GpioN, PNx, [
+    PN0: (pn0, 0, Tristate),
+    PN1: (pn1, 1, Tristate),
+    PN2: (pn2, 2, Tristate),
+    PN3: (pn3, 3, Tristate),
+    PN4: (pn4, 4, Tristate),
+    PN5: (pn5, 5, Tristate),
+    PN6: (pn6, 6, Tristate),
+    PN7: (pn7, 7, Tristate),
+]);
+
+gpio!(GPIO_PORTP, gpiop, GpioP, PPx, [
+    PP0: (pp0, 0, Tristate),
+    PP1: (pp1, 1, Tristate),
+    PP2: (pp2, 2, Tristate),
+    PP3: (pp3, 3, Tristate),
+    PP4: (pp4, 4, Tristate),
+    PP5: (pp5, 5, Tristate),
+    // PP6: (pp6, 6, Tristate),
+    // PP7: (pp7, 7, Tristate),
+]);
+
+gpio!(GPIO_PORTQ, gpioq, GpioQ, PQx, [
+    PQ0: (pq0, 0, Tristate),
+    PQ1: (pq1, 1, Tristate),
+    PQ2: (pq2, 2, Tristate),
+    PQ3: (pq3, 3, Tristate),
+    PQ4: (pq4, 4, Tristate),
+    // PQ5: (pq5, 5, Tristate),
+    // PQ6: (pq6, 6, Tristate),
+    // PQ7: (pq7, 7, Tristate),
 ]);

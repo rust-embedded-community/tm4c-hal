@@ -21,10 +21,10 @@
 //!
 //! See the LM4F120 datasheet, page 228 for a full list.
 
-use cortex_m::asm::nop;
 use crate::bb;
 use crate::time::{Hertz, U32Ext};
-use tm4c123x;
+use cortex_m::asm::nop;
+use tm4c129x;
 
 /// Constrained SYSCTL peripheral.
 pub struct Sysctl {
@@ -51,14 +51,13 @@ pub struct ClockSetup {
 /// Selects the system oscillator source
 #[derive(Clone, Copy)]
 pub enum Oscillator {
-    /// Use the main oscillator (with the given crystal), into the PLL or a clock divider
+    /// Use the main oscillator (with the given crystal), into the PLL or a
+    /// clock divider
     Main(CrystalFrequency, SystemClock),
-    /// Use the 16 MHz precision internal oscillator, into the PLL or a clock divider
+    /// Use the 16 MHz precision internal oscillator, into the PLL or a clock
+    /// divider
     PrecisionInternal(SystemClock),
-    /// Use the 16 MHz precision internal oscillator, divided down to 4 MHz
-    /// and then divided down again by the given value.
-    PrecisionInternalDiv4(Divider),
-    /// Use the 30 kHz internal oscillator, divided by the given value.
+    /// Use the 33 kHz internal oscillator, divided by the given value.
     LowFrequencyInternal(Divider),
 }
 
@@ -193,7 +192,8 @@ pub enum Divider {
 
 /// Frozen clock frequencies
 ///
-/// The existence of this value indicates that the clock configuration can no longer be changed
+/// The existence of this value indicates that the clock configuration can no
+/// longer be changed
 #[derive(Clone, Copy)]
 pub struct Clocks {
     /// System oscillator clock speed
@@ -221,7 +221,25 @@ pub enum Domain {
     Timer1,
     /// 32/16-bit Timer 0
     Timer0,
-    /// GPIO F
+    /// Gpio Q
+    GpioQ,
+    /// Gpio P
+    GpioP,
+    /// Gpio N
+    GpioN,
+    /// Gpio M
+    GpioM,
+    /// Gpio L
+    GpioL,
+    /// Gpio K
+    GpioK,
+    /// Gpio J
+    GpioJ,
+    /// Gpio H
+    GpioH,
+    /// Gpio G
+    GpioG,
+    /// Gpio F
     GpioF,
     /// GPIO E
     GpioE,
@@ -281,18 +299,6 @@ pub enum Domain {
     AnalogComparator,
     /// EEPROM
     Eeprom,
-    /// 64/32-bit Timer 5
-    WideTimer5,
-    /// 64/32-bit Timer 4
-    WideTimer4,
-    /// 64/32-bit Timer 3
-    WideTimer3,
-    /// 64/32-bit Timer 2
-    WideTimer2,
-    /// 64/32-bit Timer 1
-    WideTimer1,
-    /// 64/32-bit Timer 0
-    WideTimer0,
     /// PWM0
     Pwm0,
     /// PWM1
@@ -322,7 +328,7 @@ pub enum PowerState {
 /// Reset a peripheral
 pub fn reset(_lock: &PowerControl, pd: Domain) {
     // We use bit-banding to make an atomic write, so this is safe
-    let p = unsafe { &*tm4c123x::SYSCTL::ptr() };
+    let p = unsafe { &*tm4c129x::SYSCTL::ptr() };
     match pd {
         Domain::Watchdog1 => unsafe {
             bb::toggle_bit(&p.srwd, 1);
@@ -355,6 +361,42 @@ pub fn reset(_lock: &PowerControl, pd: Domain) {
         Domain::Timer0 => unsafe {
             bb::toggle_bit(&p.srtimer, 0);
             bb::spin_bit(&p.prtimer, 0);
+        },
+        Domain::GpioQ => unsafe {
+            bb::toggle_bit(&p.srgpio, 14);
+            bb::spin_bit(&p.prgpio, 14);
+        },
+        Domain::GpioP => unsafe {
+            bb::toggle_bit(&p.srgpio, 13);
+            bb::spin_bit(&p.prgpio, 13);
+        },
+        Domain::GpioN => unsafe {
+            bb::toggle_bit(&p.srgpio, 12);
+            bb::spin_bit(&p.prgpio, 12);
+        },
+        Domain::GpioM => unsafe {
+            bb::toggle_bit(&p.srgpio, 11);
+            bb::spin_bit(&p.prgpio, 11);
+        },
+        Domain::GpioL => unsafe {
+            bb::toggle_bit(&p.srgpio, 10);
+            bb::spin_bit(&p.prgpio, 10);
+        },
+        Domain::GpioK => unsafe {
+            bb::toggle_bit(&p.srgpio, 9);
+            bb::spin_bit(&p.prgpio, 9);
+        },
+        Domain::GpioJ => unsafe {
+            bb::toggle_bit(&p.srgpio, 8);
+            bb::spin_bit(&p.prgpio, 8);
+        },
+        Domain::GpioH => unsafe {
+            bb::toggle_bit(&p.srgpio, 7);
+            bb::spin_bit(&p.prgpio, 7);
+        },
+        Domain::GpioG => unsafe {
+            bb::toggle_bit(&p.srgpio, 6);
+            bb::spin_bit(&p.prgpio, 6);
         },
         Domain::GpioF => unsafe {
             bb::toggle_bit(&p.srgpio, 5);
@@ -476,30 +518,6 @@ pub fn reset(_lock: &PowerControl, pd: Domain) {
             bb::toggle_bit(&p.sreeprom, 0);
             bb::spin_bit(&p.preeprom, 0);
         },
-        Domain::WideTimer5 => unsafe {
-            bb::toggle_bit(&p.srwtimer, 5);
-            bb::spin_bit(&p.prwtimer, 5);
-        },
-        Domain::WideTimer4 => unsafe {
-            bb::toggle_bit(&p.srwtimer, 4);
-            bb::spin_bit(&p.prwtimer, 4);
-        },
-        Domain::WideTimer3 => unsafe {
-            bb::toggle_bit(&p.srwtimer, 3);
-            bb::spin_bit(&p.prwtimer, 3);
-        },
-        Domain::WideTimer2 => unsafe {
-            bb::toggle_bit(&p.srwtimer, 2);
-            bb::spin_bit(&p.prwtimer, 2);
-        },
-        Domain::WideTimer1 => unsafe {
-            bb::toggle_bit(&p.srwtimer, 1);
-            bb::spin_bit(&p.prwtimer, 1);
-        },
-        Domain::WideTimer0 => unsafe {
-            bb::toggle_bit(&p.srwtimer, 0);
-            bb::spin_bit(&p.prwtimer, 0);
-        },
         Domain::Pwm0 => unsafe {
             bb::toggle_bit(&p.srpwm, 0);
             bb::spin_bit(&p.prpwm, 0);
@@ -537,7 +555,7 @@ pub fn control_power(_lock: &PowerControl, pd: Domain, run_mode: RunMode, state:
 
 fn control_run_power(pd: Domain, on: bool) {
     // We use bit-banding to make an atomic write, so this is safe
-    let p = unsafe { &*tm4c123x::SYSCTL::ptr() };
+    let p = unsafe { &*tm4c129x::SYSCTL::ptr() };
     match pd {
         Domain::Watchdog1 => unsafe { bb::change_bit(&p.rcgcwd, 1, on) },
         Domain::Watchdog0 => unsafe { bb::change_bit(&p.rcgcwd, 0, on) },
@@ -547,6 +565,15 @@ fn control_run_power(pd: Domain, on: bool) {
         Domain::Timer2 => unsafe { bb::change_bit(&p.rcgctimer, 2, on) },
         Domain::Timer1 => unsafe { bb::change_bit(&p.rcgctimer, 1, on) },
         Domain::Timer0 => unsafe { bb::change_bit(&p.rcgctimer, 0, on) },
+        Domain::GpioQ => unsafe { bb::change_bit(&p.rcgcgpio, 14, on) },
+        Domain::GpioP => unsafe { bb::change_bit(&p.rcgcgpio, 13, on) },
+        Domain::GpioN => unsafe { bb::change_bit(&p.rcgcgpio, 12, on) },
+        Domain::GpioM => unsafe { bb::change_bit(&p.rcgcgpio, 11, on) },
+        Domain::GpioL => unsafe { bb::change_bit(&p.rcgcgpio, 10, on) },
+        Domain::GpioK => unsafe { bb::change_bit(&p.rcgcgpio, 9, on) },
+        Domain::GpioJ => unsafe { bb::change_bit(&p.rcgcgpio, 8, on) },
+        Domain::GpioH => unsafe { bb::change_bit(&p.rcgcgpio, 7, on) },
+        Domain::GpioG => unsafe { bb::change_bit(&p.rcgcgpio, 6, on) },
         Domain::GpioF => unsafe { bb::change_bit(&p.rcgcgpio, 5, on) },
         Domain::GpioE => unsafe { bb::change_bit(&p.rcgcgpio, 4, on) },
         Domain::GpioD => unsafe { bb::change_bit(&p.rcgcgpio, 3, on) },
@@ -577,12 +604,6 @@ fn control_run_power(pd: Domain, on: bool) {
         Domain::Adc0 => unsafe { bb::change_bit(&p.rcgcadc, 0, on) },
         Domain::AnalogComparator => unsafe { bb::change_bit(&p.rcgcacmp, 0, on) },
         Domain::Eeprom => unsafe { bb::change_bit(&p.rcgceeprom, 0, on) },
-        Domain::WideTimer5 => unsafe { bb::change_bit(&p.rcgcwtimer, 5, on) },
-        Domain::WideTimer4 => unsafe { bb::change_bit(&p.rcgcwtimer, 4, on) },
-        Domain::WideTimer3 => unsafe { bb::change_bit(&p.rcgcwtimer, 3, on) },
-        Domain::WideTimer2 => unsafe { bb::change_bit(&p.rcgcwtimer, 2, on) },
-        Domain::WideTimer1 => unsafe { bb::change_bit(&p.rcgcwtimer, 1, on) },
-        Domain::WideTimer0 => unsafe { bb::change_bit(&p.rcgcwtimer, 0, on) },
         Domain::Pwm0 => unsafe { bb::change_bit(&p.rcgcpwm, 0, on) },
         Domain::Pwm1 => unsafe { bb::change_bit(&p.rcgcpwm, 1, on) },
     }
@@ -590,7 +611,7 @@ fn control_run_power(pd: Domain, on: bool) {
 
 fn control_sleep_power(pd: Domain, on: bool) {
     // We use bit-banding to make an atomic write, so this is safe
-    let p = unsafe { &*tm4c123x::SYSCTL::ptr() };
+    let p = unsafe { &*tm4c129x::SYSCTL::ptr() };
     match pd {
         Domain::Watchdog1 => unsafe { bb::change_bit(&p.scgcwd, 1, on) },
         Domain::Watchdog0 => unsafe { bb::change_bit(&p.scgcwd, 0, on) },
@@ -600,6 +621,15 @@ fn control_sleep_power(pd: Domain, on: bool) {
         Domain::Timer2 => unsafe { bb::change_bit(&p.scgctimer, 2, on) },
         Domain::Timer1 => unsafe { bb::change_bit(&p.scgctimer, 1, on) },
         Domain::Timer0 => unsafe { bb::change_bit(&p.scgctimer, 0, on) },
+        Domain::GpioQ => unsafe { bb::change_bit(&p.scgcgpio, 14, on) },
+        Domain::GpioP => unsafe { bb::change_bit(&p.scgcgpio, 13, on) },
+        Domain::GpioN => unsafe { bb::change_bit(&p.scgcgpio, 12, on) },
+        Domain::GpioM => unsafe { bb::change_bit(&p.scgcgpio, 11, on) },
+        Domain::GpioL => unsafe { bb::change_bit(&p.scgcgpio, 10, on) },
+        Domain::GpioK => unsafe { bb::change_bit(&p.scgcgpio, 9, on) },
+        Domain::GpioJ => unsafe { bb::change_bit(&p.scgcgpio, 8, on) },
+        Domain::GpioH => unsafe { bb::change_bit(&p.scgcgpio, 7, on) },
+        Domain::GpioG => unsafe { bb::change_bit(&p.scgcgpio, 6, on) },
         Domain::GpioF => unsafe { bb::change_bit(&p.scgcgpio, 5, on) },
         Domain::GpioE => unsafe { bb::change_bit(&p.scgcgpio, 4, on) },
         Domain::GpioD => unsafe { bb::change_bit(&p.scgcgpio, 3, on) },
@@ -630,12 +660,6 @@ fn control_sleep_power(pd: Domain, on: bool) {
         Domain::Adc0 => unsafe { bb::change_bit(&p.scgcadc, 0, on) },
         Domain::AnalogComparator => unsafe { bb::change_bit(&p.scgcacmp, 0, on) },
         Domain::Eeprom => unsafe { bb::change_bit(&p.scgceeprom, 0, on) },
-        Domain::WideTimer5 => unsafe { bb::change_bit(&p.scgcwtimer, 5, on) },
-        Domain::WideTimer4 => unsafe { bb::change_bit(&p.scgcwtimer, 4, on) },
-        Domain::WideTimer3 => unsafe { bb::change_bit(&p.scgcwtimer, 3, on) },
-        Domain::WideTimer2 => unsafe { bb::change_bit(&p.scgcwtimer, 2, on) },
-        Domain::WideTimer1 => unsafe { bb::change_bit(&p.scgcwtimer, 1, on) },
-        Domain::WideTimer0 => unsafe { bb::change_bit(&p.scgcwtimer, 0, on) },
         Domain::Pwm0 => unsafe { bb::change_bit(&p.scgcpwm, 0, on) },
         Domain::Pwm1 => unsafe { bb::change_bit(&p.scgcpwm, 1, on) },
     }
@@ -643,7 +667,7 @@ fn control_sleep_power(pd: Domain, on: bool) {
 
 fn control_deep_sleep_power(pd: Domain, on: bool) {
     // We use bit-banding to make an atomic write, so this is safe
-    let p = unsafe { &*tm4c123x::SYSCTL::ptr() };
+    let p = unsafe { &*tm4c129x::SYSCTL::ptr() };
     match pd {
         Domain::Watchdog1 => unsafe { bb::change_bit(&p.dcgcwd, 1, on) },
         Domain::Watchdog0 => unsafe { bb::change_bit(&p.dcgcwd, 0, on) },
@@ -653,6 +677,15 @@ fn control_deep_sleep_power(pd: Domain, on: bool) {
         Domain::Timer2 => unsafe { bb::change_bit(&p.dcgctimer, 2, on) },
         Domain::Timer1 => unsafe { bb::change_bit(&p.dcgctimer, 1, on) },
         Domain::Timer0 => unsafe { bb::change_bit(&p.dcgctimer, 0, on) },
+        Domain::GpioQ => unsafe { bb::change_bit(&p.dcgcgpio, 14, on) },
+        Domain::GpioP => unsafe { bb::change_bit(&p.dcgcgpio, 13, on) },
+        Domain::GpioN => unsafe { bb::change_bit(&p.dcgcgpio, 12, on) },
+        Domain::GpioM => unsafe { bb::change_bit(&p.dcgcgpio, 11, on) },
+        Domain::GpioL => unsafe { bb::change_bit(&p.dcgcgpio, 10, on) },
+        Domain::GpioK => unsafe { bb::change_bit(&p.dcgcgpio, 9, on) },
+        Domain::GpioJ => unsafe { bb::change_bit(&p.dcgcgpio, 8, on) },
+        Domain::GpioH => unsafe { bb::change_bit(&p.dcgcgpio, 7, on) },
+        Domain::GpioG => unsafe { bb::change_bit(&p.dcgcgpio, 6, on) },
         Domain::GpioF => unsafe { bb::change_bit(&p.dcgcgpio, 5, on) },
         Domain::GpioE => unsafe { bb::change_bit(&p.dcgcgpio, 4, on) },
         Domain::GpioD => unsafe { bb::change_bit(&p.dcgcgpio, 3, on) },
@@ -683,12 +716,6 @@ fn control_deep_sleep_power(pd: Domain, on: bool) {
         Domain::Adc0 => unsafe { bb::change_bit(&p.dcgcadc, 0, on) },
         Domain::AnalogComparator => unsafe { bb::change_bit(&p.dcgcacmp, 0, on) },
         Domain::Eeprom => unsafe { bb::change_bit(&p.dcgceeprom, 0, on) },
-        Domain::WideTimer5 => unsafe { bb::change_bit(&p.dcgcwtimer, 5, on) },
-        Domain::WideTimer4 => unsafe { bb::change_bit(&p.dcgcwtimer, 4, on) },
-        Domain::WideTimer3 => unsafe { bb::change_bit(&p.dcgcwtimer, 3, on) },
-        Domain::WideTimer2 => unsafe { bb::change_bit(&p.dcgcwtimer, 2, on) },
-        Domain::WideTimer1 => unsafe { bb::change_bit(&p.dcgcwtimer, 1, on) },
-        Domain::WideTimer0 => unsafe { bb::change_bit(&p.dcgcwtimer, 0, on) },
         Domain::Pwm0 => unsafe { bb::change_bit(&p.dcgcpwm, 0, on) },
         Domain::Pwm1 => unsafe { bb::change_bit(&p.dcgcpwm, 1, on) },
     }
@@ -696,11 +723,12 @@ fn control_deep_sleep_power(pd: Domain, on: bool) {
 
 /// Extension trait that constrains the `SYSCTL` peripheral
 pub trait SysctlExt {
-    /// Constrains the `SYSCTL` peripheral so it plays nicely with the other abstractions
+    /// Constrains the `SYSCTL` peripheral so it plays nicely with the other
+    /// abstractions
     fn constrain(self) -> Sysctl;
 }
 
-impl SysctlExt for tm4c123x::SYSCTL {
+impl SysctlExt for tm4c129x::SYSCTL {
     fn constrain(self) -> Sysctl {
         Sysctl {
             power_control: PowerControl { _0: () },
@@ -717,236 +745,29 @@ impl ClockSetup {
     /// so that other modules can calibrate themselves (e.g. the UARTs).
     pub fn freeze(self) -> Clocks {
         // We own the SYSCTL at this point - no one else can be running.
-        let p = unsafe { &*tm4c123x::SYSCTL::ptr() };
+        let p = unsafe { &*tm4c129x::SYSCTL::ptr() };
 
-        let mut osc = 0u32;
-        let mut sysclk = 0u32;
+        let osc;
+        let sysclk;
 
         match self.oscillator {
-            Oscillator::Main(crystal_frequency, system_clock) => {
-                p.rcc.write(|w| {
-                    // BYPASS on
-                    w.bypass().set_bit();
-                    // OSCSRC = Main Oscillator
-                    w.oscsrc().main();
-                    // Main Oscillator not disabled
-                    w.moscdis().clear_bit();
-                    // SysDiv = 0x00
-                    unsafe {
-                        w.sysdiv().bits(0x00);
-                    }
-                    // Set crystal frequency
-                    osc = match crystal_frequency {
-                        CrystalFrequency::_4mhz => {
-                            w.xtal()._4mhz();
-                            4_000_000
-                        }
-                        CrystalFrequency::_4_09mhz => {
-                            w.xtal()._4_09mhz();
-                            4_090_000
-                        }
-                        CrystalFrequency::_4_91mhz => {
-                            w.xtal()._4_91mhz();
-                            4_910_000
-                        }
-                        CrystalFrequency::_5mhz => {
-                            w.xtal()._5mhz();
-                            5_000_000
-                        }
-                        CrystalFrequency::_5_12mhz => {
-                            w.xtal()._5_12mhz();
-                            5_120_000
-                        }
-                        CrystalFrequency::_6mhz => {
-                            w.xtal()._6mhz();
-                            6_000_000
-                        }
-                        CrystalFrequency::_6_14mhz => {
-                            w.xtal()._6_14mhz();
-                            6_140_000
-                        }
-                        CrystalFrequency::_7_37mhz => {
-                            w.xtal()._7_37mhz();
-                            7_370_000
-                        }
-                        CrystalFrequency::_8mhz => {
-                            w.xtal()._8mhz();
-                            8_000_000
-                        }
-                        CrystalFrequency::_8_19mhz => {
-                            w.xtal()._8_19mhz();
-                            8_190_000
-                        }
-                        CrystalFrequency::_10mhz => {
-                            w.xtal()._10mhz();
-                            10_000_000
-                        }
-                        CrystalFrequency::_12mhz => {
-                            w.xtal()._12mhz();
-                            12_000_000
-                        }
-                        CrystalFrequency::_12_2mhz => {
-                            w.xtal()._12_2mhz();
-                            12_200_000
-                        }
-                        CrystalFrequency::_13_5mhz => {
-                            w.xtal()._13_5mhz();
-                            13_500_000
-                        }
-                        CrystalFrequency::_14_3mhz => {
-                            w.xtal()._14_3mhz();
-                            14_300_000
-                        }
-                        CrystalFrequency::_16mhz => {
-                            w.xtal()._16mhz();
-                            16_000_000
-                        }
-                        CrystalFrequency::_16_3mhz => {
-                            w.xtal()._16_3mhz();
-                            16_300_000
-                        }
-                        CrystalFrequency::_18mhz => {
-                            w.xtal()._18mhz();
-                            18_000_000
-                        }
-                        CrystalFrequency::_20mhz => {
-                            w.xtal()._20mhz();
-                            20_000_000
-                        }
-                        CrystalFrequency::_24mhz => {
-                            w.xtal()._24mhz();
-                            24_000_000
-                        }
-                        CrystalFrequency::_25mhz => {
-                            w.xtal()._25mhz();
-                            25_000_000
-                        }
-                    };
-                    if let SystemClock::UseOscillator(div) = system_clock {
-                        w.usesysdiv().set_bit();
-                        unsafe {
-                            w.sysdiv().bits(div as u8);
-                        }
-                        sysclk = osc / (div as u32);
-                    } else {
-                        // Run 1:1 now, do PLL later
-                        w.usesysdiv().clear_bit();
-                        unsafe {
-                            w.sysdiv().bits(0);
-                        }
-                        sysclk = osc;
-                    }
-                    w
-                });
-            }
             // The default
-            Oscillator::PrecisionInternal(system_clock) => {
+            Oscillator::PrecisionInternal(SystemClock::UseOscillator(div)) => {
                 osc = 16_000_000;
-                p.rcc.write(|w| {
-                    // BYPASS on
-                    w.bypass().set_bit();
-                    // OSCSRC = Internal Oscillator
-                    w.oscsrc().int();
-                    // Main Oscillator disabled
-                    w.moscdis().set_bit();
-                    // SysDiv = ?
-                    if let SystemClock::UseOscillator(div) = system_clock {
-                        w.usesysdiv().set_bit();
-                        unsafe {
-                            w.sysdiv().bits(div as u8);
-                        }
-                        sysclk = osc / (div as u32);
-                    } else {
-                        // Run 1:1 now, do PLL later
-                        w.usesysdiv().clear_bit();
-                        unsafe {
-                            w.sysdiv().bits(0);
-                        }
-                        sysclk = osc;
-                    }
+                sysclk = osc / (div as u32);
+
+                p.rsclkcfg.write(|w| {
+                    w.usepll().clear_bit();
+                    w.oscsrc().piosc();
+
+                    w.osysdiv().bits(div as u16 - 1);
+
                     w
                 });
             }
-            Oscillator::PrecisionInternalDiv4(div) => {
-                osc = 4_000_000;
-                p.rcc.write(|w| {
-                    // BYPASS on
-                    w.bypass().set_bit();
-                    // OSCSRC = Internal Oscillator / 4
-                    w.oscsrc().int4();
-                    // Main Oscillator disabled
-                    w.moscdis().set_bit();
-                    w.usesysdiv().set_bit();
-                    unsafe {
-                        w.sysdiv().bits(div as u8);
-                    }
-                    sysclk = osc / (div as u32);
-                    w
-                });
-            }
-            Oscillator::LowFrequencyInternal(div) => {
-                osc = 30_000;
-                p.rcc.write(|w| {
-                    // BYPASS on
-                    w.bypass().set_bit();
-                    // OSCSRC = Low Frequency internal (30 kHz)
-                    w.oscsrc()._30();
-                    // Main Oscillator disabled
-                    w.moscdis().set_bit();
-                    w.usesysdiv().set_bit();
-                    unsafe {
-                        w.sysdiv().bits(div as u8);
-                    }
-                    sysclk = osc / (div as u32);
-                    w
-                });
-            }
-        }
-
-        match self.oscillator {
-            Oscillator::PrecisionInternal(SystemClock::UsePll(f))
-            | Oscillator::Main(_, SystemClock::UsePll(f)) => {
-                // Configure 400MHz PLL with divider f
-
-                // Set PLL bit in masked interrupt status to clear
-                // PLL lock status
-                p.misc.write(|w| w.plllmis().set_bit());
-
-                // Enable the PLL
-                p.rcc.modify(|_, w| w.pwrdn().clear_bit());
-
-                while p.pllstat.read().lock().bit_is_clear() {
-                    nop();
-                }
-
-                match f {
-                    // We need to use RCC2 for this one
-                    PllOutputFrequency::_80_00mhz => {
-                        p.rcc2.write(|w| {
-                            w.usercc2().set_bit();
-                            // Divide 400 MHz not 200 MHz
-                            w.div400().set_bit();
-                            // div=2 with lsb=0 gives divide by 5, so 400 MHz => 80 MHz
-                            w.sysdiv2lsb().clear_bit();
-                            unsafe { w.sysdiv2().bits(2) };
-                            w.bypass2().clear_bit();
-                            w
-                        });
-                        sysclk = 400_000_000u32 / 5;
-                    }
-                    _ => {
-                        // All the other frequencies can be done with legacy registers
-                        p.rcc.modify(|_, w| {
-                            unsafe { w.sysdiv().bits(f as u8) };
-                            w.usesysdiv().set_bit();
-                            w.bypass().clear_bit();
-                            w
-                        });
-                        sysclk = 400_000_000u32 / (2 * ((f as u32) + 1));
-                    }
-                }
-            }
-            _ => {}
+            Oscillator::Main(_crystal_frequency, _system_clock) => unimplemented!(),
+            Oscillator::PrecisionInternal(SystemClock::UsePll(_)) => unimplemented!(),
+            Oscillator::LowFrequencyInternal(_div) => unimplemented!(),
         }
 
         Clocks {
@@ -1020,7 +841,8 @@ pub mod chip_id {
         Industrial,
         /// It's a Extended temperature range part (-40°C - +105°C)
         Extended,
-        /// It's either Extended or Industrial depending on the exact part number
+        /// It's either Extended or Industrial depending on the exact part
+        /// number
         IndustrialOrExtended,
         /// I don't know what temperature range this is
         Unknown,
@@ -1089,9 +911,9 @@ pub mod chip_id {
     /// Read DID0 and DID1 to discover what sort of
     /// TM4C123/LM4F120 this is.
     pub fn get() -> Result<ChipId, Error> {
-        use tm4c123x;
+        use tm4c129x;
         // This is safe as it's read only
-        let p = unsafe { &*tm4c123x::SYSCTL::ptr() };
+        let p = unsafe { &*tm4c129x::SYSCTL::ptr() };
         let did0 = p.did0.read();
         if did0.ver().bits() != 0x01 {
             return Err(Error::UnknownDid0Ver(did0.ver().bits()));

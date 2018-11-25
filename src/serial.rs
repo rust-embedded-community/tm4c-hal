@@ -6,11 +6,11 @@ use core::marker::PhantomData;
 use crate::hal::prelude::*;
 use crate::hal::serial;
 use nb::{self, block};
-pub use tm4c123x::{UART0, UART1, UART2, UART3, UART4, UART5, UART6, UART7};
+pub use tm4c129x::{UART0, UART1, UART2, UART3, UART4, UART5, UART6, UART7};
 use void::Void;
 
-use crate::gpio::{gpioa, gpiob, gpioc, gpiod, gpioe, gpiof};
-use crate::gpio::{AlternateFunction, OutputMode, AF1, AF2, AF8};
+use crate::gpio::*;
+use crate::gpio::{AlternateFunction, OutputMode, AF1};
 use crate::sysctl;
 use crate::sysctl::Clocks;
 use crate::time::Bps;
@@ -22,86 +22,186 @@ pub unsafe trait TxPin<UART> {}
 /// RX pin - DO NOT IMPLEMENT THIS TRAIT
 pub unsafe trait RxPin<UART> {}
 
-/// RTS pin - DO NOT IMPLEMENT THIS TRAIT
-pub unsafe trait RtsPin<UART> {
-    /// Enables the RTS functionality if a valid pin is given (not `()`).
-    fn enable(&mut self, _uart: &mut UART) {}
-}
-
 /// CTS pin - DO NOT IMPLEMENT THIS TRAIT
 pub unsafe trait CtsPin<UART> {
     /// Enables the CTS functionality if a valid pin is given (not `()`).
-    fn enable(&mut self, _uart: &mut UART) {}
+    fn enable(&mut self, _uart: &mut UART);
 }
 
-unsafe impl CtsPin<UART0> for () {}
-unsafe impl RtsPin<UART0> for () {}
-unsafe impl CtsPin<UART1> for () {}
-unsafe impl RtsPin<UART1> for () {}
-unsafe impl CtsPin<UART2> for () {}
-unsafe impl RtsPin<UART2> for () {}
-unsafe impl CtsPin<UART3> for () {}
-unsafe impl RtsPin<UART3> for () {}
-unsafe impl CtsPin<UART4> for () {}
-unsafe impl RtsPin<UART4> for () {}
-unsafe impl CtsPin<UART5> for () {}
-unsafe impl RtsPin<UART5> for () {}
-unsafe impl CtsPin<UART6> for () {}
-unsafe impl RtsPin<UART6> for () {}
-unsafe impl CtsPin<UART7> for () {}
-unsafe impl RtsPin<UART7> for () {}
-
-unsafe impl<T> CtsPin<UART1> for gpiof::PF1<AlternateFunction<AF1, T>>
-where
-    T: OutputMode,
-{
-    fn enable(&mut self, uart: &mut UART1) {
-        uart.ctl.modify(|_, w| w.ctsen().set_bit());
-    }
-}
-unsafe impl<T> CtsPin<UART1> for gpioc::PC5<AlternateFunction<AF8, T>>
-where
-    T: OutputMode,
-{
-    fn enable(&mut self, uart: &mut UART1) {
-        uart.ctl.modify(|_, w| w.ctsen().set_bit());
-    }
-}
-unsafe impl<T> RtsPin<UART1> for gpioc::PC4<AlternateFunction<AF8, T>>
-where
-    T: OutputMode,
-{
-    fn enable(&mut self, uart: &mut UART1) {
-        uart.ctl.modify(|_, w| w.rtsen().set_bit());
-    }
-}
-unsafe impl<T> RtsPin<UART1> for gpiof::PF0<AlternateFunction<AF1, T>>
-where
-    T: OutputMode,
-{
-    fn enable(&mut self, uart: &mut UART1) {
-        uart.ctl.modify(|_, w| w.rtsen().set_bit());
-    }
+/// DCD pin - DO NOT IMPLEMENT THIS TRAIT
+pub unsafe trait DcdPin<UART> {
+    /// Enables the DCD functionality if a valid pin is given (not `()`).
+    fn enable(&mut self, _uart: &mut UART);
 }
 
-unsafe impl<T> RxPin<UART0> for gpioa::PA0<AlternateFunction<AF1, T>> where T: OutputMode {}
-unsafe impl<T> RxPin<UART1> for gpiob::PB0<AlternateFunction<AF1, T>> where T: OutputMode {}
-unsafe impl<T> RxPin<UART1> for gpioc::PC4<AlternateFunction<AF2, T>> where T: OutputMode {}
-unsafe impl<T> RxPin<UART2> for gpiod::PD6<AlternateFunction<AF1, T>> where T: OutputMode {}
-unsafe impl<T> RxPin<UART3> for gpioc::PC6<AlternateFunction<AF1, T>> where T: OutputMode {}
-unsafe impl<T> RxPin<UART4> for gpioc::PC4<AlternateFunction<AF1, T>> where T: OutputMode {}
-unsafe impl<T> RxPin<UART5> for gpioe::PE4<AlternateFunction<AF1, T>> where T: OutputMode {}
-unsafe impl<T> RxPin<UART6> for gpiod::PD4<AlternateFunction<AF1, T>> where T: OutputMode {}
-unsafe impl<T> RxPin<UART7> for gpioe::PE0<AlternateFunction<AF1, T>> where T: OutputMode {}
-unsafe impl<T> TxPin<UART0> for gpioa::PA1<AlternateFunction<AF1, T>> where T: OutputMode {}
-unsafe impl<T> TxPin<UART1> for gpiob::PB1<AlternateFunction<AF1, T>> where T: OutputMode {}
-unsafe impl<T> TxPin<UART1> for gpioc::PC5<AlternateFunction<AF2, T>> where T: OutputMode {}
-unsafe impl<T> TxPin<UART2> for gpiod::PD7<AlternateFunction<AF1, T>> where T: OutputMode {}
-unsafe impl<T> TxPin<UART3> for gpioc::PC7<AlternateFunction<AF1, T>> where T: OutputMode {}
-unsafe impl<T> TxPin<UART4> for gpioc::PC5<AlternateFunction<AF1, T>> where T: OutputMode {}
-unsafe impl<T> TxPin<UART5> for gpioe::PE5<AlternateFunction<AF1, T>> where T: OutputMode {}
-unsafe impl<T> TxPin<UART6> for gpiod::PD5<AlternateFunction<AF1, T>> where T: OutputMode {}
-unsafe impl<T> TxPin<UART7> for gpioe::PE1<AlternateFunction<AF1, T>> where T: OutputMode {}
+/// DSR pin - DO NOT IMPLEMENT THIS TRAIT
+pub unsafe trait DsrPin<UART> {
+    /// Enables the DSR functionality if a valid pin is given (not `()`).
+    fn enable(&mut self, _uart: &mut UART);
+}
+
+/// DTR pin - DO NOT IMPLEMENT THIS TRAIT
+pub unsafe trait DtrPin<UART> {
+    /// Enables the DTR functionality if a valid pin is given (not `()`).
+    fn enable(&mut self, _uart: &mut UART);
+}
+
+/// RI pin - DO NOT IMPLEMENT THIS TRAIT
+pub unsafe trait RiPin<UART> {
+    /// Enables the RI functionality if a valid pin is given (not `()`).
+    fn enable(&mut self, _uart: &mut UART);
+}
+
+/// RTS pin - DO NOT IMPLEMENT THIS TRAIT
+pub unsafe trait RtsPin<UART> {
+    /// Enables the RTS functionality if a valid pin is given (not `()`).
+    fn enable(&mut self, _uart: &mut UART);
+}
+
+macro_rules! uart {
+    ($UARTn:ident,
+        cts: [() $(, ($($ctsgpio: ident)::*, $ctsaf: ident))*],
+        // dcd: [() $(, ($($dcdgpio: ident)::*, $dcdaf: ident))*],
+        // dsr: [() $(, ($($dsrgpio: ident)::*, $dsraf: ident))*],
+        // dtr: [() $(, ($($dtrgpio: ident)::*, $dtraf: ident))*],
+        // ri: [() $(, ($($rigpio: ident)::*, $riaf: ident))*],
+        rts: [() $(, ($($rtsgpio: ident)::*, $rtsaf: ident))*],
+        rx: [$(($($rxgpio: ident)::*, $rxaf: ident)),*],
+        tx: [$(($($txgpio: ident)::*, $txaf: ident)),*],
+    ) => {
+        unsafe impl CtsPin<$UARTn> for () {
+            fn enable(&mut self, _uart: &mut $UARTn) {}
+        }
+
+        $(
+            unsafe impl<T> CtsPin<$UARTn> for $($ctsgpio)::*<AlternateFunction<$ctsaf, T>>
+            where
+                T: OutputMode,
+            {
+                fn enable(&mut self, uart: &mut $UARTn) {
+                    uart.ctl.modify(|_, w| w.ctsen().set_bit());
+                }
+            }
+        )*
+
+        unsafe impl RtsPin<$UARTn> for () {
+            fn enable(&mut self, _uart: &mut $UARTn) {}
+        }
+
+        $(
+            unsafe impl<T> CtsPin<$UARTn> for $($rtsgpio)::*<AlternateFunction<$rtsaf, T>>
+            where
+                T: OutputMode,
+            {
+                fn enable(&mut self, uart: &mut $UARTn) {
+                    uart.ctl.modify(|_, w| w.rtsen().set_bit());
+                }
+            }
+        )*
+
+        $(
+            unsafe impl <T> RxPin<$UARTn> for $($rxgpio)::*<AlternateFunction<$rxaf, T>>
+            where
+                T: OutputMode,
+            {}
+        )*
+
+        $(
+            unsafe impl <T> TxPin<$UARTn> for $($txgpio)::*<AlternateFunction<$txaf, T>>
+            where
+                T: OutputMode,
+            {}
+        )*
+    }
+}
+
+uart!(UART0,
+    cts: [(), (gpioh::PH1, AF1), (gpiom::PM4, AF1), (gpiob::PB4, AF1)],
+    // dcd: [(), (gpioh::PH2, AF1), (gpiom::PM5, AF1), (gpiop::PP3, AF2)],
+    // dsr: [(), (gpioh::PH3, AF1), (gpiom::PM6, AF1), (gpiop::PP4, AF2)],
+    // dtr: [(), (gpiop::PP2, AF2)],
+    // ri: [(), (gpiok::PK7, AF1), (gpiom::PM7, AF1)],
+    rts: [(), (gpioh::PH0, AF1), (gpiob::PB5, AF1)],
+    rx: [(gpioa::PA0, AF1)],
+    tx: [(gpioa::PA1, AF1)],
+);
+
+uart!(UART1,
+    cts: [(), (gpiop::PP3, AF1), (gpion::PN1, AF1)],
+    // dcd: [(), (gpioe::PE2, AF1), (gpion::PN2, AF1)],
+    // dsr: [(), (gpioe::PE1, AF1), (gpion::PN3, AF1)],
+    // dtr: [(), (gpioe::PE3, AF1), (gpion::PN3, AF1)],
+    // ri: [(), (gpion::PN5, AF1), (gpion::PE4, AF1)],
+    rts: [(), (gpioe::PE0, AF1), (gpion::PN0, AF1)],
+    rx: [(gpiob::PB0, AF1), (gpioq::PQ4, AF1)],
+    tx: [(gpiob::PB1, AF1)],
+);
+
+uart!(UART2,
+    cts: [(), (gpion::PN3, AF2), (gpiod::PD7, AF1)],
+    // dcd: [(), (gpion::PN2, AF2), (gpiod::PD6, AF1)],
+    // dsr: [()],
+    // dtr: [()],
+    // ri: [()],
+    rts: [()],
+    rx: [(gpioa::PA6, AF1), (gpiod::PD4, AF1)],
+    tx: [(gpioa::PA7, AF1), (gpiod::PD5, AF1)],
+);
+
+uart!(UART3,
+    cts: [()],
+    // dcd: [()],
+    // dsr: [()],
+    // dtr: [()],
+    // ri: [()],
+    rts: [()],
+    rx: [],
+    tx: [],
+);
+
+uart!(UART4,
+    cts: [()],
+    // dcd: [()],
+    // dsr: [()],
+    // dtr: [()],
+    // ri: [()],
+    rts: [()],
+    rx: [],
+    tx: [],
+);
+
+uart!(UART5,
+    cts: [()],
+    // dcd: [()],
+    // dsr: [()],
+    // dtr: [()],
+    // ri: [()],
+    rts: [()],
+    rx: [],
+    tx: [],
+);
+
+uart!(UART6,
+    cts: [()],
+    // dcd: [()],
+    // dsr: [()],
+    // dtr: [()],
+    // ri: [()],
+    rts: [()],
+    rx: [],
+    tx: [],
+);
+
+uart!(UART7,
+    cts: [()],
+    // dcd: [()],
+    // dsr: [()],
+    // dtr: [()],
+    // ri: [()],
+    rts: [()],
+    rx: [],
+    tx: [],
+);
 
 /// Serial abstraction
 pub struct Serial<UART, TX, RX, RTS, CTS> {
@@ -176,9 +276,9 @@ macro_rules! hal {
 
                     // Set baud rate
                     uart.ibrd.write(|w|
-                        unsafe { w.divint().bits((baud_int / 64) as u16) });
+                        w.divint().bits((baud_int / 64) as u16));
                     uart.fbrd.write(|w|
-                        unsafe { w.divfrac().bits((baud_int % 64) as u8) });
+                        w.divfrac().bits((baud_int % 64) as u8));
 
                     // Set data bits / parity / stop bits / enable fifo
                     uart.lcrh.write(|w| w.wlen()._8().fen().bit(true));
@@ -294,7 +394,7 @@ macro_rules! hal {
                     if self.uart.fr.read().txff().bit() {
                         return Err(nb::Error::WouldBlock);
                     }
-                    self.uart.dr.write(|w| unsafe { w.data().bits(byte) });
+                    self.uart.dr.write(|w| w.data().bits(byte));
                     Ok(())
                 }
             }
@@ -313,7 +413,7 @@ macro_rules! hal {
                     if self.uart.fr.read().txff().bit() {
                         return Err(nb::Error::WouldBlock);
                     }
-                    self.uart.dr.write(|w| unsafe { w.data().bits(byte) });
+                    self.uart.dr.write(|w| w.data().bits(byte));
                     Ok(())
                 }
             }

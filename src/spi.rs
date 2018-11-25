@@ -7,12 +7,12 @@ use crate::gpio::gpiob::{PB4, PB6, PB7};
 use crate::gpio::gpiod::{PD0, PD2, PD3};
 use crate::gpio::{AlternateFunction, OutputMode, AF1, AF2};
 use crate::hal::spi::{FullDuplex, Phase, Polarity};
-use crate::sysctl::Clocks;
 use crate::sysctl;
+use crate::sysctl::Clocks;
 use crate::time::Hertz;
 
 use nb;
-use tm4c123x::{SSI0, SSI1, SSI2, SSI3};
+use tm4c129x::{SSI0, SSI1, SSI2, SSI3};
 
 /// SPI error
 #[derive(Debug)]

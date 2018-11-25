@@ -1,18 +1,11 @@
 //! Inter-Integrated Circuit (I2C) bus
 
-use tm4c123x::{I2C0, I2C1, I2C2, I2C3};
-
-use crate::gpio::gpioa::{PA6, PA7};
-use crate::gpio::gpiob::{PB2, PB3};
-use crate::gpio::gpiod::{PD0, PD1};
-use crate::gpio::gpioe::{PE4, PE5};
-
+use crate::gpio::*;
 use crate::gpio::{AlternateFunction, Floating, OpenDrain, OutputMode, AF3};
-
-use crate::sysctl::{self, Clocks};
-
 use crate::hal::blocking::i2c::{Read, Write, WriteRead};
+use crate::sysctl::{self, Clocks};
 use crate::time::Hertz;
+use tm4c129x::{I2C0, I2C1, I2C2, I2C3};
 
 /// I2C error
 #[derive(Debug)]
@@ -39,17 +32,31 @@ pub unsafe trait SclPin<I2C> {}
 /// SDA pin -- DO NOT IMPLEMENT THIS TRAIT
 pub unsafe trait SdaPin<I2C> {}
 
-unsafe impl<T> SclPin<I2C0> for PB2<AlternateFunction<AF3, T>> where T: OutputMode {}
-unsafe impl SdaPin<I2C0> for PB3<AlternateFunction<AF3, OpenDrain<Floating>>> {}
+macro_rules! i2c {
+    ($UARTn:ident,
+        scl: [$(($($sclgpio: ident)::*, $sclaf: ident)),*],
+        sda: [$(($($sdagpio: ident)::*, $sdaaf: ident)),*],
+    ) => {
+        $(
+            unsafe impl SclPin<$UARTn> for $($sclgpio)::*<AlternateFunction<$sclaf, OpenDrain<Floating>>>
+            {}
+        )*
 
-unsafe impl<T> SclPin<I2C1> for PA6<AlternateFunction<AF3, T>> where T: OutputMode {}
-unsafe impl SdaPin<I2C1> for PA7<AlternateFunction<AF3, OpenDrain<Floating>>> {}
+        $(
+            unsafe impl<T> SdaPin<$UARTn> for $($sdagpio)::*<AlternateFunction<$sdaaf, T>>
+            where
+                T: OutputMode,
+            {}
+        )*
+    }
+}
 
-unsafe impl<T> SclPin<I2C2> for PE4<AlternateFunction<AF3, T>> where T: OutputMode {}
-unsafe impl SdaPin<I2C2> for PE5<AlternateFunction<AF3, OpenDrain<Floating>>> {}
-
-unsafe impl<T> SclPin<I2C3> for PD0<AlternateFunction<AF3, T>> where T: OutputMode {}
-unsafe impl SdaPin<I2C3> for PD1<AlternateFunction<AF3, OpenDrain<Floating>>> {}
+i2c!(I2C0, scl: [(gpiob::PB2, AF2)], sda: [(gpiob::PB3, AF2)],);
+i2c!(I2C1, scl: [(gpiog::PG0, AF2)], sda: [(gpiog::PG1, AF2)],);
+i2c!(I2C2,
+    scl: [(gpiol::PL1, AF2),(gpiop::PP5, AF2), (gpion::PN5, AF3)],
+    sda: [(gpiol::PL0, AF2), (gpion::PN4, AF3)],
+);
 
 /// I2C peripheral operating in master mode
 pub struct I2c<I2C, PINS> {
