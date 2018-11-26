@@ -807,6 +807,8 @@ pub mod chip_id {
     pub enum DeviceClass {
         /// It's a Stellaris LM4F or a TM4C123 (they have the same value)
         StellarisBlizzard,
+        /// It's a "Tiva™ Snowflake-class microcontroller"
+        Snowflake,
         /// I don't know what chip this is
         Unknown,
     }
@@ -881,6 +883,8 @@ pub mod chip_id {
         Tm4c123gh6pm,
         /// It's a LM4F120H5QR
         Lm4f120h5qr,
+        /// It's a TM4C1294NCPDT
+        Tm4c1294ncpdt,
         /// It's an unknown chip - please file a bug report
         Unknown(u8),
     }
@@ -919,7 +923,8 @@ pub mod chip_id {
             return Err(Error::UnknownDid0Ver(did0.ver().bits()));
         }
         let device_class = match did0.class().bits() {
-            5 => DeviceClass::StellarisBlizzard,
+            0x05 => DeviceClass::StellarisBlizzard,
+            0x0a => DeviceClass::Snowflake,
             _ => DeviceClass::Unknown,
         };
         let major = did0.maj().bits();
@@ -932,6 +937,7 @@ pub mod chip_id {
         let part_no = match did1.prtno().bits() {
             0x04 => PartNo::Lm4f120h5qr,
             0xA1 => PartNo::Tm4c123gh6pm,
+            0x1F => PartNo::Tm4c1294ncpdt,
             e => PartNo::Unknown(e),
         };
         let pin_count = match did1.pincnt().bits() {
