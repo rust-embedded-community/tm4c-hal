@@ -118,6 +118,15 @@ pub enum CrystalFrequency {
     _25mhz,
 }
 
+impl Into<Hertz> for CrystalFrequency {
+    fn into(self) -> Hertz {
+        Hertz(match self {
+            CrystalFrequency::_25mhz => 25000000,
+            _ => unimplemented!(),
+        })
+    }
+}
+
 /// Selects what to divide the PLL's 400MHz down to.
 #[derive(Clone, Copy)]
 pub enum PllOutputFrequency {
@@ -134,11 +143,11 @@ pub enum PllOutputFrequency {
     /// 28.57 MHz
     _28_57mhz = 6,
     /// 25 MHz
-    _25mhz = 7,
+    _25_00mhz = 7,
     /// 22.22 MHz
     _22_22mhz = 8,
     /// 20 MHz
-    _20mhz = 9,
+    _20_00mhz = 9,
     /// 18.18 MHz
     _18_18mhz = 10,
     /// 16.67 MHz
@@ -150,7 +159,29 @@ pub enum PllOutputFrequency {
     /// 13.33 MHz
     _13_33mhz = 14,
     /// 12.5 MHz
-    _12_5mhz = 15,
+    _12_50mhz = 15,
+}
+
+impl Into<Hertz> for PllOutputFrequency {
+    fn into(self) -> Hertz {
+        Hertz(match self {
+            PllOutputFrequency::_80_00mhz => 80000000,
+            PllOutputFrequency::_66_67mhz => 66670000,
+            PllOutputFrequency::_50_00mhz => 50000000,
+            PllOutputFrequency::_40_00mhz => 40000000,
+            PllOutputFrequency::_33_33mhz => 33330000,
+            PllOutputFrequency::_28_57mhz => 28570000,
+            PllOutputFrequency::_25_00mhz => 25000000,
+            PllOutputFrequency::_22_22mhz => 22220000,
+            PllOutputFrequency::_20_00mhz => 20000000,
+            PllOutputFrequency::_18_18mhz => 18180000,
+            PllOutputFrequency::_16_67mhz => 16670000,
+            PllOutputFrequency::_15_38mhz => 15380000,
+            PllOutputFrequency::_14_29mhz => 14290000,
+            PllOutputFrequency::_13_33mhz => 13330000,
+            PllOutputFrequency::_12_50mhz => 12500000,
+        })
+    }
 }
 
 /// Selects how much to divide the system oscillator down.
@@ -747,14 +778,14 @@ impl ClockSetup {
         // We own the SYSCTL at this point - no one else can be running.
         let p = unsafe { &*tm4c129x::SYSCTL::ptr() };
 
-        let osc;
-        let sysclk;
+        let osc: Hertz;
+        let sysclk: Hertz;
 
         match self.oscillator {
             // The default
             Oscillator::PrecisionInternal(SystemClock::UseOscillator(div)) => {
-                osc = 16_000_000;
-                sysclk = osc / (div as u32);
+                osc = 16_000_000.hz();
+                sysclk = (osc.0 / (div as u32)).hz();
 
                 p.rsclkcfg.write(|w| {
                     w.usepll().clear_bit();
@@ -765,15 +796,40 @@ impl ClockSetup {
                     w
                 });
             }
-            Oscillator::Main(_crystal_frequency, _system_clock) => unimplemented!(),
-            Oscillator::PrecisionInternal(SystemClock::UsePll(_)) => unimplemented!(),
+            Oscillator::PrecisionInternal(SystemClock::UsePll(_output_frequency)) => {
+                unimplemented!()
+            }
+
+            Oscillator::Main(crystal_frequency, SystemClock::UseOscillator(div)) => {
+                osc = crystal_frequency.into();
+                sysclk = (osc.0 / (div as u32)).hz();
+
+                p.moscctl.write(|w| {
+                    w.oscrng().set_bit();
+
+                    w.noxtal().clear_bit();
+                    w.pwrdn().clear_bit();
+
+                    w
+                });
+
+                p.rsclkcfg.write(|w| {
+                    w.usepll().clear_bit();
+                    w.oscsrc().mosc();
+
+                    w.osysdiv().bits(div as u16 - 1);
+
+                    w
+                })
+            }
+            Oscillator::Main(_crystal_frequency, SystemClock::UsePll(_output_frequency)) => {
+                unimplemented!()
+            }
+
             Oscillator::LowFrequencyInternal(_div) => unimplemented!(),
         }
 
-        Clocks {
-            osc: osc.hz(),
-            sysclk: sysclk.hz(),
-        }
+        Clocks { osc, sysclk }
     }
 }
 
