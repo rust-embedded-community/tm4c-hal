@@ -16,7 +16,7 @@ pub struct Delay {
 
 impl Delay {
     /// Configures the system timer (SysTick) as a delay provider
-    pub fn new(mut syst: SYST, clocks: &Clocks) -> Self {
+    pub fn new(mut syst: SYST, clocks: Clocks) -> Self {
         syst.set_clock_source(SystClkSource::Core);
 
         Delay {

@@ -995,12 +995,12 @@ impl ClockSetup {
 
 impl Clocks {
     /// Returns the frequency of the oscillator.
-    pub fn osc(&self) -> Hertz {
+    pub fn osc(self) -> Hertz {
         self.osc
     }
 
     /// Returns the system (core) frequency
-    pub fn sysclk(&self) -> Hertz {
+    pub fn sysclk(self) -> Hertz {
         self.sysclk
     }
 }

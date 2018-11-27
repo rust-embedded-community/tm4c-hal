@@ -150,7 +150,7 @@ impl<ODM> OutputMode for OpenDrain<ODM> where ODM: OpenDrainMode {}
 pub struct AF1;
 impl AlternateFunctionChoice for AF1 {
     fn number() -> u32 {
-        return 1;
+        1
     }
 }
 
@@ -158,7 +158,7 @@ impl AlternateFunctionChoice for AF1 {
 pub struct AF2;
 impl AlternateFunctionChoice for AF2 {
     fn number() -> u32 {
-        return 2;
+        2
     }
 }
 
@@ -166,7 +166,7 @@ impl AlternateFunctionChoice for AF2 {
 pub struct AF3;
 impl AlternateFunctionChoice for AF3 {
     fn number() -> u32 {
-        return 3;
+        3
     }
 }
 
@@ -174,7 +174,7 @@ impl AlternateFunctionChoice for AF3 {
 pub struct AF4;
 impl AlternateFunctionChoice for AF4 {
     fn number() -> u32 {
-        return 4;
+        4
     }
 }
 
@@ -182,7 +182,7 @@ impl AlternateFunctionChoice for AF4 {
 pub struct AF5;
 impl AlternateFunctionChoice for AF5 {
     fn number() -> u32 {
-        return 5;
+        5
     }
 }
 
@@ -190,7 +190,7 @@ impl AlternateFunctionChoice for AF5 {
 pub struct AF6;
 impl AlternateFunctionChoice for AF6 {
     fn number() -> u32 {
-        return 6;
+        6
     }
 }
 
@@ -198,7 +198,7 @@ impl AlternateFunctionChoice for AF6 {
 pub struct AF7;
 impl AlternateFunctionChoice for AF7 {
     fn number() -> u32 {
-        return 7;
+        7
     }
 }
 
@@ -206,7 +206,7 @@ impl AlternateFunctionChoice for AF7 {
 pub struct AF8;
 impl AlternateFunctionChoice for AF8 {
     fn number() -> u32 {
-        return 8;
+        8
     }
 }
 
@@ -214,7 +214,7 @@ impl AlternateFunctionChoice for AF8 {
 pub struct AF9;
 impl AlternateFunctionChoice for AF9 {
     fn number() -> u32 {
-        return 9;
+        9
     }
 }
 
@@ -224,7 +224,7 @@ impl AlternateFunctionChoice for AF9 {
 pub struct AF14;
 impl AlternateFunctionChoice for AF14 {
     fn number() -> u32 {
-        return 14;
+        14
     }
 }
 
