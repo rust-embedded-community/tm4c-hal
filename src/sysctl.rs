@@ -121,7 +121,7 @@ pub enum CrystalFrequency {
 impl Into<Hertz> for CrystalFrequency {
     fn into(self) -> Hertz {
         Hertz(match self {
-            CrystalFrequency::_25mhz => 25000000,
+            CrystalFrequency::_25mhz => 25_000_000,
             _ => unimplemented!(),
         })
     }
@@ -149,13 +149,13 @@ pub enum PllOutputFrequency {
 impl Into<Hertz> for PllOutputFrequency {
     fn into(self) -> Hertz {
         Hertz(match self {
-            PllOutputFrequency::_120mhz => 120000000,
-            PllOutputFrequency::_60mhz => 60000000,
-            PllOutputFrequency::_48mhz => 48000000,
-            PllOutputFrequency::_30mhz => 30000000,
-            PllOutputFrequency::_24mhz => 24000000,
-            PllOutputFrequency::_12mhz => 12000000,
-            PllOutputFrequency::_6mhz => 6000000,
+            PllOutputFrequency::_120mhz => 120_000_000,
+            PllOutputFrequency::_60mhz => 60_000_000,
+            PllOutputFrequency::_48mhz => 48_000_000,
+            PllOutputFrequency::_30mhz => 30_000_000,
+            PllOutputFrequency::_24mhz => 24_000_000,
+            PllOutputFrequency::_12mhz => 12_000_000,
+            PllOutputFrequency::_6mhz => 6_000_000,
         })
     }
 }
@@ -771,7 +771,7 @@ impl ClockSetup {
                 });
             }
             Oscillator::PrecisionInternal(SystemClock::UsePll(output_frequency)) => {
-                osc = 16_000_000.hz().into();
+                osc = 16_000_000.hz();
                 sysclk = output_frequency.into();
 
                 // 6. Write the PLLFREQ0 and PLLFREQ1 registers with the values of Q, N, MINT,
