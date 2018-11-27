@@ -130,56 +130,32 @@ impl Into<Hertz> for CrystalFrequency {
 /// Selects what to divide the PLL's 400MHz down to.
 #[derive(Clone, Copy)]
 pub enum PllOutputFrequency {
-    /// 80.00 MHz
-    _80_00mhz = 0,
-    /// 66.67 MHz
-    _66_67mhz = 2,
-    /// 50 MHz
-    _50_00mhz = 3,
-    /// 40 MHz
-    _40_00mhz = 4,
-    /// 33.33 MHz
-    _33_33mhz = 5,
-    /// 28.57 MHz
-    _28_57mhz = 6,
-    /// 25 MHz
-    _25_00mhz = 7,
-    /// 22.22 MHz
-    _22_22mhz = 8,
-    /// 20 MHz
-    _20_00mhz = 9,
-    /// 18.18 MHz
-    _18_18mhz = 10,
-    /// 16.67 MHz
-    _16_67mhz = 11,
-    /// 15.38 MHz
-    _15_38mhz = 12,
-    /// 14.29 MHz
-    _14_29mhz = 13,
-    /// 13.33 MHz
-    _13_33mhz = 14,
-    /// 12.5 MHz
-    _12_50mhz = 15,
+    /// 120 MHz
+    _120mhz,
+    /// 60 MHz
+    _60mhz,
+    /// 48 MHz
+    _48mhz,
+    /// 30 MHz
+    _30mhz,
+    /// 24 MHz
+    _24mhz,
+    /// 12 MHz
+    _12mhz,
+    /// 6 MHz
+    _6mhz,
 }
 
 impl Into<Hertz> for PllOutputFrequency {
     fn into(self) -> Hertz {
         Hertz(match self {
-            PllOutputFrequency::_80_00mhz => 80000000,
-            PllOutputFrequency::_66_67mhz => 66670000,
-            PllOutputFrequency::_50_00mhz => 50000000,
-            PllOutputFrequency::_40_00mhz => 40000000,
-            PllOutputFrequency::_33_33mhz => 33330000,
-            PllOutputFrequency::_28_57mhz => 28570000,
-            PllOutputFrequency::_25_00mhz => 25000000,
-            PllOutputFrequency::_22_22mhz => 22220000,
-            PllOutputFrequency::_20_00mhz => 20000000,
-            PllOutputFrequency::_18_18mhz => 18180000,
-            PllOutputFrequency::_16_67mhz => 16670000,
-            PllOutputFrequency::_15_38mhz => 15380000,
-            PllOutputFrequency::_14_29mhz => 14290000,
-            PllOutputFrequency::_13_33mhz => 13330000,
-            PllOutputFrequency::_12_50mhz => 12500000,
+            PllOutputFrequency::_120mhz => 120000000,
+            PllOutputFrequency::_60mhz => 60000000,
+            PllOutputFrequency::_48mhz => 48000000,
+            PllOutputFrequency::_30mhz => 30000000,
+            PllOutputFrequency::_24mhz => 24000000,
+            PllOutputFrequency::_12mhz => 12000000,
+            PllOutputFrequency::_6mhz => 6000000,
         })
     }
 }
@@ -784,27 +760,95 @@ impl ClockSetup {
         match self.oscillator {
             // The default
             Oscillator::PrecisionInternal(SystemClock::UseOscillator(div)) => {
+                // 1. Once POR has completed, the PIOSC is acting as the system clock.
                 osc = 16_000_000.hz();
                 sysclk = (osc.0 / (div as u32)).hz();
 
-                p.rsclkcfg.write(|w| {
-                    w.usepll().clear_bit();
-                    w.oscsrc().piosc();
-
+                p.rsclkcfg.modify(|_, w| {
                     w.osysdiv().bits(div as u16 - 1);
 
                     w
                 });
             }
-            Oscillator::PrecisionInternal(SystemClock::UsePll(_output_frequency)) => {
-                unimplemented!()
+            Oscillator::PrecisionInternal(SystemClock::UsePll(output_frequency)) => {
+                osc = 16_000_000.hz().into();
+                sysclk = output_frequency.into();
+
+                // 6. Write the PLLFREQ0 and PLLFREQ1 registers with the values of Q, N, MINT,
+                // and MFRAC to the configure the desired VCO frequency setting.
+                // Crystal, MINT, MINT, N, Ref MHZ, Pll MHZ
+
+                p.rsclkcfg.modify(|_, w| w.pllsrc().piosc());
+
+                p.pllfreq0.modify(|_, w| {
+                    w.pllpwr().set_bit();
+
+                    w.mfrac().bits(0);
+                    w.mint().bits(30);
+
+                    w
+                });
+
+                p.pllfreq1.modify(|_, w| {
+                    w.q().bits(0);
+                    w.n().bits(0);
+
+                    w
+                });
+
+                p.rsclkcfg.modify(|_, w| w.newfreq().set_bit());
+
+                let (xbcht, xbce, xws) = match sysclk.0 {
+                    f if f <= 16_000_000 => (0, true, 0),
+                    f if f <= 40_000_000 => (2, false, 1),
+                    f if f <= 60_000_000 => (3, false, 2),
+                    f if f <= 80_000_000 => (4, false, 3),
+                    f if f <= 100_000_000 => (5, false, 4),
+                    f if f <= 120_000_000 => (6, false, 5),
+                    _ => unreachable!(),
+                };
+
+                // 7. Write the MEMTIM0 register to correspond to the new system clock setting.
+                p.memtim0.modify(|_, w| {
+                    unsafe {
+                        w.fbcht().bits(xbcht);
+                        w.ebcht().bits(xbcht);
+
+                        w.fbce().bit(xbce);
+                        w.ebce().bit(xbce);
+
+                        w.fws().bits(xws);
+                        w.ews().bits(xws);
+                    }
+
+                    w
+                });
+
+                // 8. Wait for the PLLSTAT register to indicate the PLL has reached lock at the
+                // new operating point (or that a timeout period has passed and lock has failed,
+                // in which case an error condition exists and this sequence is abandoned and
+                // error processing is initiated).
+                while p.pllstat.read().lock().bit_is_clear() {
+                    cortex_m::asm::nop();
+                }
+
+                // 9. Write the RSCLKCFG register's PSYSDIV value, set the USEPLL bit to
+                // enabled, and MEMTIMU bit.
+                p.rsclkcfg.modify(|_, w| {
+                    w.usepll().set_bit();
+                    w.memtimu().set_bit();
+                    w.psysdiv().bits((480_000_000 / sysclk.0 - 1) as u16);
+
+                    w
+                });
             }
 
             Oscillator::Main(crystal_frequency, SystemClock::UseOscillator(div)) => {
                 osc = crystal_frequency.into();
                 sysclk = (osc.0 / (div as u32)).hz();
 
-                p.moscctl.write(|w| {
+                // 2. Power up the MOSC by clearing the NOXTAL bit in the MOSCCTL register.
+                p.moscctl.modify(|_, w| {
                     w.oscrng().set_bit();
 
                     w.noxtal().clear_bit();
@@ -813,17 +857,133 @@ impl ClockSetup {
                     w
                 });
 
-                p.rsclkcfg.write(|w| {
-                    w.usepll().clear_bit();
+                let (xbcht, xbce, xws) = match sysclk.0 {
+                    f if f < 16_000_000 => (0, true, 0),
+                    f if f < 40_000_000 => (2, false, 1),
+                    _ => unreachable!(),
+                };
+
+                // 7. Write the MEMTIM0 register to correspond to the new system clock
+                p.memtim0.modify(|_, w| {
+                    unsafe {
+                        w.fbcht().bits(xbcht);
+                        w.ebcht().bits(xbcht);
+
+                        w.fbce().bit(xbce);
+                        w.ebce().bit(xbce);
+
+                        w.fws().bits(xws);
+                        w.ews().bits(xws);
+                    }
+
+                    w
+                });
+
+                // If single-ended MOSC mode is required, the MOSC is ready to use. If crystal
+                // mode is required, clear the PWRDN bit and wait for the MOSCPUPRIS bit to be
+                // set in the Raw Interrupt Status (RIS), indicating MOSC crystal mode is ready.
+                while p.ris.read().moscpupris().bit_is_clear() {
+                    cortex_m::asm::nop();
+                }
+
+                // 4. Set the OSCSRC field to 0x3 in the RSCLKCFG register at offset 0x0B0.
+                p.rsclkcfg.modify(|_, w| {
                     w.oscsrc().mosc();
+                    w.memtimu().set_bit();
 
                     w.osysdiv().bits(div as u16 - 1);
 
                     w
-                })
+                });
             }
-            Oscillator::Main(_crystal_frequency, SystemClock::UsePll(_output_frequency)) => {
-                unimplemented!()
+
+            Oscillator::Main(crystal_frequency, SystemClock::UsePll(output_frequency)) => {
+                osc = crystal_frequency.into();
+                sysclk = output_frequency.into();
+
+                // 2. Power up the MOSC by clearing the NOXTAL bit in the MOSCCTL register.
+                p.moscctl.modify(|_, w| {
+                    w.oscrng().set_bit();
+
+                    w.noxtal().clear_bit();
+                    w.pwrdn().clear_bit();
+
+                    w
+                });
+
+                // If single-ended MOSC mode is required, the MOSC is ready to use. If crystal
+                // mode is required, clear the PWRDN bit and wait for the MOSCPUPRIS bit to be
+                // set in the Raw Interrupt Status (RIS), indicating MOSC crystal mode is ready.
+                while p.ris.read().moscpupris().bit_is_clear() {
+                    cortex_m::asm::nop();
+                }
+
+                // 6. Write the PLLFREQ0 and PLLFREQ1 registers with the values of Q, N, MINT,
+                // and MFRAC to the configure the desired VCO frequency setting.
+                // Crystal, MINT, MINT, N, Ref MHZ, Pll MHZ
+
+                p.rsclkcfg.modify(|_, w| w.pllsrc().mosc());
+
+                p.pllfreq1.modify(|_, w| {
+                    w.q().bits(0);
+                    w.n().bits(4);
+
+                    w
+                });
+
+                p.pllfreq0.modify(|_, w| {
+                    w.mfrac().bits(0);
+                    w.mint().bits(96);
+
+                    w
+                });
+
+                p.pllfreq0.modify(|_, w| w.pllpwr().set_bit());
+
+                // 8. Wait for the PLLSTAT register to indicate the PLL has reached lock at the
+                // new operating point (or that a timeout period has passed and lock has failed,
+                // in which case an error condition exists and this sequence is abandoned and
+                // error processing is initiated).
+
+                while p.pllstat.read().lock().bit_is_clear() {
+                    cortex_m::asm::nop();
+                }
+
+                let (xbcht, xbce, xws) = match sysclk.0 {
+                    f if f <= 16_000_000 => (0, true, 0),
+                    f if f <= 40_000_000 => (2, false, 1),
+                    f if f <= 60_000_000 => (3, false, 2),
+                    f if f <= 80_000_000 => (4, false, 3),
+                    f if f <= 100_000_000 => (5, false, 4),
+                    f if f <= 120_000_000 => (6, false, 5),
+                    _ => unreachable!(),
+                };
+
+                // 7. Write the MEMTIM0 register to correspond to the new system clock setting.
+                p.memtim0.modify(|_, w| {
+                    unsafe {
+                        w.fbcht().bits(xbcht);
+                        w.ebcht().bits(xbcht);
+
+                        w.fbce().bit(xbce);
+                        w.ebce().bit(xbce);
+
+                        w.fws().bits(xws);
+                        w.ews().bits(xws);
+                    }
+
+                    w
+                });
+
+                // 9. Write the RSCLKCFG register's PSYSDIV value, set the USEPLL bit to
+                // enabled, and MEMTIMU bit.
+                p.rsclkcfg.modify(|_, w| {
+                    w.usepll().set_bit();
+                    w.memtimu().set_bit();
+                    w.psysdiv().bits((480_000_000 / sysclk.0 - 1) as u16);
+
+                    w
+                });
             }
 
             Oscillator::LowFrequencyInternal(_div) => unimplemented!(),
