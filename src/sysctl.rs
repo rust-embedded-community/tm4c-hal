@@ -1119,6 +1119,8 @@ pub mod chip_id {
         Lm4f120h5qr,
         /// It's a TM4C1294NCPDT
         Tm4c1294ncpdt,
+        /// It's a TM4C129ENCPDT
+        Tm4c129encpdt,
         /// It's an unknown chip - please file a bug report
         Unknown(u8),
     }
@@ -1172,6 +1174,7 @@ pub mod chip_id {
             0x04 => PartNo::Lm4f120h5qr,
             0xA1 => PartNo::Tm4c123gh6pm,
             0x1F => PartNo::Tm4c1294ncpdt,
+            45 => PartNo::Tm4c129encpdt,
             e => PartNo::Unknown(e),
         };
         let pin_count = match did1.pincnt().bits() {
