@@ -310,6 +310,10 @@ pub enum Domain {
     Pwm0,
     /// PWM1
     Pwm1,
+    /// EMAC0
+    Emac0,
+    /// EPHY0
+    Ephy0,
 }
 
 #[derive(Copy, Clone)]
@@ -533,6 +537,14 @@ pub fn reset(_lock: &PowerControl, pd: Domain) {
             bb::toggle_bit(&p.srpwm, 1);
             bb::spin_bit(&p.prpwm, 1);
         },
+        Domain::Emac0 => unsafe {
+            bb::toggle_bit(&p.sremac, 0);
+            bb::spin_bit(&p.premac, 0);
+        },
+        Domain::Ephy0 => unsafe {
+            bb::toggle_bit(&p.srephy, 0);
+            bb::spin_bit(&p.prephy, 0);
+        },
     }
 }
 
@@ -613,6 +625,8 @@ fn control_run_power(pd: Domain, on: bool) {
         Domain::Eeprom => unsafe { bb::change_bit(&p.rcgceeprom, 0, on) },
         Domain::Pwm0 => unsafe { bb::change_bit(&p.rcgcpwm, 0, on) },
         Domain::Pwm1 => unsafe { bb::change_bit(&p.rcgcpwm, 1, on) },
+        Domain::Emac0 => unsafe { bb::change_bit(&p.rcgcemac, 0, on) },
+        Domain::Ephy0 => unsafe { bb::change_bit(&p.rcgcephy, 0, on) },
     }
 }
 
@@ -669,6 +683,8 @@ fn control_sleep_power(pd: Domain, on: bool) {
         Domain::Eeprom => unsafe { bb::change_bit(&p.scgceeprom, 0, on) },
         Domain::Pwm0 => unsafe { bb::change_bit(&p.scgcpwm, 0, on) },
         Domain::Pwm1 => unsafe { bb::change_bit(&p.scgcpwm, 1, on) },
+        Domain::Emac0 => unsafe { bb::change_bit(&p.scgcemac, 0, on) },
+        Domain::Ephy0 => unsafe { bb::change_bit(&p.scgcephy, 0, on) },
     }
 }
 
@@ -725,6 +741,8 @@ fn control_deep_sleep_power(pd: Domain, on: bool) {
         Domain::Eeprom => unsafe { bb::change_bit(&p.dcgceeprom, 0, on) },
         Domain::Pwm0 => unsafe { bb::change_bit(&p.dcgcpwm, 0, on) },
         Domain::Pwm1 => unsafe { bb::change_bit(&p.dcgcpwm, 1, on) },
+        Domain::Emac0 => unsafe { bb::change_bit(&p.dcgcemac, 0, on) },
+        Domain::Ephy0 => unsafe { bb::change_bit(&p.dcgcephy, 0, on) },
     }
 }
 
