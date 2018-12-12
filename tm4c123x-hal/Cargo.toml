@@ -1,0 +1,39 @@
+[package]
+name = "tm4c123x-hal"
+version = "0.6.1"
+authors = [
+	"Jorge Aparicio <jorge@japaric.io>",
+	"Jonathan 'theJPster' Pallant <github@thejpster.org.uk>",
+	"Marc Poulhiès <dkm@kataplop.net>",
+]
+description = "HAL for the TM4C123x family of microcontrollers"
+keywords = ["arm", "cortex-m", "tm4c", "lm4f120", "hal"]
+categories = ["embedded", "hardware-support", "no-std"]
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/thejpster/tm4c-hal/tm4c123x-hal"
+edition = "2018"
+
+[dependencies.cast]
+version = "0.2.2"
+default-features = false
+
+[dependencies.cortex-m]
+version = "0.5.2"
+
+[dependencies.embedded-hal]
+version = "0.2.2"
+features = ["unproven"]
+
+[dependencies.nb]
+version = "0.1"
+
+[dependencies.tm4c123x]
+version = "0.7"
+# path = "../dslite2svd/crates/tm4c123x"
+
+[dependencies.void]
+version = "1.0"
+default-features = false
+
+[features]
+rt = ["tm4c123x/rt"]

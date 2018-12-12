@@ -1,20 +1,18 @@
-# `tm4c129x-hal` and `tm4c123x-hal`
+# `tm4c123x-hal`
 
-> HAL for the TM4C129x and TM4C123x families of microcontrollers
+> HAL for the TM4C123x (and compatible LM4F120x) family of microcontrollers
 
 [`embedded-hal`]: https://crates.io/crates/embedded-hal
 
-## Documentation
-
-See https://docs.rs/tm4c129x-hal and https://docs.rs/tm4c123x-hal.
+## [Documentation](https://docs.rs/tm4c123x-hal)
 
 ## License
 
 Licensed under either of
 
-- Apache License, Version 2.0 ([LICENSE-APACHE](LICENSE-APACHE) or
+- Apache License, Version 2.0 ([LICENSE-APACHE](../LICENSE-APACHE) or
   http://www.apache.org/licenses/LICENSE-2.0)
-- MIT license ([LICENSE-MIT](LICENSE-MIT) or http://opensource.org/licenses/MIT)
+- MIT license ([LICENSE-MIT](../LICENSE-MIT) or http://opensource.org/licenses/MIT)
 
 at your option.
 
