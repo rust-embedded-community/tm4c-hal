@@ -199,5 +199,4 @@ pub enum InterruptMode {
     Disabled,
 }
 
-
 // End of file

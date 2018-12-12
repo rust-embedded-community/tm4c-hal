@@ -24,8 +24,8 @@
 #![no_std]
 
 pub use tm4c_hal::bb;
-pub use tm4c_hal::time;
 pub use tm4c_hal::delay;
+pub use tm4c_hal::time;
 
 pub use tm4c_hal::gpio as gpio_common;
 
@@ -38,4 +38,4 @@ pub mod sysctl;
 
 use embedded_hal as hal;
 pub use tm4c123x;
-pub use tm4c123x::{Peripherals, CorePeripherals};
+pub use tm4c123x::{CorePeripherals, Peripherals};

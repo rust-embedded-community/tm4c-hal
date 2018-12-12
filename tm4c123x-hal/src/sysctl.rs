@@ -21,9 +21,9 @@
 //!
 //! See the LM4F120 datasheet, page 228 for a full list.
 
-use cortex_m::asm::nop;
 use crate::bb;
 use crate::time::{Hertz, U32Ext};
+use cortex_m::asm::nop;
 use tm4c123x;
 
 pub use tm4c_hal::sysctl::*;

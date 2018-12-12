@@ -36,11 +36,11 @@
 
 pub use tm4c_hal::gpio::*;
 
-use tm4c_hal::gpio_macro;
 use crate::bb;
 use crate::hal::digital::{InputPin, OutputPin, StatefulOutputPin};
 use crate::sysctl;
 use core::marker::PhantomData;
+use tm4c_hal::gpio_macro;
 
 /// Extension trait to split a GPIO peripheral in independent pins and registers
 pub trait GpioExt {
