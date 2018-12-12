@@ -32,7 +32,8 @@ version = "1.0"
 default-features = false
 
 [dependencies.tm4c-hal]
-path = "../tm4c-hal"
+# path = "../tm4c-hal"
+version = "0.1.0"
 
 [features]
 rt = ["tm4c129x/rt"]
