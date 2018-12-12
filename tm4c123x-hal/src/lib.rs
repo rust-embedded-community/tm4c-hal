@@ -23,16 +23,17 @@
 #![deny(warnings)]
 #![no_std]
 
-pub mod bb;
-pub mod delay;
+pub use tm4c_hal::bb;
+pub use tm4c_hal::delay;
+pub use tm4c_hal::time;
+
 pub mod gpio;
 pub mod i2c;
 pub mod prelude;
 pub mod serial;
 pub mod spi;
 pub mod sysctl;
-pub mod time;
 
 use embedded_hal as hal;
 pub use tm4c123x;
-pub use tm4c123x::{Peripherals, CorePeripherals};
+pub use tm4c123x::{CorePeripherals, Peripherals};

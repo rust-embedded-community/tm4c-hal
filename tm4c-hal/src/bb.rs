@@ -48,7 +48,7 @@ pub fn read_bit<T>(address: *const T, bit: u8) -> bool {
 fn ref_to_bitband(address: u32, bit: u8) -> *mut u32 {
     let prefix = address & 0xF000_0000;
     let byte_offset = address & 0x0FFF_FFFF;
-    let bit_word_offset = (byte_offset * 32) + (bit as u32 * 4);
+    let bit_word_offset = (byte_offset * 32) + (u32::from(bit) * 4);
     let bit_word_addr = bit_word_offset + prefix + 0x0200_0000;
     bit_word_addr as *mut u32
 }

@@ -1,0 +1,16 @@
+[package]
+name = "tm4c-hal"
+version = "0.1.0"
+authors = ["Jonathan 'theJPster' Pallant <github@thejpster.org.uk>"]
+edition = "2018"
+
+[dependencies]
+cortex-m = "0.5"
+
+[dependencies.embedded-hal]
+version = "0.2.2"
+features = ["unproven"]
+
+[dependencies.cast]
+version = "0.2.2"
+default-features = false

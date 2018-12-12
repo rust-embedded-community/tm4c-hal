@@ -1,10 +1,28 @@
-# `tm4c123x-hal`
+# `tm4c129x-hal` and `tm4c123x-hal`
 
-> HAL for the TM4C123x (and compatible LM4F120x) family of microcontrollers
+> An [Embedded HAL] for the [TM4C129x] and [TM4C123x] families of microcontrollers from Texas Instruments.
 
-[`embedded-hal`]: https://crates.io/crates/embedded-hal
+[Embedded HAL]: https://crates.io/crates/embedded-hal
+[TM4C123x]: https://www.ti.com/product/TM4C123GH6PM
+[TM4C129x]: https://www.ti.com/product/TM4C1294NCPDT
 
-## [Documentation](https://docs.rs/tm4c123x-hal)
+## Example Hardware
+
+These crates are tested on the following Tiva-C Launchpad boards:
+
+* Tiva-C Series TM4C123G Launchpad, [EK-TM4C123GXL](https://www.ti.com/tool/EK-TM4C123GXL)
+* Tiva-C Series TM4C1294 Connected Launchpad, [EK-TM4C1294XL](https://www.ti.com/tool/EK-TM4C1294XL)
+* Tiva-C Series TM4C129E Crypto Launchpad, [EK-TM4C129EXL](http://www.ti.com/tool/EK-TM4C129EXL)
+
+## Example projects
+
+The authors are aware of the following projects which use one or other (or both) of these crates:
+
+* [Monotron](https://github.com/thejpster/monotron), a 1980s-style retro computer with VGA output
+
+## Documentation
+
+See https://docs.rs/tm4c129x-hal and https://docs.rs/tm4c123x-hal.
 
 ## License
 
@@ -16,7 +34,7 @@ Licensed under either of
 
 at your option.
 
-### Contribution
+## Contribution
 
 Unless you explicitly state otherwise, any contribution intentionally submitted
 for inclusion in the work by you, as defined in the Apache-2.0 license, shall be
