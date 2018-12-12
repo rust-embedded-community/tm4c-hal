@@ -846,7 +846,7 @@ impl ClockSetup {
                     if let SystemClock::UseOscillator(div) = system_clock {
                         w.usesysdiv().set_bit();
                         unsafe {
-                            w.sysdiv().bits(div as u8);
+                            w.sysdiv().bits(div as u8 - 1);
                         }
                         sysclk = osc / (div as u32);
                     } else {
@@ -874,7 +874,7 @@ impl ClockSetup {
                     if let SystemClock::UseOscillator(div) = system_clock {
                         w.usesysdiv().set_bit();
                         unsafe {
-                            w.sysdiv().bits(div as u8);
+                            w.sysdiv().bits(div as u8 - 1);
                         }
                         sysclk = osc / (div as u32);
                     } else {
@@ -899,7 +899,7 @@ impl ClockSetup {
                     w.moscdis().set_bit();
                     w.usesysdiv().set_bit();
                     unsafe {
-                        w.sysdiv().bits(div as u8);
+                        w.sysdiv().bits(div as u8 - 1);
                     }
                     sysclk = osc / (div as u32);
                     w
@@ -916,7 +916,7 @@ impl ClockSetup {
                     w.moscdis().set_bit();
                     w.usesysdiv().set_bit();
                     unsafe {
-                        w.sysdiv().bits(div as u8);
+                        w.sysdiv().bits(div as u8 - 1);
                     }
                     sysclk = osc / (div as u32);
                     w
