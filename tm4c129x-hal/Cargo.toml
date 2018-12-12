@@ -1,11 +1,11 @@
 [package]
 name = "tm4c129x-hal"
-version = "0.6.1"
+version = "0.7.0"
 authors = [
 	"Jorge Aparicio <jorge@japaric.io>",
 	"Jonathan 'theJPster' Pallant <github@thejpster.org.uk>",
 	"Marc Poulhiès <dkm@kataplop.net>",
-    "David Wood <code@dtwood.co.uk>",
+	"David Wood <code@dtwood.co.uk>",
 ]
 description = "HAL for the TM4C129x family of microcontrollers"
 keywords = ["arm", "cortex-m", "tm4c", "hal"]
@@ -30,6 +30,9 @@ features = ["unproven"]
 [dependencies.void]
 version = "1.0"
 default-features = false
+
+[dependencies.tm4c-hal]
+path = "../tm4c-hal"
 
 [features]
 rt = ["tm4c129x/rt"]

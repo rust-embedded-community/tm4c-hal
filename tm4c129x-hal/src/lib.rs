@@ -24,7 +24,9 @@
 // #![deny(warnings)]
 #![no_std]
 
-pub mod bb;
+pub use tm4c_hal::bb;
+pub use tm4c_hal::time;
+
 pub mod delay;
 pub mod gpio;
 pub mod i2c;
@@ -32,7 +34,6 @@ pub mod prelude;
 pub mod serial;
 // pub mod spi;
 pub mod sysctl;
-pub mod time;
 
 use embedded_hal as hal;
 pub use tm4c129x;
