@@ -5,6 +5,7 @@ authors = [
 	"Jorge Aparicio <jorge@japaric.io>",
 	"Jonathan 'theJPster' Pallant <github@thejpster.org.uk>",
 	"Marc Poulhiès <dkm@kataplop.net>",
+	"David Wood <code@dtwood.co.uk>",
 ]
 description = "HAL for the TM4C123x family of microcontrollers"
 keywords = ["arm", "cortex-m", "tm4c", "lm4f120", "hal"]

@@ -1,7 +1,16 @@
 [package]
 name = "tm4c-hal"
 version = "0.1.0"
-authors = ["Jonathan 'theJPster' Pallant <github@thejpster.org.uk>"]
+authors = [
+	"Jorge Aparicio <jorge@japaric.io>",
+	"Jonathan 'theJPster' Pallant <github@thejpster.org.uk>",
+	"Marc Poulhiès <dkm@kataplop.net>",
+	"David Wood <code@dtwood.co.uk>",
+]
+description = "Common bits of HAL for the TM4C123x/TM4C129x family of microcontrollers"
+keywords = ["arm", "cortex-m", "tm4c", "lm4f120", "hal"]
+categories = ["embedded", "hardware-support", "no-std"]
+license = "MIT OR Apache-2.0"
 edition = "2018"
 
 [dependencies]
