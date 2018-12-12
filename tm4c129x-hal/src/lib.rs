@@ -28,8 +28,6 @@ pub use tm4c_hal::bb;
 pub use tm4c_hal::delay;
 pub use tm4c_hal::time;
 
-pub use tm4c_hal::gpio as gpio_common;
-
 pub mod gpio;
 pub mod i2c;
 pub mod prelude;
