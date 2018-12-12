@@ -1,0 +1,3 @@
+[workspace]
+members = ["tm4c123x-hal", "tm4c129x-hal", "tm4c-hal"]
+

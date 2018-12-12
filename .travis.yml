@@ -1,9 +1,8 @@
 language: rust
 rust:
-  - nightly
+  - stable
 install:
-  - pushd /
   - rustup component add rust-src
   - rustup target add thumbv7em-none-eabihf
-  - popd
-script: cargo build --release
+script: cargo build
+
