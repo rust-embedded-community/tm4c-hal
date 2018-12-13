@@ -6,6 +6,7 @@ use crate::hal::blocking::i2c::{Read, Write, WriteRead};
 use crate::sysctl::{self, Clocks};
 use crate::time::Hertz;
 use tm4c129x::{I2C0, I2C1, I2C2, I2C3};
+use cortex_m::asm::delay;
 
 /// I2C error
 #[derive(Debug)]
@@ -66,6 +67,12 @@ pub struct I2c<I2C, PINS> {
 
 macro_rules! busy_wait {
     ($i2c:expr, $flag:ident, $op:ident) => {
+        // in 'release' builds, the time between setting the `run` bit and checking the `busy`
+        // bit is too short and the `busy` bit is not reliably set by the time you get there,
+        // it can take up to 8 clock cycles for the `run` to begin so this delay allows time
+        // for that hardware synchronization
+        delay(2);
+
         loop {
             let mcs = $i2c.mcs.read();
 
