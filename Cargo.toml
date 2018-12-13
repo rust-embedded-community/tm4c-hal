@@ -1,3 +1,13 @@
 [workspace]
-members = ["tm4c123x-hal", "tm4c129x-hal", "tm4c-hal"]
+members = [
+	"tm4c123x-hal",
+	"tm4c129x-hal",
+	"tm4c-hal",
+	"examples/tiva-c-launchpad",
+	"examples/tiva-c-connected-launchpad",
+]
 
+[profile.release]
+codegen-units = 1 # better optimizations
+debug = true # symbols are nice and they don't increase the size on Flash
+lto = true # better optimizations
