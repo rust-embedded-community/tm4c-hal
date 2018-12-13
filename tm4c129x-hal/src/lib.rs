@@ -21,13 +21,15 @@
 //! [`f3`]: https://docs.rs/f3/~0.5.1
 
 #![no_std]
-#![deny(missing_docs)]
-#![deny(warnings)]
 #![allow(deprecated)]
 
 pub use tm4c129x::{self, CorePeripherals, Peripherals};
 pub use tm4c_hal::{bb, delay, time};
 
+pub mod edes;
+mod edes_old;
+pub mod ephy;
+pub mod ethernet;
 pub mod gpio;
 pub mod i2c;
 pub mod prelude;
