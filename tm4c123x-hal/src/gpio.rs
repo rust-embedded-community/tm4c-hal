@@ -49,7 +49,7 @@ pub trait GpioExt {
     fn split(self, power_control: &sysctl::PowerControl) -> Self::Parts;
 }
 
-gpio_macro!(tm4c123x, GPIO_PORTA, gpioa, GpioA, PAx, [
+gpio_macro!(tm4c123x, GPIO_PORTA_AHB, gpioa, GpioA, PAx, [
     PA0: (pa0, 0, Tristate),
     PA1: (pa1, 1, Tristate),
     PA2: (pa2, 2, Tristate),
@@ -60,7 +60,7 @@ gpio_macro!(tm4c123x, GPIO_PORTA, gpioa, GpioA, PAx, [
     PA7: (pa7, 7, Tristate),
 ]);
 
-gpio_macro!(tm4c123x, GPIO_PORTB, gpiob, GpioB, PBx, [
+gpio_macro!(tm4c123x, GPIO_PORTB_AHB, gpiob, GpioB, PBx, [
     PB0: (pb0, 0, Tristate),
     PB1: (pb1, 1, Tristate),
     PB2: (pb2, 2, Tristate),
@@ -71,7 +71,7 @@ gpio_macro!(tm4c123x, GPIO_PORTB, gpiob, GpioB, PBx, [
     PB7: (pb7, 7, Tristate),
 ]);
 
-gpio_macro!(tm4c123x, GPIO_PORTC, gpioc, GpioC, PCx, [
+gpio_macro!(tm4c123x, GPIO_PORTC_AHB, gpioc, GpioC, PCx, [
     PC0: (pc0, 0, Locked), // JTAG/SWD pin
     PC1: (pc1, 1, Locked), // JTAG/SWD pin
     PC2: (pc2, 2, Locked), // JTAG/SWD pin
@@ -82,7 +82,7 @@ gpio_macro!(tm4c123x, GPIO_PORTC, gpioc, GpioC, PCx, [
     PC7: (pc7, 7, Tristate),
 ]);
 
-gpio_macro!(tm4c123x, GPIO_PORTD, gpiod, GpioD, PDx, [
+gpio_macro!(tm4c123x, GPIO_PORTD_AHB, gpiod, GpioD, PDx, [
     PD0: (pd0, 0, Tristate),
     PD1: (pd1, 1, Tristate),
     PD2: (pd2, 2, Tristate),
@@ -93,7 +93,7 @@ gpio_macro!(tm4c123x, GPIO_PORTD, gpiod, GpioD, PDx, [
     PD7: (pd7, 7, Locked), // NMI pin
 ]);
 
-gpio_macro!(tm4c123x, GPIO_PORTE, gpioe, GpioE, PEx, [
+gpio_macro!(tm4c123x, GPIO_PORTE_AHB, gpioe, GpioE, PEx, [
     PE0: (pe0, 0, Tristate),
     PE1: (pe1, 1, Tristate),
     PE2: (pe2, 2, Tristate),
@@ -104,7 +104,7 @@ gpio_macro!(tm4c123x, GPIO_PORTE, gpioe, GpioE, PEx, [
     PE7: (pe7, 7, Tristate),
 ]);
 
-gpio_macro!(tm4c123x, GPIO_PORTF, gpiof, GpioF, PFx, [
+gpio_macro!(tm4c123x, GPIO_PORTF_AHB, gpiof, GpioF, PFx, [
     PF0: (pf0, 0, Locked), // NMI pin
     PF1: (pf1, 1, Tristate),
     PF2: (pf2, 2, Tristate),
