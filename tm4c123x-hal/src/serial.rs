@@ -9,7 +9,7 @@ use nb::{self, block};
 pub use tm4c123x::{UART0, UART1, UART2, UART3, UART4, UART5, UART6, UART7};
 use void::Void;
 
-use crate::gpio::{gpioa, gpiob, gpioc, gpiod, gpioe};
+use crate::gpio::{gpioa, gpiob, gpioc, gpiod, gpioe, gpiof};
 use crate::gpio::{AlternateFunction, OutputMode, AF1, AF2};
 use crate::sysctl;
 use crate::sysctl::Clocks;
@@ -48,32 +48,20 @@ pub struct Tx<UART, TX, RTS> {
 
 uart_pin_macro!(UART0,
     cts: [],
-    // dcd: [(gpioh::PH2, AF1), (gpiom::PM5, AF1), (gpiop::PP3, AF2)],
-    // dsr: [(gpioh::PH3, AF1), (gpiom::PM6, AF1), (gpiop::PP4, AF2)],
-    // dtr: [(gpiop::PP2, AF2)],
-    // ri: [(gpiok::PK7, AF1), (gpiom::PM7, AF1)],
     rts: [],
     rx: [(gpioa::PA0, AF1)],
     tx: [(gpioa::PA1, AF1)],
 );
 
 uart_pin_macro!(UART1,
-    cts: [],
-    // dcd: [(gpioe::PE2, AF1), (gpion::PN2, AF1)],
-    // dsr: [(gpioe::PE1, AF1), (gpion::PN3, AF1)],
-    // dtr: [(gpioe::PE3, AF1), (gpion::PN3, AF1)],
-    // ri: [(gpion::PN5, AF1), (gpion::PE4, AF1)],
-    rts: [],
+    cts: [(gpioc::PC5, AF2),(gpiof::PF1, AF1)],
+    rts: [(gpioc::PC4, AF2),(gpiof::PF0, AF1)],
     rx: [(gpiob::PB0, AF1),(gpioc::PC4, AF2)],
     tx: [(gpiob::PB1, AF1),(gpioc::PC5, AF2)],
 );
 
 uart_pin_macro!(UART2,
     cts: [],
-    // dcd: [(gpion::PN2, AF2), (gpiod::PD6, AF1)],
-    // dsr: [],
-    // dtr: [],
-    // ri: [],
     rts: [],
     rx: [(gpiod::PD6, AF1)],
     tx: [(gpiod::PD7, AF1)],
@@ -81,10 +69,6 @@ uart_pin_macro!(UART2,
 
 uart_pin_macro!(UART3,
     cts: [],
-    // dcd: [],
-    // dsr: [],
-    // dtr: [],
-    // ri: [],
     rts: [],
     rx: [(gpioc::PC6, AF1)],
     tx: [(gpioc::PC7, AF1)],
@@ -92,10 +76,6 @@ uart_pin_macro!(UART3,
 
 uart_pin_macro!(UART4,
     cts: [],
-    // dcd: [],
-    // dsr: [],
-    // dtr: [],
-    // ri: [],
     rts: [],
     rx: [(gpioc::PC4, AF1)],
     tx: [(gpioc::PC5, AF1)],
@@ -103,10 +83,6 @@ uart_pin_macro!(UART4,
 
 uart_pin_macro!(UART5,
     cts: [],
-    // dcd: [],
-    // dsr: [],
-    // dtr: [],
-    // ri: [],
     rts: [],
     rx: [(gpioe::PE4, AF1)],
     tx: [(gpioe::PE5, AF1)],
@@ -114,10 +90,6 @@ uart_pin_macro!(UART5,
 
 uart_pin_macro!(UART6,
     cts: [],
-    // dcd: [],
-    // dsr: [],
-    // dtr: [],
-    // ri: [],
     rts: [],
     rx: [(gpiod::PD4, AF1)],
     tx: [(gpiod::PD5, AF1)],
@@ -125,10 +97,6 @@ uart_pin_macro!(UART6,
 
 uart_pin_macro!(UART7,
     cts: [],
-    // dcd: [],
-    // dsr: [],
-    // dtr: [],
-    // ri: [],
     rts: [],
     rx: [(gpioe::PE0, AF1)],
     tx: [(gpioe::PE1, AF1)],
