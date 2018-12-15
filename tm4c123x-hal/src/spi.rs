@@ -146,6 +146,40 @@ macro_rules! hal {
                 pub fn free(self) -> ($SPIX, (SCK, MISO, MOSI)) {
                     (self.spi, self.pins)
                 }
+
+                /// Change the clock frequency of the SPI device.
+                pub fn reclock<F>(&mut self, freq: F, clocks: &Clocks) where F: Into<Hertz> {
+                    // Disable peripheral
+                    self.spi.cr1.modify(|_, w| w.sse().clear_bit());
+
+                    let scr: u8;
+                    let mut cpsr = 2u32;
+                    let target_bitrate : u32 = clocks.sysclk.0 / freq.into().0;
+
+                    // Find solution for
+                    // SSInClk = SysClk / (CPSDVSR * (1 + SCR))
+                    // with:
+                    //   CPSDVSR in [2,254]
+                    //   SCR in [0,255]
+
+                    loop {
+                        let scr32 = (target_bitrate / cpsr) - 1;
+                        if scr32 < 255 {
+                            scr = scr32 as u8;
+                            break;
+                        }
+                        cpsr += 2;
+                        assert!(cpsr <= 254);
+                    }
+
+                    let cpsr = cpsr as u8;
+
+                    self.spi.cpsr.write(|w| unsafe { w.cpsdvsr().bits(cpsr) });
+                    self.spi.cr0.modify(|_,w| unsafe { w.scr().bits(scr) });
+
+                    // Enable peripheral again
+                    self.spi.cr1.modify(|_, w| w.sse().set_bit());
+                }
             }
 
             impl<PINS> FullDuplex<u8> for Spi<$SPIX, PINS> {
