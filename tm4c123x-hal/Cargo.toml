@@ -37,7 +37,7 @@ version = "1.0"
 default-features = false
 
 [dependencies.tm4c-hal]
-path = "../tm4c-hal"
+# path = "../tm4c-hal"
 version = "0.2.0"
 
 [features]
