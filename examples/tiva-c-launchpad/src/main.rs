@@ -19,7 +19,7 @@ fn main() -> ! {
     );
     let clocks = sc.clock_setup.freeze();
 
-    let mut porta = p.GPIO_PORTA_AHB.split(&sc.power_control);
+    let mut porta = p.GPIO_PORTA.split(&sc.power_control);
 
     // Activate UART
     let mut uart = hal::serial::Serial::uart0(
