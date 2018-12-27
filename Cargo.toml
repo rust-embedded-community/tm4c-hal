@@ -4,6 +4,7 @@ members = [
 	"tm4c129x-hal",
 	"tm4c-hal",
 	"examples/tiva-c-launchpad",
+	"examples/tiva-c-launchpad-usb-host",
 	"examples/tiva-c-connected-launchpad",
 ]
 
