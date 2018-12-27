@@ -33,6 +33,7 @@ pub mod prelude;
 pub mod serial;
 pub mod spi;
 pub mod sysctl;
+pub mod usb;
 
 use embedded_hal as hal;
 pub use tm4c123x;
