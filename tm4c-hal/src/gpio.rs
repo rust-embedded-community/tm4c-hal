@@ -44,6 +44,10 @@ impl OpenDrainMode for Floating {
 pub struct PullDown;
 impl InputMode for PullDown {}
 
+/// Sub-mode of Input: Analog input (type state)
+pub struct Analog;
+impl InputMode for Analog {}
+
 /// Sub-mode of Input: Pulled up input (type state)
 pub struct PullUp;
 impl InputMode for PullUp {}

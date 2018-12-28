@@ -237,6 +237,25 @@ macro_rules! gpio_macro {
                         $PXi { _mode: PhantomData }
                     }
 
+                    /// Configures the pin to operate as a analog input pin
+                    /// with 2mA drive strength
+                    pub fn into_analog_input(
+                        self
+                    ) -> $PXi<Input<Analog>> {
+                        let p = unsafe { &*$GPIOX::ptr() };
+                        unsafe { bb::change_bit(&p.afsel, $i, false); }
+                        unsafe { bb::change_bit(&p.dir, $i, false); }
+                        unsafe { bb::change_bit(&p.odr, $i, false); }
+                        unsafe { bb::change_bit(&p.pur, $i, false); }
+                        unsafe { bb::change_bit(&p.pdr, $i, false); }
+                        unsafe { bb::change_bit(&p.den, $i, false); }
+                        unsafe { bb::change_bit(&p.dr2r, $i, true); }
+                        unsafe { bb::change_bit(&p.dr4r, $i, false); }
+                        unsafe { bb::change_bit(&p.dr8r, $i, false); }
+                        unsafe { bb::change_bit(&p.slr, $i, false); }
+                        $PXi { _mode: PhantomData }
+                    }
+
                     /// Configures the pin to operate as a pulled down input pin
                     pub fn into_pull_down_input(
                         self
