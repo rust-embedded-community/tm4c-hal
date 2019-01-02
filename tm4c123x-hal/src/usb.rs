@@ -60,32 +60,42 @@ pub enum UsbSpeed {
     LowSpeed,
     /// A 11 Mbit/sec device
     FullSpeed,
-    /// A 480 Mbit/sec device
-    HighSpeed,
-    /// A 5.0 Gbit/sec device
-    SuperSpeed,
 }
 
 /// The hardware supports a special bi-directional Endpoint 0, plus 7
 /// additional endpoints.
 #[derive(Debug, Copy, Clone)]
 pub enum Endpoint {
-    /// Endpoint number 0
-    EP0,
-    /// Endpoint number 1
-    EP1,
-    /// Endpoint number 2
-    EP2,
-    /// Endpoint number 3
-    EP3,
-    /// Endpoint number 4
-    EP4,
-    /// Endpoint number 5
-    EP5,
-    /// Endpoint number 6
-    EP6,
-    /// Endpoint number 7
-    EP7,
+    /// Endpoint number 0 (TX & RX)
+    ControlEp0,
+    /// Endpoint number 1 TX
+    TxEp1,
+    /// Endpoint number 2 TX
+    TxEp2,
+    /// Endpoint number 3 TX
+    TxEp3,
+    /// Endpoint number 4 Tx
+    TxEp4,
+    /// Endpoint number 5 Tx
+    TxEp5,
+    /// Endpoint number 6 Tx
+    TxEp6,
+    /// Endpoint number 7 Tx
+    TxEp7,
+    /// Endpoint number 1 RX
+    RxEp1,
+    /// Endpoint number 2 RX
+    RxEp2,
+    /// Endpoint number 3 RX
+    RxEp3,
+    /// Endpoint number 4 Rx
+    RxEp4,
+    /// Endpoint number 5 Rx
+    RxEp5,
+    /// Endpoint number 6 Rx
+    RxEp6,
+    /// Endpoint number 7 Rx
+    RxEp7,
 }
 
 /// Represents a 7-bit USB device address.
@@ -148,37 +158,45 @@ where
     /// Returns the current USB Frame Number. When the bus isn't suspended,
     /// this values goes up by one every millisecond.
     pub fn get_frame_number(&self) -> u16 {
-        unimplemented!();
+        self.usb.frame.read().frame().bits()
     }
 
     /// Enable/disable the Start Of Frame interrupt.
-    pub fn sof_interrupts_enabled(&mut self, _enabled: bool) {
-        unimplemented!();
+    pub fn sof_interrupts_enabled(&mut self, enabled: bool) {
+        self.usb.ie.modify(|_r, w| w.sof().bit(enabled))
     }
 
     /// Resets the USB bus, including the endpoints in any attached device and
-    /// pipes on the AVR host. USB bus resets leave the default control pipe
+    /// pipes on the host. USB bus resets leave the default control pipe
     /// configured (if already configured).
     ///
     /// If the USB bus has been suspended prior to issuing a bus reset, the
     /// attached device will be woken up automatically and the bus resumed
     /// after the reset has been correctly issued.
     pub fn bus_reset(&mut self) {
-        unimplemented!();
+        self.usb.power.modify(|_r, w| w.reset().set_bit());
     }
 
     /// Return false if a previous bus reset is still in progress, else return
     /// true.
     pub fn bus_is_reset_complete(&mut self) -> bool {
-        unimplemented!()
+        // @TODO if we have delayed 20ms here
+        if false {
+            self.usb.power.modify(|_r, w| w.reset().clear_bit());
+            true
+        } else {
+            false
+        }
     }
 
     /// Resumes USB communications with an attached and enumerated device, by
     /// resuming the transmission of the 1MS Start Of Frame messages to the
     /// device. When resumed, USB communications between the host and attached
-    /// device may occur.
+    /// device may occur. This takes the host out of suspend mode.
     pub fn bus_resume(&mut self) {
-        unimplemented!();
+        self.usb.power.modify(|_r, w| w.resume().set_bit());
+        // @TODO Delay at least 10ms but not more than 15ms
+        self.usb.power.modify(|_r, w| w.resume().clear_bit());
     }
 
     /// Suspends the USB bus, preventing any communications from occurring
@@ -190,17 +208,21 @@ where
     ///       disabled; this means that some events (such as device
     ///       disconnections) will not fire until the bus is resumed.
     pub fn bus_suspend(&mut self) {
-        unimplemented!();
+        self.usb.power.modify(|_r, w| w.suspend().set_bit());
     }
 
     /// Return true if the bus is currently suspended.
     pub fn bus_is_suspended(&self) -> bool {
-        unimplemented!();
+        self.usb.power.read().suspend().bit_is_set()
     }
 
     /// Returns the speed of the attached device.
     pub fn bus_speed(&self) -> UsbSpeed {
-        unimplemented!();
+        if self.usb.devctl.read().fsdev().bit_is_set() {
+            UsbSpeed::FullSpeed
+        } else {
+            UsbSpeed::LowSpeed
+        }
     }
 
     /// Determines if the attached device is currently issuing a Remote Wakeup
@@ -230,14 +252,262 @@ where
 
     /// Specify which USB device a particular endpoint is connected to. If
     /// this device is not directly connected, you can also specify the device
-    /// address and port of the hub it is connected to.
+    /// address and port of the hub it is connected to. It will optionally set
+    /// the speed for the endpoint too.
     pub fn set_device_address_for_endpoint(
         &mut self,
-        _endpoint: Endpoint,
-        _address: DeviceAddress,
-        _connection: DeviceConnection,
+        endpoint: Endpoint,
+        address: DeviceAddress,
+        connection: DeviceConnection,
+        speed: Option<UsbSpeed>,
     ) {
-        unimplemented!();
+        let (hub_address, port) = match connection {
+            None => (0, 0),
+            Some((hub_address, port)) => (hub_address.0, port),
+        };
+        match endpoint {
+            Endpoint::ControlEp0 => {
+                // Also controls the RX addresses as they are the same
+                self.usb
+                    .txfuncaddr0
+                    .write(|w| unsafe { w.addr().bits(address.0) });
+                self.usb
+                    .txhubaddr0
+                    .write(|w| unsafe { w.addr().bits(hub_address) });
+                self.usb
+                    .txhubport0
+                    .write(|w| unsafe { w.port().bits(port) });
+                match speed {
+                    None => {}
+                    Some(UsbSpeed::LowSpeed) => self.usb.type0.write(|w| w.speed().low()),
+                    Some(UsbSpeed::FullSpeed) => self.usb.type0.write(|w| w.speed().full()),
+                }
+            }
+            Endpoint::TxEp1 => {
+                self.usb
+                    .txfuncaddr1
+                    .write(|w| unsafe { w.addr().bits(address.0) });
+                self.usb
+                    .txhubaddr1
+                    .write(|w| unsafe { w.addr().bits(hub_address) });
+                self.usb
+                    .txhubport1
+                    .write(|w| unsafe { w.port().bits(port) });
+                match speed {
+                    None => {}
+                    Some(UsbSpeed::LowSpeed) => self.usb.txtype1.write(|w| w.speed().low()),
+                    Some(UsbSpeed::FullSpeed) => self.usb.txtype1.write(|w| w.speed().full()),
+                }
+            }
+            Endpoint::TxEp2 => {
+                self.usb
+                    .txfuncaddr2
+                    .write(|w| unsafe { w.addr().bits(address.0) });
+                self.usb
+                    .txhubaddr2
+                    .write(|w| unsafe { w.addr().bits(hub_address) });
+                self.usb
+                    .txhubport2
+                    .write(|w| unsafe { w.port().bits(port) });
+                match speed {
+                    None => {}
+                    Some(UsbSpeed::LowSpeed) => self.usb.txtype2.write(|w| w.speed().low()),
+                    Some(UsbSpeed::FullSpeed) => self.usb.txtype2.write(|w| w.speed().full()),
+                }
+            }
+            Endpoint::TxEp3 => {
+                self.usb
+                    .txfuncaddr3
+                    .write(|w| unsafe { w.addr().bits(address.0) });
+                self.usb
+                    .txhubaddr3
+                    .write(|w| unsafe { w.addr().bits(hub_address) });
+                self.usb
+                    .txhubport3
+                    .write(|w| unsafe { w.port().bits(port) });
+                match speed {
+                    None => {}
+                    Some(UsbSpeed::LowSpeed) => self.usb.txtype3.write(|w| w.speed().low()),
+                    Some(UsbSpeed::FullSpeed) => self.usb.txtype3.write(|w| w.speed().full()),
+                }
+            }
+            Endpoint::TxEp4 => {
+                self.usb
+                    .txfuncaddr4
+                    .write(|w| unsafe { w.addr().bits(address.0) });
+                self.usb
+                    .txhubaddr4
+                    .write(|w| unsafe { w.addr().bits(hub_address) });
+                self.usb
+                    .txhubport4
+                    .write(|w| unsafe { w.port().bits(port) });
+                match speed {
+                    None => {}
+                    Some(UsbSpeed::LowSpeed) => self.usb.txtype4.write(|w| w.speed().low()),
+                    Some(UsbSpeed::FullSpeed) => self.usb.txtype4.write(|w| w.speed().full()),
+                }
+            }
+            Endpoint::TxEp5 => {
+                self.usb
+                    .txfuncaddr5
+                    .write(|w| unsafe { w.addr().bits(address.0) });
+                self.usb
+                    .txhubaddr5
+                    .write(|w| unsafe { w.addr().bits(hub_address) });
+                self.usb
+                    .txhubport5
+                    .write(|w| unsafe { w.port().bits(port) });
+                match speed {
+                    None => {}
+                    Some(UsbSpeed::LowSpeed) => self.usb.txtype5.write(|w| w.speed().low()),
+                    Some(UsbSpeed::FullSpeed) => self.usb.txtype5.write(|w| w.speed().full()),
+                }
+            }
+            Endpoint::TxEp6 => {
+                self.usb
+                    .txfuncaddr6
+                    .write(|w| unsafe { w.addr().bits(address.0) });
+                self.usb
+                    .txhubaddr6
+                    .write(|w| unsafe { w.addr().bits(hub_address) });
+                self.usb
+                    .txhubport6
+                    .write(|w| unsafe { w.port().bits(port) });
+                match speed {
+                    None => {}
+                    Some(UsbSpeed::LowSpeed) => self.usb.txtype6.write(|w| w.speed().low()),
+                    Some(UsbSpeed::FullSpeed) => self.usb.txtype6.write(|w| w.speed().full()),
+                }
+            }
+            Endpoint::TxEp7 => {
+                self.usb
+                    .txfuncaddr7
+                    .write(|w| unsafe { w.addr().bits(address.0) });
+                self.usb
+                    .txhubaddr7
+                    .write(|w| unsafe { w.addr().bits(hub_address) });
+                self.usb
+                    .txhubport7
+                    .write(|w| unsafe { w.port().bits(port) });
+                match speed {
+                    None => {}
+                    Some(UsbSpeed::LowSpeed) => self.usb.txtype7.write(|w| w.speed().low()),
+                    Some(UsbSpeed::FullSpeed) => self.usb.txtype7.write(|w| w.speed().full()),
+                }
+            }
+            Endpoint::RxEp1 => {
+                self.usb
+                    .rxfuncaddr1
+                    .write(|w| unsafe { w.addr().bits(address.0) });
+                self.usb
+                    .rxhubaddr1
+                    .write(|w| unsafe { w.addr().bits(hub_address) });
+                self.usb
+                    .rxhubport1
+                    .write(|w| unsafe { w.port().bits(port) });
+                match speed {
+                    None => {}
+                    Some(UsbSpeed::LowSpeed) => self.usb.rxtype1.write(|w| w.speed().low()),
+                    Some(UsbSpeed::FullSpeed) => self.usb.rxtype1.write(|w| w.speed().full()),
+                }
+            }
+            Endpoint::RxEp2 => {
+                self.usb
+                    .rxfuncaddr2
+                    .write(|w| unsafe { w.addr().bits(address.0) });
+                self.usb
+                    .rxhubaddr2
+                    .write(|w| unsafe { w.addr().bits(hub_address) });
+                self.usb
+                    .rxhubport2
+                    .write(|w| unsafe { w.port().bits(port) });
+                match speed {
+                    None => {}
+                    Some(UsbSpeed::LowSpeed) => self.usb.rxtype2.write(|w| w.speed().low()),
+                    Some(UsbSpeed::FullSpeed) => self.usb.rxtype2.write(|w| w.speed().full()),
+                }
+            }
+            Endpoint::RxEp3 => {
+                self.usb
+                    .rxfuncaddr3
+                    .write(|w| unsafe { w.addr().bits(address.0) });
+                self.usb
+                    .rxhubaddr3
+                    .write(|w| unsafe { w.addr().bits(hub_address) });
+                self.usb
+                    .rxhubport3
+                    .write(|w| unsafe { w.port().bits(port) });
+                match speed {
+                    None => {}
+                    Some(UsbSpeed::LowSpeed) => self.usb.rxtype3.write(|w| w.speed().low()),
+                    Some(UsbSpeed::FullSpeed) => self.usb.rxtype3.write(|w| w.speed().full()),
+                }
+            }
+            Endpoint::RxEp4 => {
+                self.usb
+                    .rxfuncaddr4
+                    .write(|w| unsafe { w.addr().bits(address.0) });
+                self.usb
+                    .rxhubaddr4
+                    .write(|w| unsafe { w.addr().bits(hub_address) });
+                self.usb
+                    .rxhubport4
+                    .write(|w| unsafe { w.port().bits(port) });
+                match speed {
+                    None => {}
+                    Some(UsbSpeed::LowSpeed) => self.usb.rxtype4.write(|w| w.speed().low()),
+                    Some(UsbSpeed::FullSpeed) => self.usb.rxtype4.write(|w| w.speed().full()),
+                }
+            }
+            Endpoint::RxEp5 => {
+                self.usb
+                    .rxfuncaddr5
+                    .write(|w| unsafe { w.addr().bits(address.0) });
+                self.usb
+                    .rxhubaddr5
+                    .write(|w| unsafe { w.addr().bits(hub_address) });
+                self.usb
+                    .rxhubport5
+                    .write(|w| unsafe { w.port().bits(port) });
+                match speed {
+                    None => {}
+                    Some(UsbSpeed::LowSpeed) => self.usb.rxtype5.write(|w| w.speed().low()),
+                    Some(UsbSpeed::FullSpeed) => self.usb.rxtype5.write(|w| w.speed().full()),
+                }
+            }
+            Endpoint::RxEp6 => {
+                self.usb
+                    .rxfuncaddr6
+                    .write(|w| unsafe { w.addr().bits(address.0) });
+                self.usb
+                    .rxhubaddr6
+                    .write(|w| unsafe { w.addr().bits(hub_address) });
+                self.usb
+                    .rxhubport6
+                    .write(|w| unsafe { w.port().bits(port) });
+                match speed {
+                    None => {}
+                    Some(UsbSpeed::LowSpeed) => self.usb.rxtype6.write(|w| w.speed().low()),
+                    Some(UsbSpeed::FullSpeed) => self.usb.rxtype6.write(|w| w.speed().full()),
+                }
+            }
+            Endpoint::RxEp7 => {
+                self.usb
+                    .rxfuncaddr7
+                    .write(|w| unsafe { w.addr().bits(address.0) });
+                self.usb
+                    .rxhubaddr7
+                    .write(|w| unsafe { w.addr().bits(hub_address) });
+                self.usb
+                    .rxhubport7
+                    .write(|w| unsafe { w.port().bits(port) });
+                match speed {
+                    None => {}
+                    Some(UsbSpeed::LowSpeed) => self.usb.rxtype7.write(|w| w.speed().low()),
+                    Some(UsbSpeed::FullSpeed) => self.usb.rxtype7.write(|w| w.speed().full()),
+                }
+            }
+        }
     }
 
     /// Get which USB device a particular endpoint is connected to. If this
@@ -245,9 +515,108 @@ where
     /// port of the hub it is connected to.
     pub fn get_device_address_for_endpoint(
         &mut self,
-        _endpoint: Endpoint,
+        endpoint: Endpoint,
     ) -> (DeviceAddress, DeviceConnection) {
-        unimplemented!();
+        let (address, hub_address, hub_port) = match endpoint {
+            Endpoint::ControlEp0 => {
+                let address = self.usb.txfuncaddr0.read().bits();
+                let hub_address = self.usb.txhubaddr0.read().addr().bits();
+                let hub_port = self.usb.txhubport0.read().port().bits();
+                (address, hub_address, hub_port)
+            }
+            Endpoint::TxEp1 => {
+                let address = self.usb.txfuncaddr1.read().bits();
+                let hub_address = self.usb.txhubaddr1.read().addr().bits();
+                let hub_port = self.usb.txhubport1.read().port().bits();
+                (address, hub_address, hub_port)
+            }
+            Endpoint::TxEp2 => {
+                let address = self.usb.txfuncaddr2.read().bits();
+                let hub_address = self.usb.txhubaddr2.read().addr().bits();
+                let hub_port = self.usb.txhubport2.read().port().bits();
+                (address, hub_address, hub_port)
+            }
+            Endpoint::TxEp3 => {
+                let address = self.usb.txfuncaddr3.read().bits();
+                let hub_address = self.usb.txhubaddr3.read().addr().bits();
+                let hub_port = self.usb.txhubport3.read().port().bits();
+                (address, hub_address, hub_port)
+            }
+            Endpoint::TxEp4 => {
+                let address = self.usb.txfuncaddr4.read().bits();
+                let hub_address = self.usb.txhubaddr4.read().addr().bits();
+                let hub_port = self.usb.txhubport4.read().port().bits();
+                (address, hub_address, hub_port)
+            }
+            Endpoint::TxEp5 => {
+                let address = self.usb.txfuncaddr5.read().bits();
+                let hub_address = self.usb.txhubaddr5.read().addr().bits();
+                let hub_port = self.usb.txhubport5.read().port().bits();
+                (address, hub_address, hub_port)
+            }
+            Endpoint::TxEp6 => {
+                let address = self.usb.txfuncaddr6.read().bits();
+                let hub_address = self.usb.txhubaddr6.read().addr().bits();
+                let hub_port = self.usb.txhubport6.read().port().bits();
+                (address, hub_address, hub_port)
+            }
+            Endpoint::TxEp7 => {
+                let address = self.usb.txfuncaddr7.read().bits();
+                let hub_address = self.usb.txhubaddr7.read().addr().bits();
+                let hub_port = self.usb.txhubport7.read().port().bits();
+                (address, hub_address, hub_port)
+            }
+            Endpoint::RxEp1 => {
+                let address = self.usb.rxfuncaddr1.read().bits();
+                let hub_address = self.usb.rxhubaddr1.read().addr().bits();
+                let hub_port = self.usb.rxhubport1.read().port().bits();
+                (address, hub_address, hub_port)
+            }
+            Endpoint::RxEp2 => {
+                let address = self.usb.rxfuncaddr2.read().bits();
+                let hub_address = self.usb.rxhubaddr2.read().addr().bits();
+                let hub_port = self.usb.rxhubport2.read().port().bits();
+                (address, hub_address, hub_port)
+            }
+            Endpoint::RxEp3 => {
+                let address = self.usb.rxfuncaddr3.read().bits();
+                let hub_address = self.usb.rxhubaddr3.read().addr().bits();
+                let hub_port = self.usb.rxhubport3.read().port().bits();
+                (address, hub_address, hub_port)
+            }
+            Endpoint::RxEp4 => {
+                let address = self.usb.rxfuncaddr4.read().bits();
+                let hub_address = self.usb.rxhubaddr4.read().addr().bits();
+                let hub_port = self.usb.rxhubport4.read().port().bits();
+                (address, hub_address, hub_port)
+            }
+            Endpoint::RxEp5 => {
+                let address = self.usb.rxfuncaddr5.read().bits();
+                let hub_address = self.usb.rxhubaddr5.read().addr().bits();
+                let hub_port = self.usb.rxhubport5.read().port().bits();
+                (address, hub_address, hub_port)
+            }
+            Endpoint::RxEp6 => {
+                let address = self.usb.rxfuncaddr6.read().bits();
+                let hub_address = self.usb.rxhubaddr6.read().addr().bits();
+                let hub_port = self.usb.rxhubport6.read().port().bits();
+                (address, hub_address, hub_port)
+            }
+            Endpoint::RxEp7 => {
+                let address = self.usb.rxfuncaddr7.read().bits();
+                let hub_address = self.usb.rxhubaddr7.read().addr().bits();
+                let hub_port = self.usb.rxhubport7.read().port().bits();
+                (address, hub_address, hub_port)
+            }
+        };
+        if hub_address != 0 {
+            (
+                DeviceAddress(address),
+                Some((DeviceAddress(hub_address), hub_port)),
+            )
+        } else {
+            (DeviceAddress(address), None)
+        }
     }
 }
 
