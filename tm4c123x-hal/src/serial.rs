@@ -10,7 +10,7 @@ pub use tm4c123x::{UART0, UART1, UART2, UART3, UART4, UART5, UART6, UART7};
 use void::Void;
 
 use crate::gpio::{gpioa, gpiob, gpioc, gpiod, gpioe, gpiof};
-use crate::gpio::{AlternateFunction, OutputMode, AF1, AF2};
+use crate::gpio::{AlternateFunction, OutputMode, AF1, AF2, AF8};
 use crate::sysctl;
 use crate::sysctl::Clocks;
 use crate::time::Bps;
@@ -54,10 +54,10 @@ uart_pin_macro!(UART0,
 );
 
 uart_pin_macro!(UART1,
-    cts: [(gpioc::PC5, AF2),(gpiof::PF1, AF1)],
-    rts: [(gpioc::PC4, AF2),(gpiof::PF0, AF1)],
-    rx: [(gpiob::PB0, AF1),(gpioc::PC4, AF2)],
-    tx: [(gpiob::PB1, AF1),(gpioc::PC5, AF2)],
+    cts: [(gpioc::PC5, AF8), (gpiof::PF1, AF1)],
+    rts: [(gpioc::PC4, AF8), (gpiof::PF0, AF1)],
+    rx: [(gpiob::PB0, AF1), (gpioc::PC4, AF2)],
+    tx: [(gpiob::PB1, AF1), (gpioc::PC5, AF2)],
 );
 
 uart_pin_macro!(UART2,
