@@ -516,6 +516,19 @@ macro_rules! uart_hal_macro {
                     Serial { uart, tx_pin, rx_pin, rts_pin, cts_pin, nl_mode }
                 }
 
+                /// Change the current baud rate for the UART. We need the
+                /// `clocks` object in order to calculate the magic baud rate
+                /// register values.
+                pub fn change_baud_rate(&mut self, baud_rate: Bps, clocks: &Clocks) {
+                    // Calculate baud rate dividers
+                    let baud_int: u32 = (((clocks.sysclk.0 * 8) / baud_rate.0) + 1) / 2;
+                    // Set baud rate
+                    self.uart.ibrd.write(|w|
+                        unsafe { w.divint().bits((baud_int / 64) as u16) });
+                    self.uart.fbrd.write(|w|
+                        unsafe { w.divfrac().bits((baud_int % 64) as u8) });
+                }
+
                 /// Splits the `Serial` abstraction into a transmitter and a
                 /// receiver half. If you do this you can transmit and receive
                 /// in different threads.
