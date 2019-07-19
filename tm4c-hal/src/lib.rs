@@ -495,6 +495,9 @@ macro_rules! uart_hal_macro {
                     uart.ctl.reset();
 
                     // Calculate baud rate dividers
+                    // baud_int = 64 * (sys_clk / (16 * baud))
+                    // baud_int = 4 * (sys_clk / baud)
+                    // baud_int = ((8 * sys_clk) / baud) / 2, plus + 1 to round correctly
                     let baud_int: u32 = (((clocks.sysclk.0 * 8) / baud_rate.0) + 1) / 2;
 
                     // Set baud rate
@@ -520,13 +523,24 @@ macro_rules! uart_hal_macro {
                 /// `clocks` object in order to calculate the magic baud rate
                 /// register values.
                 pub fn change_baud_rate(&mut self, baud_rate: Bps, clocks: &Clocks) {
+                    // Stop UART
+                    self.uart.ctl.modify(|_, w| w.uarten().bit(false));
+
                     // Calculate baud rate dividers
                     let baud_int: u32 = (((clocks.sysclk.0 * 8) / baud_rate.0) + 1) / 2;
+
                     // Set baud rate
                     self.uart.ibrd.write(|w|
                         unsafe { w.divint().bits((baud_int / 64) as u16) });
                     self.uart.fbrd.write(|w|
                         unsafe { w.divfrac().bits((baud_int % 64) as u8) });
+
+                    // Set data bits / parity / stop bits / enable fifo
+                    // If you don't write to this register, the baud rate change doesn't take effect
+                    self.uart.lcrh.write(|w| w.wlen()._8().fen().bit(true));
+
+                    // Start UART again
+                    self.uart.ctl.modify(|_, w| w.uarten().bit(true));
                 }
 
                 /// Splits the `Serial` abstraction into a transmitter and a
