@@ -1,6 +1,6 @@
 [package]
 name = "tm4c-hal"
-version = "0.2.2"
+version = "0.2.3"
 authors = [
 	"Jorge Aparicio <jorge@japaric.io>",
 	"Jonathan 'theJPster' Pallant <github@thejpster.org.uk>",

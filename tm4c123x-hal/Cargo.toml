@@ -1,6 +1,6 @@
 [package]
 name = "tm4c123x-hal"
-version = "0.9.1"
+version = "0.9.2"
 authors = [
 	"Jorge Aparicio <jorge@japaric.io>",
 	"Jonathan 'theJPster' Pallant <github@thejpster.org.uk>",
@@ -37,8 +37,8 @@ version = "1.0"
 default-features = false
 
 [dependencies.tm4c-hal]
-# path = "../tm4c-hal"
-version = "0.2.2"
+path = "../tm4c-hal"
+version = "0.2.3"
 
 [features]
 rt = ["tm4c123x/rt"]
