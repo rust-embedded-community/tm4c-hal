@@ -20,9 +20,10 @@
 //!
 //! [`f3`]: https://docs.rs/f3/~0.5.1
 
-// #![deny(missing_docs)]
-// #![deny(warnings)]
 #![no_std]
+#![deny(missing_docs)]
+#![deny(warnings)]
+#![allow(deprecated)]
 
 pub use tm4c_hal::bb;
 pub use tm4c_hal::delay;

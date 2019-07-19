@@ -1,3 +1,5 @@
+//! Code for busy-waiting
+
 use crate::sysctl::Clocks;
 use crate::time::Hertz;
 use cast::u32;

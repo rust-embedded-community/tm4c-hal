@@ -1,3 +1,5 @@
+//! Code for GPIO pins
+
 use core::marker::PhantomData;
 
 /// All unlocked pin modes implement this

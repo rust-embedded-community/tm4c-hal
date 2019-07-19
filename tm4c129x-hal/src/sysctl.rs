@@ -24,7 +24,6 @@
 use crate::bb;
 use crate::time::{Hertz, U32Ext};
 use cortex_m::asm::nop;
-use tm4c129x;
 
 pub use tm4c_hal::sysctl::*;
 
@@ -1009,7 +1008,6 @@ pub mod chip_id {
     /// Read DID0 and DID1 to discover what sort of
     /// TM4C129 this is.
     pub fn get() -> Result<ChipId, Error> {
-        use tm4c129x;
         // This is safe as it's read only
         let p = unsafe { &*tm4c129x::SYSCTL::ptr() };
         let did0 = p.did0.read();

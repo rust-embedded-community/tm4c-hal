@@ -1,4 +1,9 @@
+//! Generic implementation code for both TM4C123 and TM4C129.
+
 #![no_std]
+#![deny(missing_docs)]
+#![deny(warnings)]
+#![allow(deprecated)]
 
 pub mod bb;
 pub mod delay;
@@ -7,7 +12,7 @@ pub mod serial;
 pub mod sysctl;
 pub mod time;
 
-// I can't work out how to put this macro in a module.
+///! An internal macro to implement the GPIO functionality for each port
 #[macro_export]
 macro_rules! gpio_macro {
     ($chip_crate:ident, $GPIOX:ident, $gpiox:ident, $iopd:ident, $PXx:ident, [
@@ -460,6 +465,7 @@ macro_rules! gpio_macro {
     }
 }
 
+///! An internal macro to implement the UART functionality for each peripheral
 #[macro_export]
 macro_rules! uart_hal_macro {
     ($(
@@ -706,6 +712,7 @@ macro_rules! uart_hal_macro {
     }
 }
 
+///! An internal macro to help define all the different pin typestates
 #[macro_export]
 macro_rules! uart_pin_macro {
     ($UARTn:ident,

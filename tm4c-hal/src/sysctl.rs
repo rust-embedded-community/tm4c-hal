@@ -1,3 +1,5 @@
+//! Code for the System Control module.
+
 use crate::time::Hertz;
 
 /// Frozen clock frequencies
