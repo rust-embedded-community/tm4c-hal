@@ -5,8 +5,8 @@ use crate::gpio::{AlternateFunction, Floating, OpenDrain, OutputMode, AF3};
 use crate::hal::blocking::i2c::{Read, Write, WriteRead};
 use crate::sysctl::{self, Clocks};
 use crate::time::Hertz;
-use tm4c129x::{I2C0, I2C1, I2C2, I2C3};
 use cortex_m::asm::delay;
+use tm4c129x::{I2C0, I2C1, I2C2, I2C3};
 
 /// I2C error
 #[derive(Debug)]

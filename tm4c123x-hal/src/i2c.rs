@@ -1,7 +1,7 @@
 //! Inter-Integrated Circuit (I2C) bus
 
-use tm4c123x::{I2C0, I2C1, I2C2, I2C3};
 use cortex_m::asm::delay;
+use tm4c123x::{I2C0, I2C1, I2C2, I2C3};
 
 use crate::gpio::gpioa::{PA6, PA7};
 use crate::gpio::gpiob::{PB2, PB3};

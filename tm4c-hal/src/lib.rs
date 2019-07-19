@@ -563,8 +563,6 @@ macro_rules! uart_hal_macro {
                 }
 
                 /// Write a complete string to the UART.
-                /// If this returns `Ok(())`, all the data was sent.
-                /// Otherwise you get number of octets sent and the error.
                 pub fn write_all<I: ?Sized>(&mut self, data: &I)
                 where
                     I: AsRef<[u8]>,
@@ -594,8 +592,6 @@ macro_rules! uart_hal_macro {
 
             impl<TX, RTS> Tx<$UARTX, TX, RTS> {
                 /// Write a complete string to the UART.
-                /// If this returns `Ok(())`, all the data was sent.
-                /// Otherwise you get number of octets sent and the error.
                 pub fn write_all<I: ?Sized>(&mut self, data: &I)
                 where
                     I: AsRef<[u8]>,
