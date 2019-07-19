@@ -21,6 +21,7 @@
 
 #![deny(missing_docs)]
 #![deny(warnings)]
+#![allow(deprecated)]
 #![no_std]
 
 pub use tm4c_hal::bb;
