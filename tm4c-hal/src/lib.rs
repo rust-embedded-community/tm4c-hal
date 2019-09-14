@@ -207,6 +207,48 @@ macro_rules! gpio_macro {
                         $PXi { _mode: PhantomData }
                     }
 
+                    /// Configures the pin to serve as alternate function 1 through 15 with
+                    /// a weak pull-up resistor.
+                    pub fn into_af_pull_up<AF>(
+                        self,
+                        _gpio_control: &mut GpioControl,
+                    ) -> $PXi<AlternateFunction<AF, PullUp>> where AF: AlternateFunctionChoice {
+                        let p = unsafe { &*$GPIOX::ptr() };
+                        let mask = 0xF << ($i * 4);
+                        let bits = AF::number() << ($i * 4);
+                        unsafe {
+                            p.pctl.modify(|r, w| w.bits((r.bits() & !mask) | bits));
+                        }
+                        unsafe { bb::change_bit(&p.afsel, $i, true); }
+                        unsafe { bb::change_bit(&p.dir, $i, false); }
+                        unsafe { bb::change_bit(&p.odr, $i, false); }
+                        unsafe { bb::change_bit(&p.pur, $i, true); }
+                        unsafe { bb::change_bit(&p.pdr, $i, false); }
+                        unsafe { bb::change_bit(&p.den, $i, true); }
+                        $PXi { _mode: PhantomData }
+                    }
+
+                    /// Configures the pin to serve as alternate function 1 through 15 with
+                    /// a weak pull-down resistor.
+                    pub fn into_af_pull_down<AF>(
+                        self,
+                        _gpio_control: &mut GpioControl,
+                    ) -> $PXi<AlternateFunction<AF, PullDown>> where AF: AlternateFunctionChoice {
+                        let p = unsafe { &*$GPIOX::ptr() };
+                        let mask = 0xF << ($i * 4);
+                        let bits = AF::number() << ($i * 4);
+                        unsafe {
+                            p.pctl.modify(|r, w| w.bits((r.bits() & !mask) | bits));
+                        }
+                        unsafe { bb::change_bit(&p.afsel, $i, true); }
+                        unsafe { bb::change_bit(&p.dir, $i, false); }
+                        unsafe { bb::change_bit(&p.odr, $i, false); }
+                        unsafe { bb::change_bit(&p.pur, $i, false); }
+                        unsafe { bb::change_bit(&p.pdr, $i, true); }
+                        unsafe { bb::change_bit(&p.den, $i, true); }
+                        $PXi { _mode: PhantomData }
+                    }
+
                     /// Configures the pin to serve as alternate function 1 through 15.
                     /// Enables open-drain (useful for I2C SDA, for example).
                     pub fn into_af_open_drain<AF, ODM>(
