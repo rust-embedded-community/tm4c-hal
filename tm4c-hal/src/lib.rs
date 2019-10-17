@@ -5,6 +5,9 @@
 #![deny(warnings)]
 #![allow(deprecated)]
 
+extern crate embedded_hal as hal;
+extern crate nb;
+
 pub mod bb;
 pub mod delay;
 pub mod gpio;
