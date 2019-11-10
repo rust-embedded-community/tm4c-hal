@@ -1,6 +1,6 @@
 [package]
 name = "tm4c123x-hal"
-version = "0.9.2"
+version = "0.10.0"
 authors = [
 	"Jorge Aparicio <jorge@japaric.io>",
 	"Jonathan 'theJPster' Pallant <github@thejpster.org.uk>",
@@ -19,7 +19,7 @@ version = "0.2.2"
 default-features = false
 
 [dependencies.cortex-m]
-version = "0.5.2"
+version = "0.6"
 
 [dependencies.embedded-hal]
 version = "0.2.2"
@@ -29,8 +29,7 @@ features = ["unproven"]
 version = "0.1"
 
 [dependencies.tm4c123x]
-version = "0.7"
-# path = "../dslite2svd/crates/tm4c123x"
+version = "0.9"
 
 [dependencies.void]
 version = "1.0"
@@ -38,7 +37,7 @@ default-features = false
 
 [dependencies.tm4c-hal]
 path = "../tm4c-hal"
-version = "0.2.3"
+version = "0.3.0"
 
 [features]
 rt = ["tm4c123x/rt"]

@@ -1,6 +1,6 @@
 [package]
 name = "tm4c-hal"
-version = "0.2.3"
+version = "0.3.0"
 authors = [
 	"Jorge Aparicio <jorge@japaric.io>",
 	"Jonathan 'theJPster' Pallant <github@thejpster.org.uk>",
@@ -14,7 +14,7 @@ license = "MIT OR Apache-2.0"
 edition = "2018"
 
 [dependencies]
-cortex-m = "0.5"
+cortex-m = "0.6"
 
 [dependencies.embedded-hal]
 version = "0.2.2"
