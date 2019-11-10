@@ -1,8 +1,0 @@
-language: rust
-rust:
-  - stable
-install:
-  - rustup component add rust-src
-  - rustup target add thumbv7em-none-eabihf
-script: cargo build
-
