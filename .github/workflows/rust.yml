@@ -1,0 +1,15 @@
+name: Rust
+
+on: [push, pull_request]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v1
+    - name: Add Target
+      run: rustup target add thumbv7em-none-eabi
+    - name: Build
+      run: cargo build --verbose --target=thumbv7em-none-eabi
