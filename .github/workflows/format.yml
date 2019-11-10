@@ -3,7 +3,7 @@ name: Rust
 on: [push, pull_request]
 
 jobs:
-  build:
+  check:
 
     runs-on: ubuntu-latest
 
