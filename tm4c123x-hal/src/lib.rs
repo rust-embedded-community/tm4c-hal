@@ -34,7 +34,9 @@ pub mod prelude;
 pub mod serial;
 pub mod spi;
 pub mod sysctl;
+pub mod timer;
 
-use embedded_hal as hal;
+extern crate embedded_hal as hal;
+extern crate nb;
 pub use tm4c123x;
 pub use tm4c123x::{CorePeripherals, Peripherals};

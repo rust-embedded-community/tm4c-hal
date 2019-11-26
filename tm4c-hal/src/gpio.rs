@@ -89,6 +89,8 @@ where
 /// Output)
 pub struct PushPull;
 impl OutputMode for PushPull {}
+impl OutputMode for PullDown {}
+impl OutputMode for PullUp {}
 
 /// Sub-mode of Output/AlternateFunction: Open drain output (type state for
 /// Output)

@@ -130,9 +130,8 @@ macro_rules! hal {
                     spi.cr0.modify(|_,w| unsafe {
                         w.spo().bit(mode.polarity == Polarity::IdleHigh)
                             .sph().bit(mode.phase == Phase::CaptureOnSecondTransition)
-                            // FIXME: How to use FRFR::MOTO and DSS:: ?
-                            .frf().bits(0)
-                            .dss().bits(0x7)
+                            .frf().moto()
+                            .dss()._8()
                             .scr().bits(scr)
                     });
 
