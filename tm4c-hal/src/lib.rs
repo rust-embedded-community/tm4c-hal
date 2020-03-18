@@ -1,12 +1,8 @@
 //! Generic implementation code for both TM4C123 and TM4C129.
 
 #![no_std]
-#![deny(missing_docs)]
-#![deny(warnings)]
+#![deny(missing_docs, warnings)]
 #![allow(deprecated)]
-
-extern crate embedded_hal as hal;
-extern crate nb;
 
 pub mod bb;
 pub mod delay;

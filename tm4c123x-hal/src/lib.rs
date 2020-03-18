@@ -19,14 +19,14 @@
 //!
 //! [`f3`]: https://docs.rs/f3/~0.5.1
 
-#![deny(missing_docs)]
-#![deny(warnings)]
+#![deny(missing_docs, warnings)]
 #![allow(deprecated)]
 #![no_std]
 
-pub use tm4c_hal::bb;
-pub use tm4c_hal::delay;
-pub use tm4c_hal::time;
+pub use tm4c123x::{self, CorePeripherals, Peripherals};
+pub use tm4c_hal::{bb, delay, time};
+
+use embedded_hal as hal;
 
 pub mod gpio;
 pub mod i2c;
@@ -35,8 +35,3 @@ pub mod serial;
 pub mod spi;
 pub mod sysctl;
 pub mod timer;
-
-extern crate embedded_hal as hal;
-extern crate nb;
-pub use tm4c123x;
-pub use tm4c123x::{CorePeripherals, Peripherals};

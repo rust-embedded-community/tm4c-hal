@@ -25,9 +25,8 @@
 #![deny(warnings)]
 #![allow(deprecated)]
 
-pub use tm4c_hal::bb;
-pub use tm4c_hal::delay;
-pub use tm4c_hal::time;
+pub use tm4c129x::{self, CorePeripherals, Peripherals};
+pub use tm4c_hal::{bb, delay, time};
 
 pub mod gpio;
 pub mod i2c;
@@ -37,5 +36,3 @@ pub mod serial;
 pub mod sysctl;
 
 use embedded_hal as hal;
-pub use tm4c129x;
-pub use tm4c129x::{CorePeripherals, Peripherals};

@@ -1,12 +1,11 @@
 #![no_std]
 #![no_main]
 
-extern crate panic_halt; // you can put a breakpoint on `rust_begin_unwind` to catch panics
-extern crate tm4c129x_hal as hal;
+use panic_halt as _; // you can put a breakpoint on `rust_begin_unwind` to catch panics
 
 use core::fmt::Write;
 use cortex_m_rt::entry;
-use hal::prelude::*;
+use tm4c129x_hal::{self as hal, prelude::*};
 
 #[entry]
 fn main() -> ! {

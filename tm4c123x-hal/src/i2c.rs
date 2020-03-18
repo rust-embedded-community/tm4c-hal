@@ -3,17 +3,18 @@
 use cortex_m::asm::delay;
 use tm4c123x::{I2C0, I2C1, I2C2, I2C3};
 
-use crate::gpio::gpioa::{PA6, PA7};
-use crate::gpio::gpiob::{PB2, PB3};
-use crate::gpio::gpiod::{PD0, PD1};
-use crate::gpio::gpioe::{PE4, PE5};
-
-use crate::gpio::{AlternateFunction, Floating, OpenDrain, OutputMode, AF3};
-
-use crate::sysctl::{self, Clocks};
-
-use crate::hal::blocking::i2c::{Read, Write, WriteRead};
-use crate::time::Hertz;
+use crate::{
+    gpio::{
+        gpioa::{PA6, PA7},
+        gpiob::{PB2, PB3},
+        gpiod::{PD0, PD1},
+        gpioe::{PE4, PE5},
+        AlternateFunction, Floating, OpenDrain, OutputMode, AF3,
+    },
+    hal::blocking::i2c::{Read, Write, WriteRead},
+    sysctl::{self, Clocks},
+    time::Hertz,
+};
 
 /// I2C error
 #[derive(Debug)]
