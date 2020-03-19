@@ -36,9 +36,11 @@
 
 pub use tm4c_hal::gpio::*;
 
-use crate::bb;
-use crate::hal::digital::{InputPin, OutputPin, StatefulOutputPin};
-use crate::sysctl;
+use crate::{
+    bb,
+    hal::digital::{InputPin, OutputPin, StatefulOutputPin},
+    sysctl,
+};
 use core::marker::PhantomData;
 use tm4c_hal::gpio_macro;
 

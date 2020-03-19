@@ -1,10 +1,7 @@
 //! Code for busy-waiting
 
-use crate::sysctl::Clocks;
-use crate::time::Hertz;
-use cast::u32;
-use cortex_m::peripheral::syst::SystClkSource;
-use cortex_m::peripheral::SYST;
+use crate::{sysctl::Clocks, time::Hertz};
+use cortex_m::peripheral::{syst::SystClkSource, SYST};
 use embedded_hal::blocking::delay::{DelayMs, DelayUs};
 
 /// System timer (SysTick) as a delay provider
@@ -38,13 +35,13 @@ impl DelayMs<u32> for Delay {
 
 impl DelayMs<u16> for Delay {
     fn delay_ms(&mut self, ms: u16) {
-        self.delay_ms(u32(ms));
+        self.delay_ms(cast::u32(ms));
     }
 }
 
 impl DelayMs<u8> for Delay {
     fn delay_ms(&mut self, ms: u8) {
-        self.delay_ms(u32(ms));
+        self.delay_ms(cast::u32(ms));
     }
 }
 
@@ -75,12 +72,12 @@ impl DelayUs<u32> for Delay {
 
 impl DelayUs<u16> for Delay {
     fn delay_us(&mut self, us: u16) {
-        self.delay_us(u32(us))
+        self.delay_us(cast::u32(us))
     }
 }
 
 impl DelayUs<u8> for Delay {
     fn delay_us(&mut self, us: u8) {
-        self.delay_us(u32(us))
+        self.delay_us(cast::u32(us))
     }
 }

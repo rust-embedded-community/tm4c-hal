@@ -1,23 +1,18 @@
 //! Serial
 
-use core::fmt;
-use core::marker::PhantomData;
+use core::{fmt, marker::PhantomData};
 
-use crate::hal::prelude::*;
-use crate::hal::serial;
+use crate::{
+    gpio::*,
+    hal::{prelude::*, serial},
+    sysctl::{self, Clocks},
+    time::Bps,
+};
 use nb::{self, block};
-pub use tm4c129x::{UART0, UART1, UART2, UART3, UART4, UART5, UART6, UART7};
 use void::Void;
 
-use crate::gpio::*;
-use crate::gpio::{AlternateFunction, OutputMode, AF1};
-use crate::sysctl;
-use crate::sysctl::Clocks;
-use crate::time::Bps;
-
-pub use tm4c_hal::serial::*;
-
-pub use tm4c_hal::{uart_hal_macro, uart_pin_macro};
+pub use tm4c129x::{UART0, UART1, UART2, UART3, UART4, UART5, UART6, UART7};
+pub use tm4c_hal::{serial::*, uart_hal_macro, uart_pin_macro};
 
 /// Serial abstraction
 pub struct Serial<UART, TX, RX, RTS, CTS> {
