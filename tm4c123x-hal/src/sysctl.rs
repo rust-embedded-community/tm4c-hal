@@ -21,11 +21,13 @@
 //!
 //! See the LM4F120 datasheet, page 228 for a full list.
 
-use crate::bb;
-use crate::time::{Hertz, U32Ext};
-use cortex_m::asm::nop;
-
 pub use tm4c_hal::sysctl::*;
+
+use crate::{
+    bb,
+    time::{Hertz, U32Ext},
+};
+use cortex_m::asm::nop;
 
 /// Constrained SYSCTL peripheral.
 pub struct Sysctl {

@@ -1,16 +1,17 @@
 //! Timers
 
-extern crate embedded_hal as hal;
-
-use tm4c_hal::time::Hertz;
-
-use crate::sysctl;
-use hal::timer::{CountDown, Periodic};
+use crate::{
+    hal::timer::{CountDown, Periodic},
+    sysctl::{self, Clocks},
+};
 use nb;
-use tm4c123x::{TIMER0, TIMER1, TIMER2, TIMER3, TIMER4, TIMER5};
-use tm4c123x::{WTIMER0, WTIMER1, WTIMER2, WTIMER3, WTIMER4, WTIMER5};
 
-use crate::sysctl::Clocks;
+#[rustfmt::skip]
+use tm4c123x::{
+    TIMER0, TIMER1, TIMER2, TIMER3, TIMER4, TIMER5,
+    WTIMER0, WTIMER1, WTIMER2, WTIMER3, WTIMER4, WTIMER5,
+};
+use tm4c_hal::time::Hertz;
 use void::Void;
 
 /// Hardware timers

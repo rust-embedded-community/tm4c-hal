@@ -1,15 +1,14 @@
 //! Inter-Integrated Circuit (I2C) bus
 
+use crate::{
+    gpio::*,
+    hal::blocking::i2c::{Read, Write, WriteRead},
+    sysctl::{self, Clocks},
+    time::Hertz,
+};
+
 use cortex_m::asm::delay;
 use tm4c123x::{I2C0, I2C1, I2C2, I2C3};
-
-use crate::gpio::{gpioa, gpiob, gpiod, gpioe};
-use crate::gpio::{AlternateFunction, Floating, OpenDrain, OutputMode, AF3};
-
-use crate::sysctl::{self, Clocks};
-
-use crate::hal::blocking::i2c::{Read, Write, WriteRead};
-use crate::time::Hertz;
 
 pub use tm4c_hal::i2c::Error;
 pub use tm4c_hal::{i2c_busy_wait, i2c_hal, i2c_pins};
