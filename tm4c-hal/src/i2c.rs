@@ -3,8 +3,8 @@
 /// I2C error
 #[derive(Debug)]
 pub enum Error {
-    /// Bus error
-    Bus,
+    /// Bus Busy
+    BusBusy,
 
     /// Arbitration loss
     Arbitration,
@@ -46,33 +46,37 @@ macro_rules! i2c_pins {
 #[macro_export]
 /// Spins on a given field on a TM4C I2C peripheral
 macro_rules! i2c_busy_wait {
-    ($i2c:expr, $flag:ident, $op:ident) => {
-        // in 'release' builds, the time between setting the `run` bit and checking the `busy`
-        // bit is too short and the `busy` bit is not reliably set by the time you get there,
-        // it can take up to 8 clock cycles for the `run` to begin so this delay allows time
-        // for that hardware synchronization
-        delay(2);
+    ($i2c:expr) => {
+        {
+            // in 'release' builds, the time between setting the `run` bit and checking the `busy`
+            // bit is too short and the `busy` bit is not reliably set by the time you get there,
+            // it can take up to 8 clock cycles for the `run` to begin so this delay allows time
+            // for that hardware synchronization
+            delay(2);
 
-        // Allow 1,000 clock cycles before we timeout. At 100 kHz, this is 10 ms.
-        $i2c.mclkocnt.write(|w| unsafe { w.bits(1_000) });
-        loop {
-            let mcs = $i2c.mcs.read();
+            // Allow 1,000 clock cycles before we timeout. At 100 kHz, this is 10 ms.
+            $i2c.mclkocnt.write(|w| unsafe { w.cntl().bits((1_000 >> 8) as u8) });
 
-            if mcs.error().bit_is_set() {
-                if mcs.adrack().bit_is_set() {
-                    return Err(Error::AdrAck);
-                } else if mcs.datack().bit_is_set() {
-                    return Err(Error::DataAck);
+            let mcs = loop {
+                let mcs = $i2c.mcs.read();
+
+                if mcs.busy().bit_is_clear() {
+                    break mcs;
                 }
-                return Err(Error::Bus);
+            };
+
+            if mcs.clkto().bit_is_set() {
+                Err(Error::Timeout)
+            } else if mcs.busbsy().bit_is_set() {
+                Err(Error::BusBusy)
             } else if mcs.arblst().bit_is_set() {
-                return Err(Error::Arbitration);
-            } else if mcs.$flag().$op() {
-                break;
-            } else if $i2c.mris.read().clkris().bit_is_set() {
-                return Err(Error::Timeout);
+                Err(Error::Arbitration)
+            } else if mcs.datack().bit_is_set() {
+                Err(Error::DataAck)
+            } else if mcs.adrack().bit_is_set() {
+                Err(Error::AdrAck)
             } else {
-                // try again
+                Ok(())
             }
         }
     };
@@ -134,7 +138,13 @@ macro_rules! i2c_hal {
 
                     let sz = bytes.len();
 
-                    i2c_busy_wait!(self.i2c, busbsy, bit_is_clear);
+                    loop {
+                        match i2c_busy_wait!(self.i2c) {
+                            Ok(()) => break,
+                            Err(Error::BusBusy) => continue,
+                            e @ Err(_) => return e,
+                        }
+                    }
 
                     // Send START + RUN
                     // If single byte transfer, set STOP
@@ -147,7 +157,7 @@ macro_rules! i2c_hal {
                     });
 
                     for (i,byte) in (&bytes[1..]).iter().enumerate() {
-                        i2c_busy_wait!(self.i2c, busy, bit_is_clear);
+                        i2c_busy_wait!(self.i2c)?;
 
                         // Put next byte in data register
                         self.i2c.mdr.write(|w| unsafe {
@@ -164,7 +174,7 @@ macro_rules! i2c_hal {
                         });
                     }
 
-                    i2c_busy_wait!(self.i2c, busy, bit_is_clear);
+                    i2c_busy_wait!(self.i2c)?;
 
                     Ok(())
                 }
@@ -185,7 +195,14 @@ macro_rules! i2c_hal {
                             .rs().set_bit()
                     });
 
-                    i2c_busy_wait!(self.i2c, busbsy, bit_is_clear);
+                    loop {
+                        match i2c_busy_wait!(self.i2c) {
+                            Ok(()) => break,
+                            Err(Error::BusBusy) => continue,
+                            e @ Err(_) => return e,
+                        }
+                    }
+
                     let recv_sz = buffer.len();
 
                     if recv_sz == 1 {
@@ -196,7 +213,7 @@ macro_rules! i2c_hal {
                                 .stop().set_bit()
                         });
 
-                        i2c_busy_wait!(self.i2c, busy, bit_is_clear);
+                        i2c_busy_wait!(self.i2c)?;
                         buffer[0] = self.i2c.mdr.read().data().bits();
                     } else {
                         self.i2c.mcs.write(|w| {
@@ -205,7 +222,7 @@ macro_rules! i2c_hal {
                                 .ack().set_bit()
                         });
 
-                        i2c_busy_wait!(self.i2c, busy, bit_is_clear);
+                        i2c_busy_wait!(self.i2c)?;
                         buffer[0] = self.i2c.mdr.read().data().bits();
 
                         for byte in &mut buffer[1..recv_sz-1] {
@@ -213,7 +230,7 @@ macro_rules! i2c_hal {
                                 w.run().set_bit()
                                     .ack().set_bit()
                             });
-                            i2c_busy_wait!(self.i2c, busy, bit_is_clear);
+                            i2c_busy_wait!(self.i2c)?;
                             *byte = self.i2c.mdr.read().data().bits();
                         }
                         self.i2c.mcs.write(|w| {
@@ -221,7 +238,7 @@ macro_rules! i2c_hal {
                                 .stop().set_bit()
                         });
 
-                        i2c_busy_wait!(self.i2c, busy, bit_is_clear);
+                        i2c_busy_wait!(self.i2c)?;
                         buffer[recv_sz-1] = self.i2c.mdr.read().data().bits();
                     }
 
@@ -259,14 +276,20 @@ macro_rules! i2c_hal {
                         w.data().bits(bytes[0])
                     });
 
-                    i2c_busy_wait!(self.i2c, busbsy, bit_is_clear);
+                    loop {
+                        match i2c_busy_wait!(self.i2c) {
+                            Ok(()) => break,
+                            Err(Error::BusBusy) => continue,
+                            e @ Err(_) => return e,
+                        }
+                    }
 
                     self.i2c.mcs.write(|w| {
                         w.start().set_bit()
                             .run().set_bit()
                     });
 
-                    i2c_busy_wait!(self.i2c, busy, bit_is_clear);
+                    i2c_busy_wait!(self.i2c)?;
 
                     for byte in (&bytes[1..write_len]).iter() {
                         self.i2c.mdr.write(|w| unsafe {
@@ -277,7 +300,7 @@ macro_rules! i2c_hal {
                             w.run().set_bit()
                         });
 
-                        i2c_busy_wait!(self.i2c, busy, bit_is_clear);
+                        i2c_busy_wait!(self.i2c)?;
                     }
 
                     // Write Slave address and set Receive bit
@@ -296,7 +319,7 @@ macro_rules! i2c_hal {
                                 .stop().set_bit()
                         });
 
-                        i2c_busy_wait!(self.i2c, busy, bit_is_clear);
+                        i2c_busy_wait!(self.i2c)?;
                         buffer[0] = self.i2c.mdr.read().data().bits();
                     } else {
                         // emit Repeated START
@@ -306,7 +329,7 @@ macro_rules! i2c_hal {
                                 .ack().set_bit()
                         });
 
-                        i2c_busy_wait!(self.i2c, busy, bit_is_clear);
+                        i2c_busy_wait!(self.i2c)?;
                         buffer[0] = self.i2c.mdr.read().data().bits();
 
                         for byte in &mut buffer[1..recv_sz-1] {
@@ -314,7 +337,7 @@ macro_rules! i2c_hal {
                                 w.run().set_bit()
                                     .ack().set_bit()
                             });
-                            i2c_busy_wait!(self.i2c, busy, bit_is_clear);
+                            i2c_busy_wait!(self.i2c)?;
                             *byte = self.i2c.mdr.read().data().bits();
                         }
 
@@ -323,7 +346,7 @@ macro_rules! i2c_hal {
                                 .stop().set_bit()
                         });
 
-                        i2c_busy_wait!(self.i2c, busy, bit_is_clear);
+                        i2c_busy_wait!(self.i2c)?;
                         buffer[recv_sz-1] = self.i2c.mdr.read().data().bits();
                     }
 
