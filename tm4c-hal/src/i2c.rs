@@ -47,40 +47,40 @@ macro_rules! i2c_pins {
 /// Spins on a given field on a TM4C I2C peripheral
 macro_rules! i2c_busy_wait {
     ($i2c:expr) => {
-        {
-            // in 'release' builds, the time between setting the `run` bit and checking the `busy`
-            // bit is too short and the `busy` bit is not reliably set by the time you get there,
-            // it can take up to 8 clock cycles for the `run` to begin so this delay allows time
-            // for that hardware synchronization
-            delay(8);
+        // in 'release' builds, the time between setting the `run` bit and checking the `busy`
+        // bit is too short and the `busy` bit is not reliably set by the time you get there,
+        // it can take up to 8 clock cycles for the `run` to begin so this delay allows time
+        // for that hardware synchronization
+        delay(8);
 
-            // Allow 1,000 clock cycles before we timeout. At 100 kHz, this is 10 ms.
-            $i2c.mclkocnt.write(|w| unsafe { w.cntl().bits((1_000 >> 4) as u8) });
+        // Allow 1,000 clock cycles before we timeout. At 100 kHz, this is 10 ms.
+        $i2c.mclkocnt
+            .write(|w| unsafe { w.cntl().bits((1_000 >> 4) as u8) });
 
-            let mcs = loop {
-                let mcs = $i2c.mcs.read();
+        let mcs = loop {
+            let mcs = $i2c.mcs.read();
 
-                if mcs.busy().bit_is_clear() {
-                    break mcs;
-                }
-            };
-
-            if mcs.clkto().bit_is_set() {
-                Err(Error::Timeout)
-            } else if mcs.busbsy().bit_is_set() {
-                Err(Error::BusBusy)
-            } else if mcs.arblst().bit_is_set() {
-                Err(Error::Arbitration)
-            } else if mcs.datack().bit_is_set() {
-                Err(Error::DataAck)
-            } else if mcs.adrack().bit_is_set() {
-                Err(Error::AdrAck)
-            } else {
-                Ok(())
+            if mcs.busy().bit_is_clear() {
+                break mcs;
             }
+        };
+
+        if mcs.clkto().bit_is_set() {
+            Err(Error::Timeout)
+        } else if mcs.busbsy().bit_is_set() {
+            Err(Error::BusBusy)
+        } else if mcs.arblst().bit_is_set() {
+            Err(Error::Arbitration)
+        } else if mcs.datack().bit_is_set() {
+            Err(Error::DataAck)
+        } else if mcs.adrack().bit_is_set() {
+            Err(Error::AdrAck)
+        } else {
+            Ok(())
         }
     };
 }
+
 #[macro_export]
 /// Implements embedded-hal for an TM4C I2C peripheral
 macro_rules! i2c_hal {
