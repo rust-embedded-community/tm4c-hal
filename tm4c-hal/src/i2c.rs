@@ -12,7 +12,7 @@ pub enum Error {
     /// Missing Data ACK
     DataAck,
 
-    /// Missing Addrees ACK
+    /// Missing Address ACK
     AdrAck,
 
     /// I2C Timeout
@@ -52,10 +52,10 @@ macro_rules! i2c_busy_wait {
             // bit is too short and the `busy` bit is not reliably set by the time you get there,
             // it can take up to 8 clock cycles for the `run` to begin so this delay allows time
             // for that hardware synchronization
-            delay(2);
+            delay(8);
 
             // Allow 1,000 clock cycles before we timeout. At 100 kHz, this is 10 ms.
-            $i2c.mclkocnt.write(|w| unsafe { w.cntl().bits((1_000 >> 8) as u8) });
+            $i2c.mclkocnt.write(|w| unsafe { w.cntl().bits((1_000 >> 4) as u8) });
 
             let mcs = loop {
                 let mcs = $i2c.mcs.read();
