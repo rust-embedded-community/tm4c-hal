@@ -28,6 +28,10 @@
 pub use tm4c129x::{self, CorePeripherals, Peripherals};
 pub use tm4c_hal::{bb, delay, time};
 
+// Enable use of interrupt macro
+#[cfg(feature = "rt")]
+pub use crate::tm4c129x::interrupt;
+
 pub mod gpio;
 pub mod i2c;
 pub mod prelude;
