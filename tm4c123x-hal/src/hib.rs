@@ -17,12 +17,30 @@ pub struct Hibernation {
 }
 
 impl Hibernation {
+    /// This causes the RTC to neither gain nor lose speed.
+    pub const DEFAULT_TRIM: u16 = 32767;
+
     /// Create a new high-level object representing the Hibernation module.
     ///
     /// It consumes the low-level object.
     ///
     /// Note, it does not start the RTC - you need to do that yourself.
-    pub fn new(peripheral: tm4c123x::HIB) -> Hibernation {
+    ///
+    /// A second normally has 32768 (0x8000) ticks in it, numbered
+    /// `[0..32767]`. Every 64th second, that second has `trim+1` number of
+    /// ticks in it. If `trim` is larger tham 32767 then the RTC runs slightly
+    /// slow. If `trim` is less then 32767, then the RTC runs slightly fast.
+    /// This lets you compensate for crystal frequency error by +/- 1.5%, at
+    /// the expense of 1 second in 64 being a different length to the other 63
+    /// seconds.
+    pub fn new(peripheral: tm4c123x::HIB, trim: u16, pc: &sysctl::PowerControl) -> Hibernation {
+        sysctl::control_power(
+            pc,
+            sysctl::Domain::Hibernation,
+            sysctl::RunMode::Run,
+            sysctl::PowerState::On,
+        );
+        peripheral.rtct.write(|w| w.trim().bits(trim));
         Hibernation { peripheral }
     }
 
