@@ -14,6 +14,10 @@ license = "MIT OR Apache-2.0"
 repository = "https://github.com/thejpster/tm4c-hal/tm4c123x-hal"
 edition = "2018"
 
+[dependencies.chrono]
+version = "0.4"
+default-features = false
+
 [dependencies.cast]
 version = "0.2.2"
 default-features = false
