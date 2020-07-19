@@ -171,6 +171,12 @@ macro_rules! gpio_macro {
                     }
                 }
 
+                /// Returns the current interrupt status for this pin.
+                pub fn get_interrupt_status(&self) -> bool {
+                    let p = unsafe { &*$GPIOX::ptr() };
+                    bb::read_bit(&p.mis, self.i)
+                }
+
                 /// Marks the interrupt for this pin as handled. You should
                 /// call this (or perform its functionality) from the ISR.
                 pub fn clear_interrupt(&self) {
@@ -474,6 +480,12 @@ macro_rules! gpio_macro {
                                 unsafe { bb::change_bit(&p.im, $i, false); }
                             },
                         }
+                    }
+
+                    /// Returns the current interrupt status for this pin.
+                    pub fn get_interrupt_status(&self) -> bool {
+                        let p = unsafe { &*$GPIOX::ptr() };
+                        bb::read_bit(&p.mis, $i)
                     }
 
                     /// Marks the interrupt for this pin as handled. You should
