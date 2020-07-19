@@ -25,17 +25,19 @@ pub enum Error {
 #[macro_export]
 /// Implements the traits for an I2C peripheral
 macro_rules! i2c_pins {
-    ($UARTn:ident,
+    ($I2Cn:ident,
         scl: [$(($($sclgpio: ident)::*, $sclaf: ident)),*],
         sda: [$(($($sdagpio: ident)::*, $sdaaf: ident)),*],
     ) => {
         $(
-            unsafe impl SclPin<$UARTn> for $($sclgpio)::*<AlternateFunction<$sclaf, OpenDrain<Floating>>>
+            unsafe impl<T> SclPin<$I2Cn> for $($sclgpio)::*<AlternateFunction<$sclaf, T>>
+            where
+                T: OutputMode,
             {}
         )*
 
         $(
-            unsafe impl<T> SdaPin<$UARTn> for $($sdagpio)::*<AlternateFunction<$sdaaf, T>>
+            unsafe impl<T> SdaPin<$I2Cn> for $($sdagpio)::*<AlternateFunction<$sdaaf, T>>
             where
                 T: OutputMode,
             {}
