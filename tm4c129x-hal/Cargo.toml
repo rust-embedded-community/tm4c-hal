@@ -1,6 +1,6 @@
 [package]
 name = "tm4c129x-hal"
-version = "0.9.0"
+version = "0.9.1"
 authors = [
 	"Jorge Aparicio <jorge@japaric.io>",
 	"Jonathan 'theJPster' Pallant <github@thejpster.org.uk>",

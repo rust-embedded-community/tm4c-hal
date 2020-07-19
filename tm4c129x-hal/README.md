@@ -6,6 +6,20 @@
 
 ## [Documentation](https://docs.rs/tm4c129x-hal)
 
+## Changelog
+
+### Unreleased Changes ([Source](https://github.com/rust-embedded-community/tm4c-hal/tree/master/tm4c129x-hal) [Diff](https://github.com/rust-embedded-community/tm4c-hal/compare/tm4c129x-hal-0.9.1...master))
+
+* No changes
+
+### v0.9.1 ([Source](https://github.com/rust-embedded-community/tm4c-hal/tree/tm4c129x-hal-0.9.1/tm4c129x-hal) [Diff](https://github.com/rust-embedded-community/tm4c-hal/compare/tm4c129x-hal-0.9.1...tm4c129x-hal-0.9.0))
+
+* Updated to tm4c-hal 0.4.0
+
+### v0.9.0 ([Source](https://github.com/rust-embedded-community/tm4c-hal/tree/tm4c129x-hal-0.9.0/tm4c129x-hal))
+
+* Changelog starts here
+
 ## License
 
 Licensed under either of
