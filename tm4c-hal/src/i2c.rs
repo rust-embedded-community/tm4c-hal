@@ -46,7 +46,7 @@ macro_rules! i2c_pins {
 #[macro_export]
 /// Spins on a given field on a TM4C I2C peripheral
 macro_rules! i2c_busy_wait {
-    ($i2c:expr) => {
+    ($i2c:expr) => {{
         // in 'release' builds, the time between setting the `run` bit and checking the `busy`
         // bit is too short and the `busy` bit is not reliably set by the time you get there,
         // it can take up to 8 clock cycles for the `run` to begin so this delay allows time
@@ -78,7 +78,7 @@ macro_rules! i2c_busy_wait {
         } else {
             Ok(())
         }
-    };
+    }};
 }
 
 #[macro_export]
