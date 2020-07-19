@@ -31,6 +31,7 @@ use embedded_hal as hal;
 pub mod gpio;
 pub mod i2c;
 pub mod prelude;
+pub mod pwm;
 pub mod serial;
 pub mod spi;
 pub mod sysctl;
