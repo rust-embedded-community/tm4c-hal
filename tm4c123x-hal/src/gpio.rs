@@ -40,7 +40,17 @@ use crate::{
     sysctl,
 };
 use core::marker::PhantomData;
-use tm4c_hal::gpio_macro;
+use tm4c_hal::{gpio_abstracted_macro, gpio_macro};
+
+#[derive(PartialEq, Eq)]
+enum GpioPort {
+    GpioA,
+    GpioB,
+    GpioC,
+    GpioD,
+    GpioE,
+    GpioF,
+}
 
 /// Extension trait to split a GPIO peripheral in independent pins and registers
 pub trait GpioExt {
@@ -51,7 +61,7 @@ pub trait GpioExt {
     fn split(self, power_control: &sysctl::PowerControl) -> Self::Parts;
 }
 
-gpio_macro!(tm4c123x, GPIO_PORTA, gpioa, GpioA, PAx, [
+gpio_macro!(tm4c123x, GPIO_PORTA, gpioa, GpioA, PAx, 0, [
     PA0: (pa0, 0, Tristate),
     PA1: (pa1, 1, Tristate),
     PA2: (pa2, 2, Tristate),
@@ -62,7 +72,7 @@ gpio_macro!(tm4c123x, GPIO_PORTA, gpioa, GpioA, PAx, [
     PA7: (pa7, 7, Tristate),
 ]);
 
-gpio_macro!(tm4c123x, GPIO_PORTB, gpiob, GpioB, PBx, [
+gpio_macro!(tm4c123x, GPIO_PORTB, gpiob, GpioB, PBx, 1, [
     PB0: (pb0, 0, Tristate),
     PB1: (pb1, 1, Tristate),
     PB2: (pb2, 2, Tristate),
@@ -73,7 +83,7 @@ gpio_macro!(tm4c123x, GPIO_PORTB, gpiob, GpioB, PBx, [
     PB7: (pb7, 7, Tristate),
 ]);
 
-gpio_macro!(tm4c123x, GPIO_PORTC, gpioc, GpioC, PCx, [
+gpio_macro!(tm4c123x, GPIO_PORTC, gpioc, GpioC, PCx, 2, [
     PC0: (pc0, 0, Locked), // JTAG/SWD pin
     PC1: (pc1, 1, Locked), // JTAG/SWD pin
     PC2: (pc2, 2, Locked), // JTAG/SWD pin
@@ -84,7 +94,7 @@ gpio_macro!(tm4c123x, GPIO_PORTC, gpioc, GpioC, PCx, [
     PC7: (pc7, 7, Tristate),
 ]);
 
-gpio_macro!(tm4c123x, GPIO_PORTD, gpiod, GpioD, PDx, [
+gpio_macro!(tm4c123x, GPIO_PORTD, gpiod, GpioD, PDx, 3, [
     PD0: (pd0, 0, Tristate),
     PD1: (pd1, 1, Tristate),
     PD2: (pd2, 2, Tristate),
@@ -95,7 +105,7 @@ gpio_macro!(tm4c123x, GPIO_PORTD, gpiod, GpioD, PDx, [
     PD7: (pd7, 7, Locked), // NMI pin
 ]);
 
-gpio_macro!(tm4c123x, GPIO_PORTE, gpioe, GpioE, PEx, [
+gpio_macro!(tm4c123x, GPIO_PORTE, gpioe, GpioE, PEx, 4, [
     PE0: (pe0, 0, Tristate),
     PE1: (pe1, 1, Tristate),
     PE2: (pe2, 2, Tristate),
@@ -106,7 +116,7 @@ gpio_macro!(tm4c123x, GPIO_PORTE, gpioe, GpioE, PEx, [
     PE7: (pe7, 7, Tristate),
 ]);
 
-gpio_macro!(tm4c123x, GPIO_PORTF, gpiof, GpioF, PFx, [
+gpio_macro!(tm4c123x, GPIO_PORTF, gpiof, GpioF, PFx, 5, [
     PF0: (pf0, 0, Locked), // NMI pin
     PF1: (pf1, 1, Tristate),
     PF2: (pf2, 2, Tristate),
@@ -116,3 +126,18 @@ gpio_macro!(tm4c123x, GPIO_PORTF, gpiof, GpioF, PFx, [
     PF6: (pf6, 6, Tristate),
     PF7: (pf7, 7, Tristate),
 ]);
+
+macro_rules! get_field {
+    ($j:expr, $field:ident) => {
+        match $j {
+            GpioPort::GpioA => &(*tm4c123x::GPIO_PORTA_AHB::ptr()).data,
+            GpioPort::GpioB => &(*tm4c123x::GPIO_PORTB_AHB::ptr()).data,
+            GpioPort::GpioC => &(*tm4c123x::GPIO_PORTC_AHB::ptr()).data,
+            GpioPort::GpioD => &(*tm4c123x::GPIO_PORTD_AHB::ptr()).data,
+            GpioPort::GpioE => &(*tm4c123x::GPIO_PORTE_AHB::ptr()).data,
+            GpioPort::GpioF => &(*tm4c123x::GPIO_PORTF_AHB::ptr()).data,
+        }
+    };
+}
+
+gpio_abstracted_macro!();

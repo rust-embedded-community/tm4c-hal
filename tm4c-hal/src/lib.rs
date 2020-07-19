@@ -12,10 +12,175 @@ pub mod serial;
 pub mod sysctl;
 pub mod time;
 
+///! An internal macro to implement the GPIO functionality for a generic GPIO
+#[macro_export]
+macro_rules! gpio_abstracted_macro {
+    () => {
+        /// Fully erased pin
+        pub struct Pxx<MODE> {
+            i: u8,
+            j: GpioPort,
+            _mode: PhantomData<MODE>,
+        }
+
+        impl<MODE> StatefulOutputPin for Pxx<Output<MODE>>
+        where
+            MODE: OutputMode,
+        {
+            fn is_set_high(&self) -> bool {
+                unsafe {
+                    let data = get_field!(self.j, data);
+                    bb::read_bit(data, self.i)
+                }
+            }
+
+            fn is_set_low(&self) -> bool {
+                !self.is_set_high()
+            }
+        }
+
+        impl<MODE> OutputPin for Pxx<Output<MODE>>
+        where
+            MODE: OutputMode,
+        {
+            fn set_high(&mut self) {
+                unsafe {
+                    let data = get_field!(self.j, data);
+                    bb::change_bit(data, self.i, true);
+                }
+            }
+
+            fn set_low(&mut self) {
+                unsafe {
+                    let data = get_field!(self.j, data);
+                    bb::change_bit(data, self.i, false);
+                }
+            }
+        }
+
+        impl<MODE> InputPin for Pxx<Input<MODE>>
+        where
+            MODE: InputMode,
+        {
+            fn is_high(&self) -> bool {
+                unsafe {
+                    let data = get_field!(self.j, data);
+                    bb::read_bit(data, self.i)
+                }
+            }
+
+            fn is_low(&self) -> bool {
+                !self.is_high()
+            }
+        }
+
+        impl<MODE> Pxx<Input<MODE>>
+        where
+            MODE: InputMode,
+        {
+            /// Enables or disables interrupts on this GPIO pin.
+            pub fn set_interrupt_mode(&mut self, mode: InterruptMode) {
+                unsafe {
+                    let im = get_field!(self.j, im);
+                    let is = get_field!(self.j, is);
+                    let ibe = get_field!(self.j, iev);
+                    let iev = get_field!(self.j, iev);
+
+                    bb::change_bit(im, self.i, false);
+
+                    match mode {
+                        InterruptMode::LevelHigh => {
+                            // IM &= ~self.i;
+                            bb::change_bit(im, self.i, false);
+                            // IS |= self.i;
+                            bb::change_bit(is, self.i, true);
+                            // IBE &= ~self.i;
+                            bb::change_bit(ibe, self.i, false);
+                            // IEV |= self.i;
+                            bb::change_bit(iev, self.i, true);
+                            // IM |= self.i;
+                            bb::change_bit(im, self.i, true);
+                        }
+                        InterruptMode::LevelLow => {
+                            // IM &= ~self.i;
+                            bb::change_bit(im, self.i, false);
+                            // IS |= self.i;
+                            bb::change_bit(is, self.i, true);
+                            // IBE &= ~self.i;
+                            bb::change_bit(ibe, self.i, false);
+                            // IEV &= ~self.i;
+                            bb::change_bit(iev, self.i, false);
+                            // IM |= self.i;
+                            bb::change_bit(im, self.i, true);
+                        }
+                        InterruptMode::EdgeRising => {
+                            // IM &= ~self.i;
+                            bb::change_bit(im, self.i, false);
+                            // IS &= ~self.i;
+                            bb::change_bit(is, self.i, false);
+                            // IBE &= ~self.i;
+                            bb::change_bit(ibe, self.i, false);
+                            // IEV |= self.i;
+                            bb::change_bit(iev, self.i, true);
+                            // IM |= self.i;
+                            bb::change_bit(im, self.i, true);
+                        }
+                        InterruptMode::EdgeFalling => {
+                            // IM &= ~self.i;
+                            bb::change_bit(im, self.i, false);
+                            // IS &= ~self.i;
+                            bb::change_bit(is, self.i, false);
+                            // IBE &= ~self.i;
+                            bb::change_bit(ibe, self.i, false);
+                            // IEV &= ~self.i;
+                            bb::change_bit(iev, self.i, false);
+                            // IM |= self.i;
+                            bb::change_bit(im, self.i, true);
+                        }
+                        InterruptMode::EdgeBoth => {
+                            // IM &= ~self.i;
+                            bb::change_bit(im, self.i, false);
+                            // IS &= ~self.i;
+                            bb::change_bit(is, self.i, false);
+                            // IBE |= self.i;
+                            bb::change_bit(ibe, self.i, true);
+                            // IEV |= self.i;
+                            bb::change_bit(iev, self.i, true);
+                            // IM |= self.i;
+                            bb::change_bit(im, self.i, true);
+                        }
+                        InterruptMode::Disabled => {
+                            // IM &= ~self.i;
+                            bb::change_bit(im, self.i, false);
+                        }
+                    }
+                }
+            }
+
+            /// Returns the current interrupt status for this pin.
+            pub fn get_interrupt_status(&self) -> bool {
+                unsafe {
+                    let mis = get_field!(self.j, mis);
+                    bb::read_bit(mis, self.i)
+                }
+            }
+
+            /// Marks the interrupt for this pin as handled. You should
+            /// call this (or perform its functionality) from the ISR.
+            pub fn clear_interrupt(&self) {
+                unsafe {
+                    let icr = get_field!(self.j, icr);
+                    bb::change_bit(icr, self.i, true);
+                }
+            }
+        }
+    };
+}
+
 ///! An internal macro to implement the GPIO functionality for each port
 #[macro_export]
 macro_rules! gpio_macro {
-    ($chip_crate:ident, $GPIOX:ident, $gpiox:ident, $iopd:ident, $PXx:ident, [
+    ($chip_crate:ident, $GPIOX:ident, $gpiox:ident, $iopd:ident, $PXx:ident, $j:expr, [
         $($PXi:ident: ($pxi:ident, $i:expr, $MODE:ty),)+
     ]) => {
         /// GPIO
@@ -62,6 +227,20 @@ macro_rules! gpio_macro {
             pub struct $PXx<MODE> {
                 i: u8,
                 _mode: PhantomData<MODE>,
+            }
+
+            impl<MODE> $PXx<MODE> {
+                /// Erases the port number from the type
+                ///
+                /// This is useful when you want to collect the pins into an array where you
+                /// need all the elements to have the same type
+                pub fn downgrade(self) -> Pxx<MODE> {
+                    Pxx {
+                        i: self.i,
+                        j: GpioPort::$iopd,
+                        _mode: self._mode,
+                    }
+                }
             }
 
             impl<MODE> StatefulOutputPin for $PXx<Output<MODE>> where MODE: OutputMode {
