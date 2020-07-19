@@ -33,6 +33,7 @@ pub use tm4c_hal::{bb, delay, time};
 pub use crate::tm4c129x::interrupt;
 
 pub mod gpio;
+pub mod hib;
 pub mod i2c;
 pub mod prelude;
 pub mod serial;
