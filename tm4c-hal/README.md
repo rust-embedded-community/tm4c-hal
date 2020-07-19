@@ -5,6 +5,20 @@
 You probably don't need this crate, you need `tm4c123x-hal` or `tm4c129x-hal`
 depending on your processor.
 
+## Changelog
+
+### Unreleased Changes ([Source](https://github.com/rust-embedded-community/tm4c-hal/tree/master/tm4c-hal) [Diff](https://github.com/rust-embedded-community/tm4c-hal/compare/tm4c-hal-0.4.0...master))
+
+* No changes
+
+### v0.4.0 ([Source](https://github.com/rust-embedded-community/tm4c-hal/tree/tm4c-hal-0.4.0/tm4c-hal) [Diff](https://github.com/rust-embedded-community/tm4c-hal/compare/tm4c-hal-0.4.0...tm4c-hal-0.3.0))
+
+* I2C fixes
+
+### v0.3.0 ([Source](https://github.com/rust-embedded-community/tm4c-hal/tree/tm4c-hal-0.3.0/tm4c-hal))
+
+* Changelog starts here
+
 ## License
 
 Licensed under either of
