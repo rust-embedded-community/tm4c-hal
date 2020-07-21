@@ -46,9 +46,11 @@ macro_rules! i2c_pins {
 }
 
 #[macro_export]
-/// Spins on a given field on a TM4C I2C peripheral
+/// Spins until the controler is ready (mcs.busy is clear) and optionally on
+/// another field of the mcs register until it is clear or set (depending on op
+/// parameter).
 macro_rules! i2c_busy_wait {
-    ($i2c:expr) => {{
+    ($i2c:expr $(, $field:ident, $op:ident)? ) => {{
         // in 'release' builds, the time between setting the `run` bit and checking the `busy`
         // bit is too short and the `busy` bit is not reliably set by the time you get there,
         // it can take up to 8 clock cycles for the `run` to begin so this delay allows time
@@ -67,19 +69,38 @@ macro_rules! i2c_busy_wait {
             }
         };
 
+
         if mcs.clkto().bit_is_set() {
-            Err(Error::Timeout)
-        } else if mcs.busbsy().bit_is_set() {
-            Err(Error::BusBusy)
+            return Err(Error::Timeout)
         } else if mcs.arblst().bit_is_set() {
-            Err(Error::Arbitration)
-        } else if mcs.datack().bit_is_set() {
-            Err(Error::DataAck)
-        } else if mcs.adrack().bit_is_set() {
-            Err(Error::AdrAck)
-        } else {
-            Ok(())
+            return Err(Error::Arbitration)
+        } else if mcs.error().bit_is_set() {
+            if mcs.adrack().bit_is_set() {
+                return Err(Error::AdrAck);
+            } else { // if mcs.datack().bit_is_set() {
+                return Err(Error::DataAck);
+            }
         }
+
+        $( loop {
+            if mcs.clkto().bit_is_set() {
+                return Err(Error::Timeout)
+            } else if mcs.arblst().bit_is_set() {
+                return Err(Error::Arbitration)
+            } else if mcs.error().bit_is_set() {
+                if mcs.adrack().bit_is_set() {
+                    return Err(Error::AdrAck);
+                } else { // if mcs.datack().bit_is_set() {
+                    return Err(Error::DataAck);
+                }
+            } else if mcs.$field().$op() {
+                break;
+            } else {
+                // try again
+            }
+        };)?
+
+        Ok(())
     }};
 }
 
@@ -140,13 +161,7 @@ macro_rules! i2c_hal {
 
                     let sz = bytes.len();
 
-                    loop {
-                        match i2c_busy_wait!(self.i2c) {
-                            Ok(()) => break,
-                            Err(Error::BusBusy) => continue,
-                            e @ Err(_) => return e,
-                        }
-                    }
+                    i2c_busy_wait!(self.i2c, busbsy, bit_is_clear)?;
 
                     // Send START + RUN
                     // If single byte transfer, set STOP
@@ -197,13 +212,7 @@ macro_rules! i2c_hal {
                             .rs().set_bit()
                     });
 
-                    loop {
-                        match i2c_busy_wait!(self.i2c) {
-                            Ok(()) => break,
-                            Err(Error::BusBusy) => continue,
-                            e @ Err(_) => return e,
-                        }
-                    }
+                    i2c_busy_wait!(self.i2c, busbsy, bit_is_clear)?;
 
                     let recv_sz = buffer.len();
 
@@ -278,21 +287,13 @@ macro_rules! i2c_hal {
                         w.data().bits(bytes[0])
                     });
 
-                    loop {
-                        match i2c_busy_wait!(self.i2c) {
-                            Ok(()) => break,
-                            Err(Error::BusBusy) => continue,
-                            e @ Err(_) => return e,
-                        }
-                    }
-
+                    i2c_busy_wait!(self.i2c, busbsy, bit_is_clear)?;
                     self.i2c.mcs.write(|w| {
                         w.start().set_bit()
                             .run().set_bit()
                     });
 
                     i2c_busy_wait!(self.i2c)?;
-
                     for byte in (&bytes[1..write_len]).iter() {
                         self.i2c.mdr.write(|w| unsafe {
                             w.data().bits(*byte)
