@@ -7,9 +7,13 @@ depending on your processor.
 
 ## Changelog
 
-### Unreleased Changes ([Source](https://github.com/rust-embedded-community/tm4c-hal/tree/master/tm4c-hal) [Diff](https://github.com/rust-embedded-community/tm4c-hal/compare/tm4c-hal-0.4.0...master))
+### Unreleased Changes ([Source](https://github.com/rust-embedded-community/tm4c-hal/tree/master/tm4c-hal) [Diff](https://github.com/rust-embedded-community/tm4c-hal/compare/tm4c-hal-0.4.1...master))
 
 * No changes
+
+### v0.4.1 ([Source](https://github.com/rust-embedded-community/tm4c-hal/tree/tm4c-hal-0.4.1/tm4c-hal) [Diff](https://github.com/rust-embedded-community/tm4c-hal/compare/tm4c-hal-0.4.1...tm4c-hal-0.4.0))
+
+* I2C busy handling fixes
 
 ### v0.4.0 ([Source](https://github.com/rust-embedded-community/tm4c-hal/tree/tm4c-hal-0.4.0/tm4c-hal) [Diff](https://github.com/rust-embedded-community/tm4c-hal/compare/tm4c-hal-0.4.0...tm4c-hal-0.3.0))
 
