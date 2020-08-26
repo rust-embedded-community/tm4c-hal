@@ -8,9 +8,13 @@
 
 ## Changelog
 
-### Unreleased Changes ([Source](https://github.com/rust-embedded-community/tm4c-hal/tree/master/tm4c123x-hal) [Diff](https://github.com/rust-embedded-community/tm4c-hal/compare/tm4c123x-hal-0.10.1...master))
+### Unreleased Changes ([Source](https://github.com/rust-embedded-community/tm4c-hal/tree/master/tm4c123x-hal) [Diff](https://github.com/rust-embedded-community/tm4c-hal/compare/tm4c123x-hal-0.10.2...master))
 
 * No changes
+
+### v0.10.2 ([Source](https://github.com/rust-embedded-community/tm4c-hal/tree/tm4c123x-hal-0.10.2/tm4c123x-hal) [Diff](https://github.com/rust-embedded-community/tm4c-hal/compare/tm4c123x-hal-0.10.2...tm4c123x-hal-0.10.1))
+
+* Updated to tm4c-hal 0.4.1
 
 ### v0.10.1 ([Source](https://github.com/rust-embedded-community/tm4c-hal/tree/tm4c123x-hal-0.10.1/tm4c123x-hal) [Diff](https://github.com/rust-embedded-community/tm4c-hal/compare/tm4c123x-hal-0.10.1...tm4c123x-hal-0.10.0))
 
