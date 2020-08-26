@@ -11,7 +11,7 @@ description = "HAL for the TM4C129x family of microcontrollers"
 keywords = ["arm", "cortex-m", "tm4c", "hal"]
 categories = ["embedded", "hardware-support", "no-std"]
 license = "MIT OR Apache-2.0"
-repository = "https://github.com/thejpster/tm4c-hal/tm4c129x-hal"
+repository = "https://github.com/rust-embedded-community/tm4c-hal/tm4c129x-hal"
 edition = "2018"
 
 [dependencies]
