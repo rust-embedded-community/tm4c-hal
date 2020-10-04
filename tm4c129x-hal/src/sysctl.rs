@@ -39,16 +39,14 @@ pub struct Sysctl {
 }
 
 /// Used to gate access to the run-time power control features of the chip.
-pub struct PowerControl {
-    _0: (),
-}
+#[non_exhaustive]
+pub struct PowerControl {}
 
 /// Used to configure the clock generators.
+#[non_exhaustive]
 pub struct ClockSetup {
     /// The system oscillator configuration
     pub oscillator: Oscillator,
-    // Make this type uncreatable
-    _0: (),
 }
 
 /// Selects the system oscillator source
@@ -746,10 +744,9 @@ pub trait SysctlExt {
 impl SysctlExt for tm4c129x::SYSCTL {
     fn constrain(self) -> Sysctl {
         Sysctl {
-            power_control: PowerControl { _0: () },
+            power_control: PowerControl {},
             clock_setup: ClockSetup {
                 oscillator: Oscillator::PrecisionInternal(SystemClock::UseOscillator(Divider::_1)),
-                _0: (),
             },
         }
     }

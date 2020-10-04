@@ -1,5 +1,8 @@
 //! Serial
 
+// uart_hal_macro can be called with too-many arguments
+#![allow(clippy::too_many_arguments)]
+
 pub use tm4c123x::{UART0, UART1, UART2, UART3, UART4, UART5, UART6, UART7};
 pub use tm4c_hal::{serial::*, uart_hal_macro, uart_pin_macro};
 

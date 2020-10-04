@@ -15,7 +15,6 @@ use crate::{
     time::Hertz,
 };
 
-use nb;
 use tm4c123x::{SSI0, SSI1, SSI2, SSI3};
 
 /// SPI error

@@ -2,6 +2,7 @@
 
 /// I2C error
 #[derive(Debug)]
+#[non_exhaustive]
 pub enum Error {
     /// Bus Busy
     BusBusy,
@@ -17,9 +18,6 @@ pub enum Error {
 
     /// I2C Timeout
     Timeout,
-
-    #[doc(hidden)]
-    _Extensible,
 }
 
 #[macro_export]
