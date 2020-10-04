@@ -67,6 +67,6 @@ impl Hib {
         let subsec: u64 = subsec.into();
 
         let millis: u64 = subsec * 1000 / 32_768;
-        return seconds * 1000 + millis;
+        seconds * 1000 + millis
     }
 }

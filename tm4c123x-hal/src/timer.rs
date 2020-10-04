@@ -4,7 +4,6 @@ use crate::{
     hal::timer::{CountDown, Periodic},
     sysctl::{self, Clocks},
 };
-use nb;
 
 #[rustfmt::skip]
 use tm4c123x::{
@@ -103,7 +102,7 @@ macro_rules! hal {
                     tim.tamr.write(|w| w.tamr().period());
 
                     let mut timer = Timer {
-                        tim:tim,
+                        tim,
                         clocks: *clocks,
                         timeout: Hertz(0),
                     };

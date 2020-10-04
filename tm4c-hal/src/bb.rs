@@ -9,7 +9,11 @@ use core::ptr::{read_volatile, write_volatile};
 use cortex_m::asm::nop;
 
 /// Sets/Clears a bit at the given address atomically, using the bit-banding
-/// feature. We take a const pointer and mutate it, but that's because the
+/// feature.
+///
+/// # Safety
+///
+/// We take a const pointer and mutate it, but that's because the
 /// svd2rust crate will only give us const pointers.
 pub unsafe fn change_bit<T>(address: *const T, bit: u8, value: bool) {
     let address = address as u32;
@@ -18,7 +22,11 @@ pub unsafe fn change_bit<T>(address: *const T, bit: u8, value: bool) {
 }
 
 /// Sets and then Clears a bit at the given address atomically, using the bit-
-/// banding feature. We take a const pointer and mutate it, but that's because
+/// banding feature.
+///
+/// # Safety
+///
+/// We take a const pointer and mutate it, but that's because
 /// the svd2rust crate will only give us const pointers.
 pub unsafe fn toggle_bit<T>(address: *const T, bit: u8) {
     let address = address as u32;

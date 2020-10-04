@@ -1,5 +1,8 @@
 //! Serial
 
+// uart_hal_macro can be called with too-many arguments
+#![allow(clippy::too_many_arguments)]
+
 use core::{fmt, marker::PhantomData};
 
 use crate::{
