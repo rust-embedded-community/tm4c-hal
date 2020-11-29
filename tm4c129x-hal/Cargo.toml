@@ -17,7 +17,12 @@ edition = "2018"
 [dependencies]
 cortex-m = "0.6"
 nb = "1"
-tm4c129x = "0.9"
+
+[dependencies.tm4c129x]
+## m-labs does not plan on publishing new release on crates.io and suggest to
+## use git instead with specific revision instead.
+git = "https://github.com/m-labs/dslite2svd.git"
+rev = "30145706b658136c35c90290701de3f02a4b8ef2"
 
 [dependencies.cast]
 version = "0.2"
