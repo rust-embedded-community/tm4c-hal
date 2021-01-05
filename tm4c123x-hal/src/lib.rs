@@ -32,6 +32,7 @@ pub use crate::tm4c123x::interrupt;
 
 use embedded_hal as hal;
 
+pub mod adc;
 pub mod gpio;
 pub mod hib;
 pub mod i2c;

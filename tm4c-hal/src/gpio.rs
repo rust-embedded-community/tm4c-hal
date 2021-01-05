@@ -11,6 +11,9 @@ pub trait InputMode {}
 /// All output modes implement this
 pub trait OutputMode {}
 
+/// All analog modes implement this
+pub trait AnalogMode {}
+
 /// OpenDrain modes implement this
 pub trait OpenDrainMode {
     /// Is pull-up enabled
@@ -55,6 +58,11 @@ impl OpenDrainMode for PullUp {
         true
     }
 }
+/// Sub-mode of Input: Analog input (type state)
+pub struct AnalogInput;
+impl AnalogMode for AnalogInput {}
+impl InputMode for AnalogInput {}
+impl IsUnlocked for AnalogInput {}
 
 /// Tri-state
 pub struct Tristate;
@@ -73,17 +81,11 @@ impl<MODE> IsUnlocked for Output<MODE> where MODE: OutputMode {}
 pub struct AlternateFunction<AF, MODE>
 where
     AF: AlternateFunctionChoice,
-    MODE: OutputMode,
 {
     _func: PhantomData<AF>,
     _mode: PhantomData<MODE>,
 }
-impl<AF, MODE> IsUnlocked for AlternateFunction<AF, MODE>
-where
-    AF: AlternateFunctionChoice,
-    MODE: OutputMode,
-{
-}
+impl<AF, MODE> IsUnlocked for AlternateFunction<AF, MODE> where AF: AlternateFunctionChoice {}
 
 /// Sub-mode of Output/AlternateFunction: Push pull output (type state for
 /// Output)

@@ -191,7 +191,29 @@ macro_rules! gpio_macro {
                     _mode: PhantomData<MODE>,
                 }
 
+                impl<MODE> $PXi<MODE> {
+                    fn number(&self) -> u8 {
+                        $i
+                    }
+                }
+
                 impl<MODE> $PXi<MODE> where MODE: IsUnlocked {
+                    /// Configures the pin to analog input.
+                    pub fn into_ain(
+                        self,
+                        _gpio_control: &mut GpioControl,
+                    ) -> $PXi<Input<AnalogInput>> {
+                        let p = unsafe { &*$GPIOX::ptr() };
+                        unsafe { bb::change_bit(&p.afsel, $i, true); }
+                        unsafe { bb::change_bit(&p.dir, $i, false); }
+                        unsafe { bb::change_bit(&p.odr, $i, false); }
+                        unsafe { bb::change_bit(&p.pur, $i, false); }
+                        unsafe { bb::change_bit(&p.pdr, $i, false); }
+                        unsafe { bb::change_bit(&p.den, $i, false); }
+                        unsafe { bb::change_bit(&p.amsel, $i, false); }
+                        $PXi { _mode: PhantomData }
+                    }
+
                     /// Configures the pin to serve as alternate function 1 through 15.
                     /// Disables open-drain to make the output a push-pull.
                     pub fn into_af_push_pull<AF>(
