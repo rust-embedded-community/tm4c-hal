@@ -7,85 +7,13 @@ use crate::{
     gpio::gpiod::{PD0, PD1, PD2, PD3},
     gpio::gpioe::{PE0, PE1, PE2, PE3, PE4, PE5},
     hal::adc,
-    sysctl,
+    ss_ctl, ss_fifo, ss_mux, sysctl,
 };
+
+pub use crate::sample_seq::{SS0, SS1, SS2, SS3};
 
 use tm4c123x::{ADC0, ADC1};
 use tm4c_hal::gpio::{AnalogInput, Input};
-use SampleSeq::{SS0, SS1, SS2, SS3};
-
-#[allow(non_snake_case)]
-/// Sample sequencers available
-pub mod SampleSeq {
-    /// 8 Samples 8 FIFO depth
-    pub struct SS0;
-    /// 4 Samples 4 FIFO depth
-    pub struct SS1;
-    /// 4 Samples 4 FIFO depth
-    pub struct SS2;
-    /// 1 Samples 1 FIFO depth
-    pub struct SS3;
-}
-
-macro_rules! ss_ctl {
-    ($adc:ident, SS0) => {
-        $adc.ssctl0
-    };
-    ($adc:ident, SS1) => {
-        $adc.ssctl1
-    };
-    ($adc:ident, SS2) => {
-        $adc.ssctl2
-    };
-    ($adc:ident, SS3) => {
-        $adc.ssctl3
-    };
-}
-
-macro_rules! ss_mux {
-    ($adc:ident, SS0) => {
-        $adc.ssmux0
-    };
-    ($adc:ident, SS1) => {
-        $adc.ssmux1
-    };
-    ($adc:ident, SS2) => {
-        $adc.ssmux2
-    };
-    ($adc:ident, SS3) => {
-        $adc.ssmux3
-    };
-}
-
-macro_rules! ss_num {
-    (SS0) => {
-        0
-    };
-    (SS1) => {
-        1
-    };
-    (SS2) => {
-        2
-    };
-    (SS3) => {
-        3
-    };
-}
-
-macro_rules! ss_fifo {
-    ($adc:ident, SS0) => {
-        $adc.ssfifo0
-    };
-    ($adc:ident, SS1) => {
-        $adc.ssfifo1
-    };
-    ($adc:ident, SS2) => {
-        $adc.ssfifo2
-    };
-    ($adc:ident, SS3) => {
-        $adc.ssfifo3
-    };
-}
 
 /// Example ADC
 pub struct Adc<SS, ADC, PIN> {
@@ -145,7 +73,7 @@ macro_rules! init_hal {
                     sysctl::reset(pc, sysctl::Domain::$powerDomain);
 
                     unsafe { // disable for config
-                        bb::change_bit(&adc.actss, ss_num!($SSX), false);
+                        bb::change_bit(&adc.actss, $SSX::num(), false);
                     }
                     adc.emux.modify(|r, w| unsafe { w.bits(r.bits() & !(0xF000)) }); // software trigger
 
@@ -154,10 +82,15 @@ macro_rules! init_hal {
                     unsafe {
                         bb::change_bit(&ss_ctl!(adc, $SSX), 1, true);
                         bb::change_bit(&ss_ctl!(adc, $SSX), 2, true);
-                        bb::change_bit(&adc.actss, ss_num!($SSX), true);
+                        bb::change_bit(&adc.actss, $SSX::num(), true);
                     }
 
                     Adc { _ss: PhantomData, pin, adc }
+                }
+
+                /// Releases the peripheral and pin
+                pub fn free(self) -> ($ADCX, PIN) {
+                    (self.adc,self.pin)
                 }
 
                 /// Configured channel
@@ -168,13 +101,13 @@ macro_rules! init_hal {
                 /// Blocking read
                 pub fn read_blocking(&self) -> u16 {
                     unsafe {
-                        bb::change_bit(&self.adc.pssi, ss_num!($SSX), true); // Enable SS3 conversion or start sampling data from AN0
+                        bb::change_bit(&self.adc.pssi, $SSX::num(), true); // Enable SS3 conversion or start sampling data from AN0
                     }
                     while (&self.adc.ris.read().bits() & 8) == 0 {
                         // cortex_m::asm::nop();
                     }
                     let ref _adc = self.adc;
-                    let adc_value = ss_fifo!(_adc, $SSX).read().data().bits(); //clear coversion clear flag bit
+                    let adc_value = ss_fifo!(_adc, $SSX).read().data().bits(); //clear conversion clear flag bit
                     &self.adc.isc.write(|w| unsafe { w.bits(8) });
                     adc_value
                 }

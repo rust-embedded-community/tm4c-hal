@@ -38,6 +38,7 @@ pub mod hib;
 pub mod i2c;
 pub mod prelude;
 pub mod pwm;
+pub mod sample_seq;
 pub mod serial;
 pub mod spi;
 pub mod sysctl;
