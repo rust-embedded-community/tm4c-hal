@@ -60,7 +60,7 @@ macro_rules! init_hal {
                 PIN::ID: Into<u32>
             {
                 /// Configures the ADC peripheral to operate in full duplex master mode
-                pub fn $adcX(
+                pub fn new(
                     adc: $ADCX,
                     pin: PIN,
                     pc: &sysctl::PowerControl,
@@ -108,7 +108,7 @@ macro_rules! init_hal {
                     }
                     let ref _adc = self.adc;
                     let adc_value = ss_fifo!(_adc, $SSX).read().data().bits(); //clear conversion clear flag bit
-                    &self.adc.isc.write(|w| unsafe { w.bits(8) });
+                    self.adc.isc.write(|w| unsafe { w.bits(8) });
                     adc_value
                 }
             }
