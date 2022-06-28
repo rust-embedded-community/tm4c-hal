@@ -191,6 +191,8 @@ macro_rules! gpio_macro {
                     _mode: PhantomData<MODE>,
                 }
 
+                impl<MODE> crate::Sealed for $PXi<MODE> {}
+
                 impl<MODE> $PXi<MODE> where MODE: IsUnlocked {
                     /// Configures the pin to serve as alternate function 1 through 15.
                     /// Disables open-drain to make the output a push-pull.
@@ -525,6 +527,8 @@ macro_rules! uart_hal_macro {
     ($(
         $UARTX:ident: ($powerDomain:ident, $uartX:ident),
     )+) => {
+        $crate::uart_traits_macro!();
+
         $(
             impl<TX, RX, RTS, CTS> Serial<$UARTX, TX, RX, RTS, CTS> {
                 /// Configures a UART peripheral to provide serial communication
@@ -780,7 +784,7 @@ macro_rules! uart_pin_macro {
         tx: [$(($($txgpio: ident)::*, $txaf: ident)),*],
     ) => {
         $(
-            unsafe impl<T> CtsPin<$UARTn> for $($ctsgpio)::*<AlternateFunction<$ctsaf, T>>
+            impl<T> CtsPin<$UARTn> for $($ctsgpio)::*<AlternateFunction<$ctsaf, T>>
             where
                 T: OutputMode,
             {
@@ -791,7 +795,7 @@ macro_rules! uart_pin_macro {
         )*
 
         $(
-            unsafe impl<T> RtsPin<$UARTn> for $($rtsgpio)::*<AlternateFunction<$rtsaf, T>>
+            impl<T> RtsPin<$UARTn> for $($rtsgpio)::*<AlternateFunction<$rtsaf, T>>
             where
                 T: OutputMode,
             {
@@ -802,14 +806,14 @@ macro_rules! uart_pin_macro {
         )*
 
         $(
-            unsafe impl <T> RxPin<$UARTn> for $($rxgpio)::*<AlternateFunction<$rxaf, T>>
+            impl <T> RxPin<$UARTn> for $($rxgpio)::*<AlternateFunction<$rxaf, T>>
             where
                 T: OutputMode,
             {}
         )*
 
         $(
-            unsafe impl <T> TxPin<$UARTn> for $($txgpio)::*<AlternateFunction<$txaf, T>>
+            impl <T> TxPin<$UARTn> for $($txgpio)::*<AlternateFunction<$txaf, T>>
             where
                 T: OutputMode,
             {}

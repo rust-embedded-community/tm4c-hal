@@ -28,14 +28,14 @@ macro_rules! i2c_pins {
         sda: [$(($($sdagpio: ident)::*, $sdaaf: ident)),*],
     ) => {
         $(
-            unsafe impl<T> SclPin<$I2Cn> for $($sclgpio)::*<AlternateFunction<$sclaf, T>>
+            impl<T> SclPin<$I2Cn> for $($sclgpio)::*<AlternateFunction<$sclaf, T>>
             where
                 T: OutputMode,
             {}
         )*
 
         $(
-            unsafe impl<T> SdaPin<$I2Cn> for $($sdagpio)::*<AlternateFunction<$sdaaf, T>>
+            impl<T> SdaPin<$I2Cn> for $($sdagpio)::*<AlternateFunction<$sdaaf, T>>
             where
                 T: OutputMode,
             {}

@@ -32,6 +32,14 @@ pub use tm4c_hal::{bb, delay, time};
 #[cfg(feature = "rt")]
 pub use crate::tm4c129x::interrupt;
 
+use sealed::Sealed;
+mod sealed {
+    // To prevent implementation of `*Pin` traits on arbitrary types
+    pub trait Sealed {}
+
+    impl Sealed for () {}
+}
+
 pub mod gpio;
 pub mod hib;
 pub mod i2c;
