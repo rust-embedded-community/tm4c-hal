@@ -13,6 +13,7 @@ use crate::{
     sysctl,
     sysctl::Clocks,
     time::Hertz,
+    Sealed,
 };
 
 use tm4c123x::{SSI0, SSI1, SSI2, SSI3};
@@ -24,35 +25,34 @@ pub enum Error {
     _Extensible,
 }
 
-// FIXME these should be "closed" traits
-/// SCK pin -- DO NOT IMPLEMENT THIS TRAIT
-pub unsafe trait SckPin<SPI> {}
+/// SCK pin
+pub trait SckPin<SPI>: Sealed {}
 
-/// MISO pin -- DO NOT IMPLEMENT THIS TRAIT
-pub unsafe trait MisoPin<SPI> {}
+/// MISO pin
+pub trait MisoPin<SPI>: Sealed {}
 
-/// MOSI pin -- DO NOT IMPLEMENT THIS TRAIT
-pub unsafe trait MosiPin<SPI> {}
+/// MOSI pin
+pub trait MosiPin<SPI>: Sealed {}
 
 // SSI0
-unsafe impl<T> SckPin<SSI0> for PA2<AlternateFunction<AF2, T>> where T: OutputMode {}
-unsafe impl<T> MisoPin<SSI0> for PA4<AlternateFunction<AF2, T>> where T: OutputMode {}
-unsafe impl<T> MosiPin<SSI0> for PA5<AlternateFunction<AF2, T>> where T: OutputMode {}
+impl<T> SckPin<SSI0> for PA2<AlternateFunction<AF2, T>> where T: OutputMode {}
+impl<T> MisoPin<SSI0> for PA4<AlternateFunction<AF2, T>> where T: OutputMode {}
+impl<T> MosiPin<SSI0> for PA5<AlternateFunction<AF2, T>> where T: OutputMode {}
 
 // SSI1
-unsafe impl<T> SckPin<SSI1> for PD0<AlternateFunction<AF2, T>> where T: OutputMode {}
-unsafe impl<T> MisoPin<SSI1> for PD2<AlternateFunction<AF2, T>> where T: OutputMode {}
-unsafe impl<T> MosiPin<SSI1> for PD3<AlternateFunction<AF2, T>> where T: OutputMode {}
+impl<T> SckPin<SSI1> for PD0<AlternateFunction<AF2, T>> where T: OutputMode {}
+impl<T> MisoPin<SSI1> for PD2<AlternateFunction<AF2, T>> where T: OutputMode {}
+impl<T> MosiPin<SSI1> for PD3<AlternateFunction<AF2, T>> where T: OutputMode {}
 
 // SSI2
-unsafe impl<T> SckPin<SSI2> for PB4<AlternateFunction<AF2, T>> where T: OutputMode {}
-unsafe impl<T> MisoPin<SSI2> for PB6<AlternateFunction<AF2, T>> where T: OutputMode {}
-unsafe impl<T> MosiPin<SSI2> for PB7<AlternateFunction<AF2, T>> where T: OutputMode {}
+impl<T> SckPin<SSI2> for PB4<AlternateFunction<AF2, T>> where T: OutputMode {}
+impl<T> MisoPin<SSI2> for PB6<AlternateFunction<AF2, T>> where T: OutputMode {}
+impl<T> MosiPin<SSI2> for PB7<AlternateFunction<AF2, T>> where T: OutputMode {}
 
 // SSI3
-unsafe impl<T> SckPin<SSI3> for PD0<AlternateFunction<AF1, T>> where T: OutputMode {}
-unsafe impl<T> MisoPin<SSI3> for PD2<AlternateFunction<AF1, T>> where T: OutputMode {}
-unsafe impl<T> MosiPin<SSI3> for PD3<AlternateFunction<AF1, T>> where T: OutputMode {}
+impl<T> SckPin<SSI3> for PD0<AlternateFunction<AF1, T>> where T: OutputMode {}
+impl<T> MisoPin<SSI3> for PD2<AlternateFunction<AF1, T>> where T: OutputMode {}
+impl<T> MosiPin<SSI3> for PD3<AlternateFunction<AF1, T>> where T: OutputMode {}
 
 /// SPI peripheral operating in full duplex master mode
 pub struct Spi<SPI, PINS> {
