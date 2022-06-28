@@ -15,7 +15,8 @@ use nb::{self, block};
 use void::Void;
 
 pub use tm4c129x::{UART0, UART1, UART2, UART3, UART4, UART5, UART6, UART7};
-pub use tm4c_hal::{serial::*, uart_hal_macro, uart_pin_macro};
+pub use tm4c_hal::serial::NewlineMode;
+use tm4c_hal::{uart_hal_macro, uart_pin_macro};
 
 /// Serial abstraction
 pub struct Serial<UART, TX, RX, RTS, CTS> {

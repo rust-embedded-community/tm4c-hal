@@ -4,7 +4,8 @@
 #![allow(clippy::too_many_arguments)]
 
 pub use tm4c123x::{UART0, UART1, UART2, UART3, UART4, UART5, UART6, UART7};
-pub use tm4c_hal::{serial::*, uart_hal_macro, uart_pin_macro};
+pub use tm4c_hal::serial::NewlineMode;
+use tm4c_hal::{uart_hal_macro, uart_pin_macro};
 
 #[rustfmt::skip]
 use crate::{
