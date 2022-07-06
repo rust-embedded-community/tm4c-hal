@@ -10,7 +10,8 @@
 
 ### Unreleased Changes ([Source](https://github.com/rust-embedded-community/tm4c-hal/tree/master/tm4c123x-hal) [Diff](https://github.com/rust-embedded-community/tm4c-hal/compare/tm4c123x-hal-0.10.2...master))
 
-* No changes
+* Use sealed traits for `*Pin` marker traits
+* Do not reexport `tm4c-hal` macros
 
 ### v0.10.2 ([Source](https://github.com/rust-embedded-community/tm4c-hal/tree/tm4c123x-hal-0.10.2/tm4c123x-hal) [Diff](https://github.com/rust-embedded-community/tm4c-hal/compare/tm4c123x-hal-0.10.2...tm4c123x-hal-0.10.1))
 
