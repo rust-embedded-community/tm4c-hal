@@ -1,80 +1,89 @@
 //! Serial code that is generic to both the TM4C123 and TM4C129, such as the pin traits.
 
-/// TX pin - DO NOT IMPLEMENT THIS TRAIT
-pub unsafe trait TxPin<UART> {}
+// The macro is required for the "sealed trait" pattern to work:
+// the traits and the gpios have to be defined in the same crate
 
-/// RX pin - DO NOT IMPLEMENT THIS TRAIT
-pub unsafe trait RxPin<UART> {}
+///! An internal macro to generate the UART traits
+#[macro_export]
+macro_rules! uart_traits_macro {
+    () => {
+        /// TX pin
+        pub trait TxPin<UART>: crate::Sealed {}
 
-/// CTS pin - DO NOT IMPLEMENT THIS TRAIT
-pub unsafe trait CtsPin<UART> {
-    /// Enables the CTS functionality if a valid pin is given (not `()`).
-    fn enable(&mut self, _uart: &mut UART);
-}
+        /// RX pin
+        pub trait RxPin<UART>: crate::Sealed {}
 
-/// DCD pin - DO NOT IMPLEMENT THIS TRAIT
-pub unsafe trait DcdPin<UART> {
-    /// Enables the DCD functionality if a valid pin is given (not `()`).
-    fn enable(&mut self, _uart: &mut UART);
-}
+        /// CTS pin
+        pub trait CtsPin<UART>: crate::Sealed {
+            /// Enables the CTS functionality if a valid pin is given (not `()`).
+            fn enable(&mut self, _uart: &mut UART);
+        }
 
-/// DSR pin - DO NOT IMPLEMENT THIS TRAIT
-pub unsafe trait DsrPin<UART> {
-    /// Enables the DSR functionality if a valid pin is given (not `()`).
-    fn enable(&mut self, _uart: &mut UART);
-}
+        /// DCD pin
+        pub trait DcdPin<UART>: crate::Sealed {
+            /// Enables the DCD functionality if a valid pin is given (not `()`).
+            fn enable(&mut self, _uart: &mut UART);
+        }
 
-/// DTR pin - DO NOT IMPLEMENT THIS TRAIT
-pub unsafe trait DtrPin<UART> {
-    /// Enables the DTR functionality if a valid pin is given (not `()`).
-    fn enable(&mut self, _uart: &mut UART);
-}
+        /// DSR pin
+        pub trait DsrPin<UART>: crate::Sealed {
+            /// Enables the DSR functionality if a valid pin is given (not `()`).
+            fn enable(&mut self, _uart: &mut UART);
+        }
 
-/// RI pin - DO NOT IMPLEMENT THIS TRAIT
-pub unsafe trait RiPin<UART> {
-    /// Enables the RI functionality if a valid pin is given (not `()`).
-    fn enable(&mut self, _uart: &mut UART);
-}
+        /// DTR pin
+        pub trait DtrPin<UART>: crate::Sealed {
+            /// Enables the DTR functionality if a valid pin is given (not `()`).
+            fn enable(&mut self, _uart: &mut UART);
+        }
 
-/// RTS pin - DO NOT IMPLEMENT THIS TRAIT
-pub unsafe trait RtsPin<UART> {
-    /// Enables the RTS functionality if a valid pin is given (not `()`).
-    fn enable(&mut self, _uart: &mut UART);
-}
+        /// RI pin
+        pub trait RiPin<UART>: crate::Sealed {
+            /// Enables the RI functionality if a valid pin is given (not `()`).
+            fn enable(&mut self, _uart: &mut UART);
+        }
 
-unsafe impl<U> TxPin<U> for () {}
+        /// RTS pin
+        pub trait RtsPin<UART>: crate::Sealed {
+            /// Enables the RTS functionality if a valid pin is given (not `()`).
+            fn enable(&mut self, _uart: &mut UART);
+        }
 
-unsafe impl<U> RxPin<U> for () {}
+        impl<U> TxPin<U> for () {}
 
-unsafe impl<U> CtsPin<U> for () {
-    fn enable(&mut self, _uart: &mut U) {
-        // Do nothing
-    }
-}
-unsafe impl<U> DcdPin<U> for () {
-    fn enable(&mut self, _uart: &mut U) {
-        // Do nothing
-    }
-}
-unsafe impl<U> DsrPin<U> for () {
-    fn enable(&mut self, _uart: &mut U) {
-        // Do nothing
-    }
-}
-unsafe impl<U> DtrPin<U> for () {
-    fn enable(&mut self, _uart: &mut U) {
-        // Do nothing
-    }
-}
-unsafe impl<U> RiPin<U> for () {
-    fn enable(&mut self, _uart: &mut U) {
-        // Do nothing
-    }
-}
-unsafe impl<U> RtsPin<U> for () {
-    fn enable(&mut self, _uart: &mut U) {
-        // Do nothing
-    }
+        impl<U> RxPin<U> for () {}
+
+        impl<U> CtsPin<U> for () {
+            fn enable(&mut self, _uart: &mut U) {
+                // Do nothing
+            }
+        }
+        impl<U> DcdPin<U> for () {
+            fn enable(&mut self, _uart: &mut U) {
+                // Do nothing
+            }
+        }
+        impl<U> DsrPin<U> for () {
+            fn enable(&mut self, _uart: &mut U) {
+                // Do nothing
+            }
+        }
+        impl<U> DtrPin<U> for () {
+            fn enable(&mut self, _uart: &mut U) {
+                // Do nothing
+            }
+        }
+        impl<U> RiPin<U> for () {
+            fn enable(&mut self, _uart: &mut U) {
+                // Do nothing
+            }
+        }
+        impl<U> RtsPin<U> for () {
+            fn enable(&mut self, _uart: &mut U) {
+                // Do nothing
+            }
+        }
+    };
 }
 
 /// writeln!() emits LF chars, so this is useful

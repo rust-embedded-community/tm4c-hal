@@ -5,6 +5,7 @@ use crate::{
     hal::blocking::i2c::{Read, Write, WriteRead},
     sysctl::{self, Clocks},
     time::Hertz,
+    Sealed,
 };
 
 use cortex_m::asm::delay;
@@ -21,12 +22,11 @@ pub struct I2c<I2C, PINS> {
     pub pins: PINS,
 }
 
-// FIXME these should be "closed" traits
-/// SCL pin -- DO NOT IMPLEMENT THIS TRAIT
-pub unsafe trait SclPin<I2C> {}
+/// SCL pin
+pub trait SclPin<I2C>: Sealed {}
 
-/// SDA pin -- DO NOT IMPLEMENT THIS TRAIT
-pub unsafe trait SdaPin<I2C> {}
+/// SDA pin
+pub trait SdaPin<I2C>: Sealed {}
 
 i2c_pins!(I2C0, scl: [(gpiob::PB2, AF2)], sda: [(gpiob::PB3, AF2)],);
 i2c_pins!(I2C1, scl: [(gpiog::PG0, AF2)], sda: [(gpiog::PG1, AF2)],);
