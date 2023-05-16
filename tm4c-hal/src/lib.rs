@@ -11,6 +11,7 @@ pub mod i2c;
 pub mod serial;
 pub mod sysctl;
 pub mod time;
+pub mod eeprom;
 
 ///! An internal macro to implement the GPIO functionality for each port
 #[macro_export]

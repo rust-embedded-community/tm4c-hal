@@ -41,3 +41,4 @@ pub mod serial;
 pub mod spi;
 pub mod sysctl;
 pub mod timer;
+pub mod eeprom;
