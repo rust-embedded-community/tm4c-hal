@@ -142,10 +142,7 @@ impl Eeprom {
 
     /// Set the block and offset registers
     fn set_block_and_offset(&self, address: &EepromAddress) -> Result<(), EepromError> {
-        if self.is_busy() {
-            return Err(EepromError::Busy);
-        }
-
+        self.wait();
         self.set_block(address.block())?;
         self.set_offset(address.offset())?;
         Ok(())
