@@ -28,8 +28,7 @@ pub struct Eeprom {
 }
 
 impl Eeprom {
-    /// Configures a new EEPROM with a start / end address defined by the 
-    /// user.
+    /// Configures a new EEPROM struct using the datasheet section 8.2.4.2
     pub fn new(eeprom: EEPROM, _pc: &sysctl::PowerControl) -> Self {
         
         let final_eeprom = Eeprom { eeprom };
@@ -98,7 +97,9 @@ impl Eeprom {
 
     /// Set the block register
     fn set_block(&self, block: usize) -> Result<(), EepromError> {
-        self.wait();
+        if self.is_busy() {
+            return Err(EepromError::Busy);
+        }
 
         if block < EEPROM_NUM_BLOCKS {
             unsafe {
@@ -110,6 +111,8 @@ impl Eeprom {
             // Changing blocks requires a small delay, see Section 8.2.4.1 Timing Considerations
             self.delay(4);
 
+            self.wait();
+
             Ok(())
         }else{
             Err(EepromError::BlockOutOfBounds)
@@ -118,7 +121,9 @@ impl Eeprom {
 
     /// Set the offset register
     fn set_offset(&self, offset: usize) -> Result<(), EepromError> {
-        self.wait();
+        if self.is_busy() {
+            return Err(EepromError::Busy);
+        }
 
         if offset < EEPROM_BLOCK_SIZE {
             unsafe {
@@ -126,6 +131,8 @@ impl Eeprom {
                     w.bits(offset as u32)
                 });
             }
+
+            self.wait();
 
             Ok(())
         }else{
@@ -135,6 +142,10 @@ impl Eeprom {
 
     /// Set the block and offset registers
     fn set_block_and_offset(&self, address: &EepromAddress) -> Result<(), EepromError> {
+        if self.is_busy() {
+            return Err(EepromError::Busy);
+        }
+
         self.set_block(address.block())?;
         self.set_offset(address.offset())?;
         Ok(())
@@ -161,7 +172,7 @@ impl Eeprom {
     /// * Block 0, Offset, 1 -> Block 0, Offset 2 
     /// * Block 0, Offset, 15 -> Block 1, Offset 0
     /// * Block 31, Offset, 15 -> Block 0, Offset 0
-    fn increment_offset(&mut self, starting_address: &mut EepromAddress) -> Result<(), EepromError> {
+    fn increment_offset(&mut self, starting_address: &mut EepromAddress) -> Result<(), EepromError> {        
         starting_address.increment(EEPROM_BLOCK_SIZE, EEPROM_NUM_BLOCKS);
         self.set_block_and_offset(&starting_address)?;
         Ok(())
