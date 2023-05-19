@@ -29,7 +29,17 @@ pub struct Eeprom {
 }
 
 impl Eeprom {
-    /// Configures a new EEPROM struct using the datasheet section 8.2.4.2
+    /// Configures a new EEPROM struct using the datasheet section 8.2.4.2. Note:
+    /// this function may panic if PRETRY and ERETRY in the EESUPP register
+    /// are set during the initialization. Section 8.2.4.2 explains further:
+    ///
+    /// If the PRETRY or ERETRY bits are set in the EESUPP register, the EEPROM
+    /// was unable to recover its state. If power is stable when this occurs,
+    /// this indicates a fatal error and is likely an indication that the EEPROM
+    /// memory has exceeded its specified lifetime write/erase specification.
+    /// If the supply voltage is unstable when this return code is observed,
+    /// retrying the operation once the voltage is stabilized may clear the
+    /// error.
     pub fn new(eeprom: EEPROM, pc: &sysctl::PowerControl) -> Self {
         let final_eeprom = Eeprom { eeprom };
 
