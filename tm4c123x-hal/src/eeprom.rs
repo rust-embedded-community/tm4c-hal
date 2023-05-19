@@ -3,6 +3,7 @@
 use core::convert::TryInto;
 
 use crate::sysctl::{self};
+use cortex_m::asm::delay;
 use tm4c123x::EEPROM;
 pub use tm4c_hal::eeprom::{Blocks, Busy, EepromAddress, EepromError, Erase, Read, Write};
 
@@ -29,7 +30,7 @@ pub struct Eeprom {
 
 impl Eeprom {
     /// Configures a new EEPROM struct using the datasheet section 8.2.4.2
-    pub fn new(eeprom: EEPROM, _pc: &sysctl::PowerControl) -> Self {
+    pub fn new(eeprom: EEPROM, pc: &sysctl::PowerControl) -> Self {
         let final_eeprom = Eeprom { eeprom };
 
         // See Section 8.2.4.2 EEPROM Initialization and Configuration
@@ -37,7 +38,7 @@ impl Eeprom {
 
         // 0. Power on the EEPROM peripheral
         sysctl::control_power(
-            _pc,
+            pc,
             sysctl::Domain::Eeprom,
             tm4c_hal::sysctl::RunMode::Run,
             tm4c_hal::sysctl::PowerState::On,
@@ -46,12 +47,18 @@ impl Eeprom {
         // 1. The datasheet calls for at least a 6 cycle delay before polling
         // the working register. Need to make sure the loop isn't optimized
         // out.
-        final_eeprom.delay(20);
+        delay(20);
 
         // 2. Poll busy
         final_eeprom.wait();
 
         // 3. Read PRETRY and ERETRY
+        // Note: If either bit is set, the data sheet indicates this is a pretty severe
+        // error with the EEPROM and the EEPROM shouldn't be used, which is why
+        // a panic!() is chosen over an error. There could be issues with the
+        // chip, core voltage, or EEPROM; regardless, it probably should be
+        // investigated further.
+        // See section 8.2.4.2
         if final_eeprom.eeprom.eesupp.read().eretry().bit_is_set() {
             panic!("Eeprom ERETRY bit set, please investigate or stop using the EEPROM peripheral");
         }
@@ -61,15 +68,21 @@ impl Eeprom {
         }
 
         // 4. Software reset
-        sysctl::reset(_pc, sysctl::Domain::Eeprom);
+        sysctl::reset(pc, sysctl::Domain::Eeprom);
 
         // 5. Another delay
-        final_eeprom.delay(20);
+        delay(20);
 
         // 6. Poll busy
         final_eeprom.wait();
 
         // 7. Recheck PRETRY and ERETRY
+        // Note: If either bit is set, the data sheet indicates this is a pretty severe
+        // error with the EEPROM and the EEPROM shouldn't be used, which is why
+        // a panic!() is chosen over an error. There could be issues with the
+        // chip, core voltage, or EEPROM; regardless, it probably should be
+        // investigated further.
+        // See section 8.2.4.2
         if final_eeprom.eeprom.eesupp.read().eretry().bit_is_set() {
             panic!("Eeprom ERETRY bit set, please investigate or stop using the EEPROM peripheral");
         }
@@ -80,19 +93,6 @@ impl Eeprom {
 
         // 8. All done
         final_eeprom
-    }
-
-    /// The EERPOM has multiple instances where small delays are needed. This
-    /// function tries introduce unoptimizable delays
-    pub fn delay(&self, est_clk_cycles: usize) {
-        let mut unoptimizable_delay: u32 = 0;
-
-        for _ in 0..est_clk_cycles {
-            unoptimizable_delay += 1;
-            unsafe {
-                core::ptr::read_volatile(&unoptimizable_delay);
-            }
-        }
     }
 
     /// Set the block register
@@ -107,7 +107,7 @@ impl Eeprom {
             }
 
             // Changing blocks requires a small delay, see Section 8.2.4.1 Timing Considerations
-            self.delay(4);
+            delay(4);
 
             self.wait();
 
@@ -145,8 +145,9 @@ impl Eeprom {
     }
 
     /// Checks if read / writing a certain number of bytes from an address is
-    /// valid.
-    fn validate_byte_array_bounds(&self, address: &EepromAddress, length_bytes: usize) -> bool {
+    /// valid. Returns true if EEPROM access is valid, false if there
+    /// are any issues (overflow or invalid address).
+    fn is_access_valid(&self, address: &EepromAddress, length_bytes: usize) -> bool {
         // Check if the initial address is valid, then check byte length
         match self.address_to_word_index(&address) {
             Ok(start_word_address) => {
@@ -217,48 +218,47 @@ impl Write for Eeprom {
         }
 
         // Check if the address is valid and if the data will fit
-        if self.validate_byte_array_bounds(address, data.len()) {
-            self.set_block_and_offset(address)?;
+        if !self.is_access_valid(address, data.len()) {
+            return Err(EepromError::WriteWouldOverflow);
+        }
 
-            let chunk_iter = data.chunks_exact(4);
-            let leftover_bytes = chunk_iter.remainder();
-            let mut address_copy = *address;
+        self.set_block_and_offset(address)?;
 
-            // Write the easy part using the auto increment register
-            for chunk in chunk_iter {
-                let tmp = u32::from_le_bytes(chunk.try_into().unwrap());
+        let chunk_iter = data.chunks_exact(4);
+        let leftover_bytes = chunk_iter.remainder();
+        let mut address_copy = *address;
 
-                self.wait();
+        for chunk in chunk_iter {
+            let tmp = u32::from_le_bytes(chunk.try_into().unwrap());
 
-                unsafe {
-                    self.eeprom.eerdwr.write(|w| w.bits(tmp));
-                }
+            self.wait();
 
-                self.increment_offset(&mut address_copy)?;
+            unsafe {
+                self.eeprom.eerdwr.write(|w| w.bits(tmp));
             }
 
-            // Buffer the leftover bytes, if any, and write
-            if leftover_bytes.len() != 0 {
-                let mut buffer = [0 as u8; 4];
-                for (i, byte) in leftover_bytes.iter().enumerate() {
-                    buffer[i] = *byte;
-                }
+            self.increment_offset(&mut address_copy)?;
+        }
 
-                self.wait();
-
-                unsafe {
-                    self.eeprom
-                        .eerdwr
-                        .write(|w| w.bits(u32::from_le_bytes(buffer)));
-                }
+        // Buffer the leftover bytes, if any, and write
+        if leftover_bytes.len() != 0 {
+            let mut buffer = [0 as u8; 4];
+            for (i, byte) in leftover_bytes.iter().enumerate() {
+                buffer[i] = *byte;
             }
 
             self.wait();
 
-            Ok(())
-        } else {
-            Err(EepromError::WriteWouldOverflow)
+            unsafe {
+                self.eeprom
+                    .eerdwr
+                    .write(|w| w.bits(u32::from_le_bytes(buffer)));
+            }
         }
+
+        self.wait();
+
+        Ok(())
     }
 }
 
@@ -277,47 +277,47 @@ impl Read for Eeprom {
             return Err(EepromError::ReadBufferTooSmall);
         }
 
-        if self.validate_byte_array_bounds(&address, bytes_to_read) {
-            let num_words = bytes_to_read / BYTES_PER_WORD;
-            let leftover_bytes = bytes_to_read % BYTES_PER_WORD;
-            let mut address_copy = *address;
+        if !self.is_access_valid(&address, bytes_to_read) {
+            return Err(EepromError::ReadWouldOverflow);
+        }
 
-            self.set_block_and_offset(&address)?;
+        let num_words = bytes_to_read / BYTES_PER_WORD;
+        let leftover_bytes = bytes_to_read % BYTES_PER_WORD;
+        let mut address_copy = *address;
 
-            let mut byte_offset = 0;
+        self.set_block_and_offset(&address)?;
 
-            for _i in 0..num_words {
-                self.wait();
+        let mut byte_offset = 0;
 
-                let word_as_bytes = self.eeprom.eerdwr.read().bits().to_le_bytes();
-
-                self.increment_offset(&mut address_copy)?;
-
-                for byte in word_as_bytes {
-                    buffer[byte_offset] = byte;
-                    byte_offset += 1;
-                }
-            }
-
-            if leftover_bytes != 0 {
-                self.wait();
-
-                let word_as_bytes = self.eeprom.eerdwr.read().bits().to_le_bytes();
-
-                self.increment_offset(&mut address_copy)?;
-
-                for index in 0..leftover_bytes {
-                    buffer[byte_offset] = word_as_bytes[index];
-                    byte_offset += 1;
-                }
-            }
-
+        for _i in 0..num_words {
             self.wait();
 
-            Ok(())
-        } else {
-            Err(EepromError::ReadWouldOverflow)
+            let word_as_bytes = self.eeprom.eerdwr.read().bits().to_le_bytes();
+
+            self.increment_offset(&mut address_copy)?;
+
+            for byte in word_as_bytes {
+                buffer[byte_offset] = byte;
+                byte_offset += 1;
+            }
         }
+
+        if leftover_bytes != 0 {
+            self.wait();
+
+            let word_as_bytes = self.eeprom.eerdwr.read().bits().to_le_bytes();
+
+            self.increment_offset(&mut address_copy)?;
+
+            for index in 0..leftover_bytes {
+                buffer[byte_offset] = word_as_bytes[index];
+                byte_offset += 1;
+            }
+        }
+
+        self.wait();
+
+        Ok(())
     }
 }
 
@@ -327,47 +327,47 @@ impl Erase for Eeprom {
             return Err(EepromError::Busy);
         }
 
-        if self.validate_byte_array_bounds(address, length_bytes) {
-            let num_words = length_bytes / BYTES_PER_WORD;
-            let leftover_bytes = length_bytes % BYTES_PER_WORD;
-            let mut address_copy = *address;
-
-            self.set_block_and_offset(&address)?;
-
-            let zero = 0 as u32;
-            for _i in 0..num_words {
-                self.wait();
-
-                unsafe {
-                    self.eeprom.eerdwr.write(|w| w.bits(zero));
-                }
-
-                self.increment_offset(&mut address_copy)?;
-            }
-
-            // Special case here, need to read-modify-write
-            if leftover_bytes != 0 {
-                self.wait();
-
-                let mut word = self.eeprom.eerdwr.read().bits().to_le_bytes();
-
-                for i in 0..leftover_bytes {
-                    word[i] = 0;
-                }
-
-                unsafe {
-                    self.eeprom
-                        .eerdwr
-                        .write(|w| w.bits(u32::from_le_bytes(word)));
-                }
-            }
-
-            self.wait();
-
-            Ok(())
-        } else {
+        if !self.is_access_valid(address, length_bytes) {
             return Err(EepromError::WriteWouldOverflow);
         }
+
+        let num_words = length_bytes / BYTES_PER_WORD;
+        let leftover_bytes = length_bytes % BYTES_PER_WORD;
+        let mut address_copy = *address;
+
+        self.set_block_and_offset(&address)?;
+
+        let zero = 0 as u32;
+        for _i in 0..num_words {
+            self.wait();
+
+            unsafe {
+                self.eeprom.eerdwr.write(|w| w.bits(zero));
+            }
+
+            self.increment_offset(&mut address_copy)?;
+        }
+
+        // Special case here, need to read-modify-write
+        if leftover_bytes != 0 {
+            self.wait();
+
+            let mut word = self.eeprom.eerdwr.read().bits().to_le_bytes();
+
+            for i in 0..leftover_bytes {
+                word[i] = 0;
+            }
+
+            unsafe {
+                self.eeprom
+                    .eerdwr
+                    .write(|w| w.bits(u32::from_le_bytes(word)));
+            }
+        }
+
+        self.wait();
+
+        Ok(())
     }
 
     fn erase_block(&mut self, block: usize) -> Result<(), EepromError> {
