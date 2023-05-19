@@ -1,17 +1,17 @@
 //! Code for the EEProm module.
-//! 
+//!
 //! Tested on a TM4C123 Tiva C Series Launchpad
-//! 
+//!
 //! Note: This code manually increments the EEBLOCK and EEOFFSET registers
 //! after each read and write instead of using the EERDWRINC register. The
 //! debugger was giving inconsistent register results for the EEOFFSET register
-//! after using EERDWRINC. Also, the EERDWRINC does not increment the block in 
-//! the case of a wrap of the offset, so it seems less useful for data that 
-//! spans blocks. 
-//! 
+//! after using EERDWRINC. Also, the EERDWRINC does not increment the block in
+//! the case of a wrap of the offset, so it seems less useful for data that
+//! spans blocks.
+//!
 //! This flexibility comes at the cost of efficiency, as the
 //! datasheet calls for at least 4 cycles of delay after setting the EEBLOCK
-//! register. 
+//! register.
 
 /// Possible errors for the Flash memory module
 #[derive(Debug, PartialEq)]
@@ -39,8 +39,12 @@ impl core::fmt::Display for EepromError {
             EepromError::AddressOutOfBounds => write!(f, "Address is out of bounds"),
             EepromError::BlockOutOfBounds => write!(f, "Block is out of bounds"),
             EepromError::OffsetOutOfBounds => write!(f, "Offset is out of bounds"),
-            EepromError::WriteWouldOverflow => write!(f, "Writing this data would overflow the EEPROM"),
-            EepromError::ReadWouldOverflow => write!(f, "Reading this data would overflow the EEPROM"),
+            EepromError::WriteWouldOverflow => {
+                write!(f, "Writing this data would overflow the EEPROM")
+            }
+            EepromError::ReadWouldOverflow => {
+                write!(f, "Reading this data would overflow the EEPROM")
+            }
             EepromError::ReadBufferTooSmall => write!(f, "Allocated buffer too small for reading"),
         }
     }
@@ -71,7 +75,7 @@ impl EepromAddress {
         self.offset
     }
 
-    /// Increments the offset by one, if that would cause an overflow, increment the block. If 
+    /// Increments the offset by one, if that would cause an overflow, increment the block. If
     /// both the block and offset wrap, the output for the new block and offset
     /// will both be 0.
     pub fn increment(&mut self, offset_size: usize, block_size: usize) -> &mut Self {
@@ -91,13 +95,13 @@ impl EepromAddress {
 /// Series of traits to make access blocks easier
 pub trait Blocks {
     /// Returns the blocksize for read / write to the flash
-    fn block_size(&self) -> Result<usize, EepromError> ;
+    fn block_size(&self) -> Result<usize, EepromError>;
 
     /// Returns the EepromAddress for a given index. Valid indexes are 0 to
     /// EEPROM_END_ADDRESS_WORDS.
     fn word_index_to_address(&self, index: usize) -> Result<EepromAddress, EepromError>;
 
-    /// Gives the the word index (0 to EEPROM_END_ADDRESS_WORDS) for a 
+    /// Gives the the word index (0 to EEPROM_END_ADDRESS_WORDS) for a
     /// given EepromAddress
     fn address_to_word_index(&self, block: &EepromAddress) -> Result<usize, EepromError>;
 }
@@ -115,7 +119,7 @@ pub trait Erase {
 pub trait Busy {
     /// Check the EEDONE register, true if busy
     fn is_busy(&self) -> bool;
-    
+
     /// Blocks until the EEPROM is not busy
     fn wait(&self);
 }
@@ -129,10 +133,10 @@ pub trait Write {
 /// Read data from the EEPROM
 pub trait Read {
     /// Eeprom Address to start reading data from
-    fn read(&mut self, address: &EepromAddress, bytes_to_read: usize, buffer: &mut [u8]) -> Result<(), EepromError>;
+    fn read(
+        &mut self,
+        address: &EepromAddress,
+        bytes_to_read: usize,
+        buffer: &mut [u8],
+    ) -> Result<(), EepromError>;
 }
-
-
-
-
-

@@ -7,6 +7,8 @@ depending on your processor.
 
 ## Changelog
 
+* Basic EEPROM Read, Write, Erase added
+
 ### Unreleased Changes ([Source](https://github.com/rust-embedded-community/tm4c-hal/tree/master/tm4c-hal) [Diff](https://github.com/rust-embedded-community/tm4c-hal/compare/tm4c-hal-0.4.1...master))
 
 * Implement use of sealed traits by downstream crates (i.e. `tm4c123x-hal` and `tm4c129x-hal`)

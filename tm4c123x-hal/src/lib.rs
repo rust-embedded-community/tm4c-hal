@@ -40,6 +40,7 @@ mod sealed {
     impl Sealed for () {}
 }
 
+pub mod eeprom;
 pub mod gpio;
 pub mod hib;
 pub mod i2c;
@@ -49,4 +50,3 @@ pub mod serial;
 pub mod spi;
 pub mod sysctl;
 pub mod timer;
-pub mod eeprom;

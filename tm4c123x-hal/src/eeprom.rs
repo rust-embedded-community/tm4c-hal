@@ -1,25 +1,25 @@
 //! Code for the EEProm module.
 
-use core::{convert::TryInto};
+use core::convert::TryInto;
 
-use tm4c123x::{EEPROM};
 use crate::sysctl::{self};
-pub use tm4c_hal::eeprom::{Blocks, Busy, Write, Read, EepromError, EepromAddress, Erase};
+use tm4c123x::EEPROM;
+pub use tm4c_hal::eeprom::{Blocks, Busy, EepromAddress, EepromError, Erase, Read, Write};
 
 // Number of EEPROM block on the TM4C123
-const EEPROM_BLOCK_SIZE : usize = 16;
+const EEPROM_BLOCK_SIZE: usize = 16;
 
 // Number of EEPROM blocks on the TM4C123
-const EEPROM_NUM_BLOCKS : usize = 32;
+const EEPROM_NUM_BLOCKS: usize = 32;
 
 // Total number of bytes in the EEPROM on the TM4C123
-const EEPROM_END_ADDRESS_BYTES : usize = 2048;
+const EEPROM_END_ADDRESS_BYTES: usize = 2048;
 
 // Total number of words in the EEPROM on the TM4C123
-const EEPROM_END_ADDRESS_WORDS : usize = 512;
+const EEPROM_END_ADDRESS_WORDS: usize = 512;
 
 // Size of the EEPROM word in bytes
-const BYTES_PER_WORD : usize = 4;
+const BYTES_PER_WORD: usize = 4;
 
 /// Eeprom struct
 pub struct Eeprom {
@@ -30,18 +30,18 @@ pub struct Eeprom {
 impl Eeprom {
     /// Configures a new EEPROM struct using the datasheet section 8.2.4.2
     pub fn new(eeprom: EEPROM, _pc: &sysctl::PowerControl) -> Self {
-        
         let final_eeprom = Eeprom { eeprom };
-        
+
         // See Section 8.2.4.2 EEPROM Initialization and Configuration
         // in the datasheet:
 
-        // 0. Power on the EEPROM peripheral 
+        // 0. Power on the EEPROM peripheral
         sysctl::control_power(
-            _pc, 
-            sysctl::Domain::Eeprom, 
+            _pc,
+            sysctl::Domain::Eeprom,
             tm4c_hal::sysctl::RunMode::Run,
-            tm4c_hal::sysctl::PowerState::On);
+            tm4c_hal::sysctl::PowerState::On,
+        );
 
         // 1. The datasheet calls for at least a 6 cycle delay before polling
         // the working register. Need to make sure the loop isn't optimized
@@ -103,9 +103,7 @@ impl Eeprom {
 
         if block < EEPROM_NUM_BLOCKS {
             unsafe {
-                self.eeprom.eeblock.write(|w| {
-                    w.bits(block as u32)
-                });
+                self.eeprom.eeblock.write(|w| w.bits(block as u32));
             }
 
             // Changing blocks requires a small delay, see Section 8.2.4.1 Timing Considerations
@@ -114,7 +112,7 @@ impl Eeprom {
             self.wait();
 
             Ok(())
-        }else{
+        } else {
             Err(EepromError::BlockOutOfBounds)
         }
     }
@@ -127,15 +125,13 @@ impl Eeprom {
 
         if offset < EEPROM_BLOCK_SIZE {
             unsafe {
-                self.eeprom.eeoffset.write(|w| {
-                    w.bits(offset as u32)
-                });
+                self.eeprom.eeoffset.write(|w| w.bits(offset as u32));
             }
 
             self.wait();
 
             Ok(())
-        }else{
+        } else {
             Err(EepromError::OffsetOutOfBounds)
         }
     }
@@ -154,7 +150,8 @@ impl Eeprom {
         // Check if the initial address is valid, then check byte length
         match self.address_to_word_index(&address) {
             Ok(start_word_address) => {
-                return start_word_address*BYTES_PER_WORD + length_bytes < EEPROM_END_ADDRESS_BYTES;
+                return start_word_address * BYTES_PER_WORD + length_bytes
+                    < EEPROM_END_ADDRESS_BYTES;
             }
             Err(_) => {
                 return false;
@@ -164,12 +161,15 @@ impl Eeprom {
 
     /// Increments the block and offset by 1 word. Will wrap both the offset and
     /// block to 0 if an increment would cause either to exceed their bounds.
-    /// 
+    ///
     /// For example:
-    /// * Block 0, Offset, 1 -> Block 0, Offset 2 
+    /// * Block 0, Offset, 1 -> Block 0, Offset 2
     /// * Block 0, Offset, 15 -> Block 1, Offset 0
     /// * Block 31, Offset, 15 -> Block 0, Offset 0
-    fn increment_offset(&mut self, starting_address: &mut EepromAddress) -> Result<(), EepromError> {        
+    fn increment_offset(
+        &mut self,
+        starting_address: &mut EepromAddress,
+    ) -> Result<(), EepromError> {
         starting_address.increment(EEPROM_BLOCK_SIZE, EEPROM_NUM_BLOCKS);
         self.set_block_and_offset(&starting_address)?;
         Ok(())
@@ -187,14 +187,14 @@ impl Busy for Eeprom {
 }
 
 impl Blocks for Eeprom {
-    fn block_size(&self) -> Result<usize, EepromError>  {
+    fn block_size(&self) -> Result<usize, EepromError> {
         Ok(EEPROM_BLOCK_SIZE)
     }
 
     fn word_index_to_address(&self, word_address: usize) -> Result<EepromAddress, EepromError> {
         if word_address > EEPROM_END_ADDRESS_WORDS {
             return Err(EepromError::AddressOutOfBounds);
-        }else{
+        } else {
             let block = word_address / EEPROM_BLOCK_SIZE;
             let offset = word_address - (block * EEPROM_BLOCK_SIZE);
             Ok(EepromAddress::new(block, offset))
@@ -204,7 +204,7 @@ impl Blocks for Eeprom {
     fn address_to_word_index(&self, block: &EepromAddress) -> Result<usize, EepromError> {
         if block.block() > EEPROM_NUM_BLOCKS || block.offset() > EEPROM_BLOCK_SIZE {
             return Err(EepromError::BlockOutOfBounds);
-        }else{
+        } else {
             return Ok(block.block() * EEPROM_BLOCK_SIZE + block.offset());
         }
     }
@@ -219,7 +219,7 @@ impl Write for Eeprom {
         // Check if the address is valid and if the data will fit
         if self.validate_byte_array_bounds(address, data.len()) {
             self.set_block_and_offset(address)?;
-            
+
             let chunk_iter = data.chunks_exact(4);
             let leftover_bytes = chunk_iter.remainder();
             let mut address_copy = *address;
@@ -227,13 +227,11 @@ impl Write for Eeprom {
             // Write the easy part using the auto increment register
             for chunk in chunk_iter {
                 let tmp = u32::from_le_bytes(chunk.try_into().unwrap());
-                
+
                 self.wait();
-                
+
                 unsafe {
-                    self.eeprom.eerdwr.write(|w| {
-                        w.bits(tmp)
-                    });
+                    self.eeprom.eerdwr.write(|w| w.bits(tmp));
                 }
 
                 self.increment_offset(&mut address_copy)?;
@@ -249,23 +247,28 @@ impl Write for Eeprom {
                 self.wait();
 
                 unsafe {
-                    self.eeprom.eerdwr.write(|w| {
-                        w.bits(u32::from_le_bytes(buffer))
-                    });
+                    self.eeprom
+                        .eerdwr
+                        .write(|w| w.bits(u32::from_le_bytes(buffer)));
                 }
             }
 
             self.wait();
 
             Ok(())
-        }else{
+        } else {
             Err(EepromError::WriteWouldOverflow)
         }
     }
 }
 
 impl Read for Eeprom {
-    fn read(&mut self, address: &EepromAddress, bytes_to_read: usize, buffer: &mut [u8]) -> Result<(), EepromError> {
+    fn read(
+        &mut self,
+        address: &EepromAddress,
+        bytes_to_read: usize,
+        buffer: &mut [u8],
+    ) -> Result<(), EepromError> {
         if self.is_busy() {
             return Err(EepromError::Busy);
         }
@@ -273,7 +276,7 @@ impl Read for Eeprom {
         if bytes_to_read > buffer.len() {
             return Err(EepromError::ReadBufferTooSmall);
         }
-        
+
         if self.validate_byte_array_bounds(&address, bytes_to_read) {
             let num_words = bytes_to_read / BYTES_PER_WORD;
             let leftover_bytes = bytes_to_read % BYTES_PER_WORD;
@@ -290,8 +293,8 @@ impl Read for Eeprom {
 
                 self.increment_offset(&mut address_copy)?;
 
-                for byte in  word_as_bytes {
-                    buffer[byte_offset ] = byte;
+                for byte in word_as_bytes {
+                    buffer[byte_offset] = byte;
                     byte_offset += 1;
                 }
             }
@@ -303,7 +306,7 @@ impl Read for Eeprom {
 
                 self.increment_offset(&mut address_copy)?;
 
-                for index in  0..leftover_bytes {
+                for index in 0..leftover_bytes {
                     buffer[byte_offset] = word_as_bytes[index];
                     byte_offset += 1;
                 }
@@ -312,10 +315,9 @@ impl Read for Eeprom {
             self.wait();
 
             Ok(())
-        }else{
+        } else {
             Err(EepromError::ReadWouldOverflow)
         }
-
     }
 }
 
@@ -324,7 +326,7 @@ impl Erase for Eeprom {
         if self.is_busy() {
             return Err(EepromError::Busy);
         }
-        
+
         if self.validate_byte_array_bounds(address, length_bytes) {
             let num_words = length_bytes / BYTES_PER_WORD;
             let leftover_bytes = length_bytes % BYTES_PER_WORD;
@@ -337,9 +339,7 @@ impl Erase for Eeprom {
                 self.wait();
 
                 unsafe {
-                    self.eeprom.eerdwr.write(|w| {
-                        w.bits(zero)
-                    });
+                    self.eeprom.eerdwr.write(|w| w.bits(zero));
                 }
 
                 self.increment_offset(&mut address_copy)?;
@@ -356,20 +356,18 @@ impl Erase for Eeprom {
                 }
 
                 unsafe {
-                    self.eeprom.eerdwr.write(|w| {
-                        w.bits(u32::from_le_bytes(word))
-                    });
+                    self.eeprom
+                        .eerdwr
+                        .write(|w| w.bits(u32::from_le_bytes(word)));
                 }
             }
 
             self.wait();
 
             Ok(())
-        }else{
+        } else {
             return Err(EepromError::WriteWouldOverflow);
         }
-
-
     }
 
     fn erase_block(&mut self, block: usize) -> Result<(), EepromError> {
@@ -381,7 +379,7 @@ impl Erase for Eeprom {
 
         let mut address = EepromAddress::new(block, 0);
 
-        let zeros = [0 as u8; EEPROM_BLOCK_SIZE*BYTES_PER_WORD];
+        let zeros = [0 as u8; EEPROM_BLOCK_SIZE * BYTES_PER_WORD];
 
         self.write(&mut address, &zeros)?;
 

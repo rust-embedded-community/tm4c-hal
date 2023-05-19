@@ -5,8 +5,10 @@ use panic_halt as _; // you can put a breakpoint on `rust_begin_unwind` to catch
 
 use core::fmt::Write;
 use cortex_m_rt::entry;
+use tm4c123x_hal::eeprom::{
+    Blocks, Eeprom, EepromAddress, EepromError, Erase, Read, Write as EepromWrite,
+};
 use tm4c123x_hal::{self as hal, prelude::*};
-use tm4c123x_hal::eeprom::{Eeprom, Read, Write as EepromWrite, EepromAddress, EepromError, Erase, Blocks};
 
 #[entry]
 fn main() -> ! {
@@ -56,7 +58,12 @@ fn main() -> ! {
     }
 }
 
-pub fn eeprom_test_write_read(eeprom: &mut Eeprom, address: &EepromAddress, data_to_write: &[u8], read_buffer: &mut [u8]) -> Result<(), EepromError> {
+pub fn eeprom_test_write_read(
+    eeprom: &mut Eeprom,
+    address: &EepromAddress,
+    data_to_write: &[u8],
+    read_buffer: &mut [u8],
+) -> Result<(), EepromError> {
     eeprom.write(address, &data_to_write)?;
     eeprom.read(address, data_to_write.len(), read_buffer)?;
 
@@ -73,11 +80,18 @@ pub fn eeprom_test_all(eeprom: &mut Eeprom) -> Result<(), EepromError> {
     // Sanity check for simple mapping from word offset to an EepromAddress
     let mut address = eeprom.word_index_to_address(52).unwrap();
     assert_eq!(address.block(), 3, "Word 52 should be in block 3, offset 4");
-    assert_eq!(address.offset(), 4, "Word 52 should be in block 3, offset 4");
+    assert_eq!(
+        address.offset(),
+        4,
+        "Word 52 should be in block 3, offset 4"
+    );
 
     // Sanity check for EepromAddress to word offset
     let word_index = eeprom.address_to_word_index(&address).unwrap();
-    assert_eq!(word_index, 52, "Word index for block 3, offset 4 should be 52");
+    assert_eq!(
+        word_index, 52,
+        "Word index for block 3, offset 4 should be 52"
+    );
 
     // Simplest case, middle of a block, no straddle
     let test_array_1: [u8; 4] = [1, 2, 3, 4];
@@ -104,9 +118,12 @@ pub fn eeprom_test_all(eeprom: &mut Eeprom) -> Result<(), EepromError> {
                 assert_eq!(buffer[i], 0, "Buffer[0..3] should be all 0's");
             }
             _ => {
-                assert_eq!(buffer[i], test_array_2[i], "Buffer[4..9] should match test_array_2")
+                assert_eq!(
+                    buffer[i], test_array_2[i],
+                    "Buffer[4..9] should match test_array_2"
+                )
             }
-        }   
+        }
     }
 
     Ok(())
