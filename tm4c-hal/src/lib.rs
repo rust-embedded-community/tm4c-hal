@@ -6,6 +6,7 @@
 
 pub mod bb;
 pub mod delay;
+pub mod eeprom;
 pub mod gpio;
 pub mod i2c;
 pub mod serial;
