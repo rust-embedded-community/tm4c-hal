@@ -8,9 +8,9 @@ name = "tiva-c-launchpad"
 version = "0.1.0"
 
 [dependencies]
-cortex-m = "0.6"
-cortex-m-rt = "0.6"
-cortex-m-semihosting = "0.3.2"
+cortex-m = "0.7"
+cortex-m-rt = "0.7"
+cortex-m-semihosting = "0.5"
 panic-halt = "0.2.0"
 
 [dependencies.tm4c123x-hal]

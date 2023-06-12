@@ -15,9 +15,11 @@ repository = "https://github.com/rust-embedded-community/tm4c-hal/tm4c129x-hal"
 edition = "2018"
 
 [dependencies]
-cortex-m = "0.6"
+cortex-m = "0.7"
 nb = "1"
-tm4c129x = "0.9"
+
+[dependencies.tm4c129x]
+git = "https://github.com/m-labs/dslite2svd"
 
 [dependencies.cast]
 version = "0.2"
