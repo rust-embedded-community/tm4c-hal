@@ -20,6 +20,7 @@ nb = "1"
 
 [dependencies.tm4c129x]
 git = "https://github.com/m-labs/dslite2svd"
+tag = "v0.9.1"
 
 [dependencies.cast]
 version = "0.2"

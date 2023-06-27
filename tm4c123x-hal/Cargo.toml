@@ -30,6 +30,7 @@ version = "1"
 
 [dependencies.tm4c123x]
 git = "https://github.com/m-labs/dslite2svd"
+tag = "v0.9.1"
 
 [dependencies.void]
 version = "1.0"
