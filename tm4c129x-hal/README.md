@@ -8,15 +8,15 @@
 
 ## Changelog
 
-* Update 0.9.3 - Updated the dependencies for the supporting crate tm4c129x to 
-0.9.1 which supports newer version of cortex-m. This _should_ allow for running
-newer version of RTIC / cortex-m, however, unlike the tm4c123 this hasn't been 
-tested.
-
 ### Unreleased Changes ([Source](https://github.com/rust-embedded-community/tm4c-hal/tree/master/tm4c129x-hal) [Diff](https://github.com/rust-embedded-community/tm4c-hal/compare/tm4c129x-hal-0.9.3...master))
 
 * Use sealed traits for `*Pin` marker traits
 * Do not reexport `tm4c-hal` macros
+* Updated the dependencies for the supporting crate `tm4c129x` to
+`0.9.1` which supports newer version of `cortex-m`. This _should_ allow for running
+newer version of RTIC / `cortex-m`, however, unlike the `tm4c123` this hasn't been
+tested.
+
 
 ### v0.9.2 ([Source](https://github.com/rust-embedded-community/tm4c-hal/tree/tm4c129x-hal-0.9.2/tm4c129x-hal) [Diff](https://github.com/rust-embedded-community/tm4c-hal/compare/tm4c129x-hal-0.9.2...tm4c129x-hal-0.9.1))
 
