@@ -16,7 +16,7 @@ repository = "https://github.com/rust-embedded-community/tm4c-hal"
 documentation = "https://docs.rs/tm4c-hal"
 
 [dependencies]
-cortex-m = "0.6"
+cortex-m = "0.7"
 nb = "1"
 
 [dependencies.embedded-hal]

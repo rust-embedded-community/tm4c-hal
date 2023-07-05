@@ -1,6 +1,6 @@
 [package]
 name = "tm4c129x-hal"
-version = "0.9.2"
+version = "0.9.3"
 authors = [
 	"Jorge Aparicio <jorge@japaric.io>",
 	"Jonathan 'theJPster' Pallant <github@thejpster.org.uk>",
@@ -15,9 +15,11 @@ repository = "https://github.com/rust-embedded-community/tm4c-hal/tm4c129x-hal"
 edition = "2018"
 
 [dependencies]
-cortex-m = "0.6"
+cortex-m = "0.7"
 nb = "1"
-tm4c129x = "0.9"
+
+[dependencies.tm4c129x]
+version = "0.9.1"
 
 [dependencies.cast]
 version = "0.2"
