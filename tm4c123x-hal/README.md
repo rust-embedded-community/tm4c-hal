@@ -14,7 +14,7 @@ versions of RTIC and has been tested in hardware (Launchpad and custom PCB)
 using RTIC 1.1.4. Testing included SPI, ADC, Timers, EEPROM, GPIO, UART, 
 and multiple interrupts (UART, GPIO, TIMERS, ADC).
 
-### Unreleased Changes ([Source](https://github.com/rust-embedded-community/tm4c-hal/tree/master/tm4c123x-hal) [Diff](https://github.com/rust-embedded-community/tm4c-hal/compare/tm4c123x-hal-0.10.2...master))
+### Unreleased Changes ([Source](https://github.com/rust-embedded-community/tm4c-hal/tree/master/tm4c123x-hal) [Diff](https://github.com/rust-embedded-community/tm4c-hal/compare/tm4c123x-hal-0.10.3...master))
 
 * Use sealed traits for `*Pin` marker traits
 * Do not reexport `tm4c-hal` macros
