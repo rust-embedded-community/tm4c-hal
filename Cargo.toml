@@ -5,6 +5,7 @@ members = [
 	"tm4c-hal",
 	"examples/tiva-c-launchpad",
 	"examples/tiva-c-connected-launchpad",
+	"examples/msp432-launchpad-for-ethernet",
 ]
 
 [profile.release]
