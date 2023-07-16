@@ -1,0 +1,30 @@
+[package]
+authors = [
+	"9names",
+]
+edition = "2018"
+readme = "README.md"
+name = "msp432-launchpad-for-ethernet"
+version = "0.1.0"
+
+[dependencies]
+cortex-m = "0.7"
+cortex-m-rt = "0.7"
+cortex-m-semihosting = "0.5"
+panic-halt = "0.2.0"
+
+# MSP432E401Y is functionally equivalent to TM4C1294NCPDT as used in Tiva C Connected Launchpad.
+# The only difference is MSP432 has SimpleLink functions in ROM
+# and TM4C has TivaWare functions in ROM.
+# As long as tm4c129x-hal never uses ROM functions these chips are, as far as I know, 100% compatible.
+# They certainly have the same memory map, appear to have the same periperals and share the same errata list.
+[dependencies.tm4c129x-hal]
+# version = "0.7.0"
+path = "../../tm4c129x-hal"
+features = ["rt"]
+
+# this lets you use `cargo fix`!
+[[bin]]
+name = "msp432-launchpad-for-ethernet"
+test = false
+bench = false
