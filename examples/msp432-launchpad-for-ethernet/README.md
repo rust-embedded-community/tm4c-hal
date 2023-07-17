@@ -4,7 +4,7 @@
 
 ## License
 
-This template is licensed under either of
+This example is licensed under either of
 
 - Apache License, Version 2.0 ([LICENSE-APACHE](LICENSE-APACHE) or
   http://www.apache.org/licenses/LICENSE-2.0)
