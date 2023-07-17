@@ -6,6 +6,7 @@ edition = "2018"
 readme = "README.md"
 name = "msp432-launchpad-for-ethernet"
 version = "0.1.0"
+license = "MIT OR Apache-2.0"
 
 [dependencies]
 cortex-m = "0.7"
