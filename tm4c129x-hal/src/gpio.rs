@@ -42,7 +42,7 @@ use crate::{
     sysctl,
 };
 use core::marker::PhantomData;
-use tm4c_hal::gpio_macro;
+use tm4c_hal::{gpio_abstracted_macro, gpio_macro};
 
 /// Extension trait to split a GPIO peripheral in independent pins and registers
 pub trait GpioExt {
@@ -53,7 +53,26 @@ pub trait GpioExt {
     fn split(self, power_control: &sysctl::PowerControl) -> Self::Parts;
 }
 
-gpio_macro!(tm4c129x, GPIO_PORTA_AHB, gpioa, GpioA, PAx, [
+#[derive(PartialEq, Eq)]
+enum GpioPort {
+    GpioA,
+    GpioB,
+    GpioC,
+    GpioD,
+    GpioE,
+    GpioF,
+    GpioG,
+    GpioH,
+    GpioJ,
+    GpioK,
+    GpioL,
+    GpioM,
+    GpioN,
+    GpioP,
+    GpioQ,
+}
+
+gpio_macro!(tm4c129x, GPIO_PORTA_AHB, gpioa, GpioA, PAx, 0, [
     PA0: (pa0, 0, Tristate),
     PA1: (pa1, 1, Tristate),
     PA2: (pa2, 2, Tristate),
@@ -64,7 +83,7 @@ gpio_macro!(tm4c129x, GPIO_PORTA_AHB, gpioa, GpioA, PAx, [
     PA7: (pa7, 7, Tristate),
 ]);
 
-gpio_macro!(tm4c129x, GPIO_PORTB_AHB, gpiob, GpioB, PBx, [
+gpio_macro!(tm4c129x, GPIO_PORTB_AHB, gpiob, GpioB, PBx, 1, [
     PB0: (pb0, 0, Tristate),
     PB1: (pb1, 1, Tristate),
     PB2: (pb2, 2, Tristate),
@@ -74,7 +93,7 @@ gpio_macro!(tm4c129x, GPIO_PORTB_AHB, gpiob, GpioB, PBx, [
     // PB6 and PB7 don't exist
 ]);
 
-gpio_macro!(tm4c129x, GPIO_PORTC_AHB, gpioc, GpioC, PCx, [
+gpio_macro!(tm4c129x, GPIO_PORTC_AHB, gpioc, GpioC, PCx, 2, [
     PC0: (pc0, 0, Locked), // JTAG/SWD pin
     PC1: (pc1, 1, Locked), // JTAG/SWD pin
     PC2: (pc2, 2, Locked), // JTAG/SWD pin
@@ -85,7 +104,7 @@ gpio_macro!(tm4c129x, GPIO_PORTC_AHB, gpioc, GpioC, PCx, [
     PC7: (pc7, 7, Tristate),
 ]);
 
-gpio_macro!(tm4c129x, GPIO_PORTD_AHB, gpiod, GpioD, PDx, [
+gpio_macro!(tm4c129x, GPIO_PORTD_AHB, gpiod, GpioD, PDx, 3, [
     PD0: (pd0, 0, Tristate),
     PD1: (pd1, 1, Tristate),
     PD2: (pd2, 2, Tristate),
@@ -96,7 +115,7 @@ gpio_macro!(tm4c129x, GPIO_PORTD_AHB, gpiod, GpioD, PDx, [
     PD7: (pd7, 7, Locked), // GPIO pin
 ]);
 
-gpio_macro!(tm4c129x, GPIO_PORTE_AHB, gpioe, GpioE, PEx, [
+gpio_macro!(tm4c129x, GPIO_PORTE_AHB, gpioe, GpioE, PEx, 4, [
     PE0: (pe0, 0, Tristate),
     PE1: (pe1, 1, Tristate),
     PE2: (pe2, 2, Tristate),
@@ -106,7 +125,7 @@ gpio_macro!(tm4c129x, GPIO_PORTE_AHB, gpioe, GpioE, PEx, [
     // PE6 and PE7 don't exist
 ]);
 
-gpio_macro!(tm4c129x, GPIO_PORTF_AHB, gpiof, GpioF, PFx, [
+gpio_macro!(tm4c129x, GPIO_PORTF_AHB, gpiof, GpioF, PFx, 5, [
     PF0: (pf0, 0, Tristate),
     PF1: (pf1, 1, Tristate),
     PF2: (pf2, 2, Tristate),
@@ -115,13 +134,13 @@ gpio_macro!(tm4c129x, GPIO_PORTF_AHB, gpiof, GpioF, PFx, [
     // PF5, PF6 and PF7 don't exist
 ]);
 
-gpio_macro!(tm4c129x, GPIO_PORTG_AHB, gpiog, GpioG, PGx, [
+gpio_macro!(tm4c129x, GPIO_PORTG_AHB, gpiog, GpioG, PGx, 6, [
     PG0: (pg0, 0, Tristate),
     PG1: (pg1, 1, Tristate),
     // PG2 through PG7 don't exist
 ]);
 
-gpio_macro!(tm4c129x, GPIO_PORTH_AHB, gpioh, GpioH, PHx, [
+gpio_macro!(tm4c129x, GPIO_PORTH_AHB, gpioh, GpioH, PHx, 7, [
     PH0: (ph0, 0, Tristate),
     PH1: (ph1, 1, Tristate),
     PH2: (ph2, 2, Tristate),
@@ -129,13 +148,13 @@ gpio_macro!(tm4c129x, GPIO_PORTH_AHB, gpioh, GpioH, PHx, [
     // PH4 through PG7 don't exist
 ]);
 
-gpio_macro!(tm4c129x, GPIO_PORTJ_AHB, gpioj, GpioJ, PJx, [
+gpio_macro!(tm4c129x, GPIO_PORTJ_AHB, gpioj, GpioJ, PJx, 8, [
     PJ0: (pj0, 0, Tristate),
     PJ1: (pj1, 1, Tristate),
     // PJ2 through PJ7 don't exist
 ]);
 
-gpio_macro!(tm4c129x, GPIO_PORTK, gpiok, GpioK, PKx, [
+gpio_macro!(tm4c129x, GPIO_PORTK, gpiok, GpioK, PKx, 9, [
     PK0: (pk0, 0, Tristate),
     PK1: (pk1, 1, Tristate),
     PK2: (pk2, 2, Tristate),
@@ -146,7 +165,7 @@ gpio_macro!(tm4c129x, GPIO_PORTK, gpiok, GpioK, PKx, [
     PK7: (pk7, 7, Tristate),
 ]);
 
-gpio_macro!(tm4c129x, GPIO_PORTL, gpiol, GpioL, PNL, [
+gpio_macro!(tm4c129x, GPIO_PORTL, gpiol, GpioL, PNx, 10, [
     PL0: (pl0, 0, Tristate),
     PL1: (pl1, 1, Tristate),
     PL2: (pl2, 2, Tristate),
@@ -157,7 +176,7 @@ gpio_macro!(tm4c129x, GPIO_PORTL, gpiol, GpioL, PNL, [
     PL7: (pl7, 7, Tristate),
 ]);
 
-gpio_macro!(tm4c129x, GPIO_PORTM, gpiom, GpioM, PMx, [
+gpio_macro!(tm4c129x, GPIO_PORTM, gpiom, GpioM, PMx, 11, [
     PM0: (pm0, 0, Tristate),
     PM1: (pm1, 1, Tristate),
     PM2: (pm2, 2, Tristate),
@@ -168,7 +187,7 @@ gpio_macro!(tm4c129x, GPIO_PORTM, gpiom, GpioM, PMx, [
     PM7: (pm7, 7, Tristate),
 ]);
 
-gpio_macro!(tm4c129x, GPIO_PORTN, gpion, GpioN, PNx, [
+gpio_macro!(tm4c129x, GPIO_PORTN, gpion, GpioN, PNx, 12, [
     PN0: (pn0, 0, Tristate),
     PN1: (pn1, 1, Tristate),
     PN2: (pn2, 2, Tristate),
@@ -179,7 +198,7 @@ gpio_macro!(tm4c129x, GPIO_PORTN, gpion, GpioN, PNx, [
     PN7: (pn7, 7, Tristate),
 ]);
 
-gpio_macro!(tm4c129x, GPIO_PORTP, gpiop, GpioP, PPx, [
+gpio_macro!(tm4c129x, GPIO_PORTP, gpiop, GpioP, PPx, 13, [
     PP0: (pp0, 0, Tristate),
     PP1: (pp1, 1, Tristate),
     PP2: (pp2, 2, Tristate),
@@ -189,7 +208,7 @@ gpio_macro!(tm4c129x, GPIO_PORTP, gpiop, GpioP, PPx, [
     // PP6 and PP7 don't exist
 ]);
 
-gpio_macro!(tm4c129x, GPIO_PORTQ, gpioq, GpioQ, PQx, [
+gpio_macro!(tm4c129x, GPIO_PORTQ, gpioq, GpioQ, PQx, 14, [
     PQ0: (pq0, 0, Tristate),
     PQ1: (pq1, 1, Tristate),
     PQ2: (pq2, 2, Tristate),
@@ -197,3 +216,27 @@ gpio_macro!(tm4c129x, GPIO_PORTQ, gpioq, GpioQ, PQx, [
     PQ4: (pq4, 4, Tristate),
     // PQ5, PQ6 and PQ7 don't exist
 ]);
+
+macro_rules! get_field {
+    ($j:expr, $field:ident) => {
+        match $j {
+            GpioPort::GpioA => &(*tm4c129x::GPIO_PORTA_AHB::ptr()).data,
+            GpioPort::GpioB => &(*tm4c129x::GPIO_PORTB_AHB::ptr()).data,
+            GpioPort::GpioC => &(*tm4c129x::GPIO_PORTC_AHB::ptr()).data,
+            GpioPort::GpioD => &(*tm4c129x::GPIO_PORTD_AHB::ptr()).data,
+            GpioPort::GpioE => &(*tm4c129x::GPIO_PORTE_AHB::ptr()).data,
+            GpioPort::GpioF => &(*tm4c129x::GPIO_PORTF_AHB::ptr()).data,
+            GpioPort::GpioG => &(*tm4c129x::GPIO_PORTG_AHB::ptr()).data,
+            GpioPort::GpioH => &(*tm4c129x::GPIO_PORTH_AHB::ptr()).data,
+            GpioPort::GpioJ => &(*tm4c129x::GPIO_PORTJ_AHB::ptr()).data,
+            GpioPort::GpioK => &(*tm4c129x::GPIO_PORTK::ptr()).data,
+            GpioPort::GpioL => &(*tm4c129x::GPIO_PORTL::ptr()).data,
+            GpioPort::GpioM => &(*tm4c129x::GPIO_PORTM::ptr()).data,
+            GpioPort::GpioN => &(*tm4c129x::GPIO_PORTN::ptr()).data,
+            GpioPort::GpioP => &(*tm4c129x::GPIO_PORTP::ptr()).data,
+            GpioPort::GpioQ => &(*tm4c129x::GPIO_PORTQ::ptr()).data,
+        }
+    };
+}
+
+gpio_abstracted_macro!();
