@@ -39,28 +39,28 @@ pub unsafe trait MosiPin<SPI>: Sealed {}
 
 // SSI0
 impl<T> SckPin<SSI0> for PA2<AlternateFunction<AF15, T>> where T: OutputMode {}
-impl<T> MisoPin<SSI0> for PA5<AlternateFunction<AF15, T>> where T: OutputMode {}
-impl<T> MosiPin<SSI0> for PA4<AlternateFunction<AF15, T>> where T: OutputMode {}
+impl<T> MisoPin<SSI0> for PA4<AlternateFunction<AF15, T>> where T: OutputMode {}
+impl<T> MosiPin<SSI0> for PA5<AlternateFunction<AF15, T>> where T: OutputMode {}
 
 // SSI1
 impl<T> SckPin<SSI1> for PB5<AlternateFunction<AF15, T>> where T: OutputMode {}
-impl<T> MisoPin<SSI1> for PE5<AlternateFunction<AF15, T>> where T: OutputMode {}
-impl<T> MosiPin<SSI1> for PE4<AlternateFunction<AF15, T>> where T: OutputMode {}
+impl<T> MisoPin<SSI1> for PE4<AlternateFunction<AF15, T>> where T: OutputMode {}
+impl<T> MosiPin<SSI1> for PE5<AlternateFunction<AF15, T>> where T: OutputMode {}
 
 // SSI2
 impl<T> SckPin<SSI2> for PD3<AlternateFunction<AF15, T>> where T: OutputMode {}
-impl<T> MisoPin<SSI2> for PD0<AlternateFunction<AF15, T>> where T: OutputMode {}
-impl<T> MosiPin<SSI2> for PD1<AlternateFunction<AF15, T>> where T: OutputMode {}
+impl<T> MisoPin<SSI2> for PD1<AlternateFunction<AF15, T>> where T: OutputMode {}
+impl<T> MosiPin<SSI2> for PD0<AlternateFunction<AF15, T>> where T: OutputMode {}
 
 // SSI3
 impl<T> SckPin<SSI3> for PQ0<AlternateFunction<AF14, T>> where T: OutputMode {}
-impl<T> MisoPin<SSI3> for PQ3<AlternateFunction<AF14, T>> where T: OutputMode {}
-impl<T> MosiPin<SSI3> for PQ2<AlternateFunction<AF14, T>> where T: OutputMode {}
+impl<T> MisoPin<SSI3> for PQ2<AlternateFunction<AF14, T>> where T: OutputMode {}
+impl<T> MosiPin<SSI3> for PQ3<AlternateFunction<AF14, T>> where T: OutputMode {}
 
 // SSI3 (alt)
 // impl<T> SckPin<SSI3> for PF3<AlternateFunction<AF14, T>> where T: OutputMode {}
-// impl<T> MisoPin<SSI3> for PF0<AlternateFunction<AF14, T>> where T: OutputMode {}
-// impl<T> MosiPin<SSI3> for PF1<AlternateFunction<AF14, T>> where T: OutputMode {}
+// impl<T> MisoPin<SSI3> for PF1<AlternateFunction<AF14, T>> where T: OutputMode {}
+// impl<T> MosiPin<SSI3> for PF0<AlternateFunction<AF14, T>> where T: OutputMode {}
 
 /// SPI peripheral operating in full duplex master mode
 pub struct Spi<SPI, PINS> {
