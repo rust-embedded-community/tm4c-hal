@@ -53,6 +53,30 @@ pub trait GpioExt {
     fn split(self, power_control: &sysctl::PowerControl) -> Self::Parts;
 }
 
+/// Alternate function 11 (type state)
+pub struct AF11;
+impl AlternateFunctionChoice for AF11 {
+    fn number() -> u32 {
+        11
+    }
+}
+
+/// Alternate function 13 (type state)
+pub struct AF13;
+impl AlternateFunctionChoice for AF13 {
+    fn number() -> u32 {
+        13
+    }
+}
+
+/// Alternate function 15 (type state)
+pub struct AF15;
+impl AlternateFunctionChoice for AF15 {
+    fn number() -> u32 {
+        15
+    }
+}
+
 gpio_macro!(tm4c129x, GPIO_PORTA_AHB, gpioa, GpioA, PAx, [
     PA0: (pa0, 0, Tristate),
     PA1: (pa1, 1, Tristate),
