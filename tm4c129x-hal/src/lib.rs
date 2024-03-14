@@ -45,7 +45,7 @@ pub mod hib;
 pub mod i2c;
 pub mod prelude;
 pub mod serial;
-// pub mod spi;
+pub mod spi;
 pub mod sysctl;
 
 use embedded_hal as hal;
