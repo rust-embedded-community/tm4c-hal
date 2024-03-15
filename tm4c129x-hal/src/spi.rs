@@ -5,9 +5,12 @@ pub use crate::hal::spi::{Mode, MODE_0, MODE_1, MODE_2, MODE_3};
 use crate::{
     gpio::{
         gpioa::{PA2, PA4, PA5},
-        gpiob::{PB4, PB6, PB7},
-        gpiod::{PD0, PD2, PD3},
-        AlternateFunction, OutputMode, AF1, AF2,
+        gpiob::{PB5},
+        gpiod::{PD0, PD1, PD3},
+        gpioe::{PE4, PE5},
+        // gpiof::{PF0, PF1, PF3},
+        gpioq::{PQ0, PQ2, PQ3},
+        AlternateFunction, OutputMode, AF14, AF15,
     },
     hal::spi::{FullDuplex, Phase, Polarity},
     sysctl::{self, Clocks},
@@ -32,27 +35,32 @@ pub trait SckPin<SPI>: Sealed {}
 pub trait MisoPin<SPI>: Sealed {}
 
 /// MOSI pin
-pub unsafe trait MosiPin<SPI>: Sealed {}
+pub trait MosiPin<SPI>: Sealed {}
 
 // SSI0
-impl<T> SckPin<SSI0> for PA2<AlternateFunction<AF2, T>> where T: OutputMode {}
-impl<T> MisoPin<SSI0> for PA4<AlternateFunction<AF2, T>> where T: OutputMode {}
-impl<T> MosiPin<SSI0> for PA5<AlternateFunction<AF2, T>> where T: OutputMode {}
+impl<T> SckPin<SSI0> for PA2<AlternateFunction<AF15, T>> where T: OutputMode {}
+impl<T> MisoPin<SSI0> for PA5<AlternateFunction<AF15, T>> where T: OutputMode {}
+impl<T> MosiPin<SSI0> for PA4<AlternateFunction<AF15, T>> where T: OutputMode {}
 
 // SSI1
-impl<T> SckPin<SSI1> for PD0<AlternateFunction<AF2, T>> where T: OutputMode {}
-impl<T> MisoPin<SSI1> for PD2<AlternateFunction<AF2, T>> where T: OutputMode {}
-impl<T> MosiPin<SSI1> for PD3<AlternateFunction<AF2, T>> where T: OutputMode {}
+impl<T> SckPin<SSI1> for PB5<AlternateFunction<AF15, T>> where T: OutputMode {}
+impl<T> MisoPin<SSI1> for PE5<AlternateFunction<AF15, T>> where T: OutputMode {}
+impl<T> MosiPin<SSI1> for PE4<AlternateFunction<AF15, T>> where T: OutputMode {}
 
 // SSI2
-impl<T> SckPin<SSI2> for PB4<AlternateFunction<AF2, T>> where T: OutputMode {}
-impl<T> MisoPin<SSI2> for PB6<AlternateFunction<AF2, T>> where T: OutputMode {}
-impl<T> MosiPin<SSI2> for PB7<AlternateFunction<AF2, T>> where T: OutputMode {}
+impl<T> SckPin<SSI2> for PD3<AlternateFunction<AF15, T>> where T: OutputMode {}
+impl<T> MisoPin<SSI2> for PD0<AlternateFunction<AF15, T>> where T: OutputMode {}
+impl<T> MosiPin<SSI2> for PD1<AlternateFunction<AF15, T>> where T: OutputMode {}
 
 // SSI3
-impl<T> SckPin<SSI3> for PD0<AlternateFunction<AF1, T>> where T: OutputMode {}
-impl<T> MisoPin<SSI3> for PD2<AlternateFunction<AF1, T>> where T: OutputMode {}
-impl<T> MosiPin<SSI3> for PD3<AlternateFunction<AF1, T>> where T: OutputMode {}
+impl<T> SckPin<SSI3> for PQ0<AlternateFunction<AF14, T>> where T: OutputMode {}
+impl<T> MisoPin<SSI3> for PQ3<AlternateFunction<AF14, T>> where T: OutputMode {}
+impl<T> MosiPin<SSI3> for PQ2<AlternateFunction<AF14, T>> where T: OutputMode {}
+
+// SSI3 (alt)
+// impl<T> SckPin<SSI3> for PF3<AlternateFunction<AF14, T>> where T: OutputMode {}
+// impl<T> MisoPin<SSI3> for PF0<AlternateFunction<AF14, T>> where T: OutputMode {}
+// impl<T> MosiPin<SSI3> for PF1<AlternateFunction<AF14, T>> where T: OutputMode {}
 
 /// SPI peripheral operating in full duplex master mode
 pub struct Spi<SPI, PINS> {
